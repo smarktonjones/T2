@@ -1161,6 +1161,7 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
         // --- Initial Setup ---
         const loadJsonData = (jsonString) => { try { const state = JSON.parse(jsonString); renderState(state); alert('Template loaded successfully!'); } catch (err) { console.error("JSON Parse Error:", err); alert('Error: Invalid JSON data.'); } };
         const renderState = (state) => { document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = ''); SECTIONS.forEach((sectionId, secIndex) => { const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`); const elements = state[sectionId] || []; if (zone && Array.isArray(elements)) { elements.forEach((item, itemIndex) => { item.originalId = `${secIndex}-${itemIndex}`; zone.appendChild(createElement(item.type, item)); }); } }); lastLoadedState = JSON.parse(JSON.stringify(state)); updateLiveOutput(); };
+document.getElementById('lock-layout-toggle').dispatchEvent(new Event('change'));	    
         const defaultJsonText = document.getElementById('default-json-data').textContent;
         if (defaultJsonText.trim().length > 2) { try { const defaultState = JSON.parse(defaultJsonText); renderState(defaultState); } catch { console.error("Could not parse embedded default JSON. Starting blank."); renderState({}); } } else { renderState({}); }
     });
