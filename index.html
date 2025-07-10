@@ -80,7 +80,7 @@
     </style>
 </head>
 <body>
-    <h1>Dental Note - MAKER v1.2</h1>
+    <h1>Dental Note - MAKER v1.3</h1>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>Header</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>Subjective</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>Objective</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>Assessment</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>Plan</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>Footer</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -1154,8 +1154,6 @@
         // --- Treatment Plan Modal Logic ---
         const txPlanModal = document.getElementById('tx-plan-modal');
 
-	    
-        // **** START OF REPLACEMENT CODE ****
         const openTxPlanEditor = (element) => {
             activeElementForEditor = element;
             const state = getElementState(element);
@@ -1209,39 +1207,8 @@
             });
 
             txPlanModal.style.display = 'block';
-        };
-        // **** END OF REPLACEMENT CODE ****
+        }; // <-- The correctly placed closing brace for the openTxPlanEditor function
 
-            // Auto-priority logic
-            let nextPriority = 1 + Math.max(0, ...Object.values(state.txData).map(d => d.priority || 0));
-            tbody.addEventListener('focusin', (e) => {
-                if (e.target.tagName === 'TEXTAREA') {
-                    const key = e.target.dataset.key;
-                    if (!state.txData[key] || !state.txData[key].priority) {
-                        e.target.previousElementSibling.textContent = nextPriority;
-                    }
-                }
-            });
-            tbody.addEventListener('focusout', (e) => {
-                if (e.target.tagName === 'TEXTAREA') {
-                    const key = e.target.dataset.key;
-                    if (!state.txData[key] || !state.txData[key].priority) {
-                        if (e.target.value.trim() !== '') {
-                            state.txData[key] = { text: e.target.value, priority: nextPriority };
-                            nextPriority++;
-                        } else {
-                            e.target.previousElementSibling.textContent = ''; // Clear priority if no text entered
-                        }
-                    } else { // It already has a priority, just update the text
-                        state.txData[key].text = e.target.value;
-                    }
-                }
-            });
-            
-            txPlanModal.style.display = 'block';
-        };
-        
-        // **** START OF REPLACEMENT CODE ****
         document.getElementById('tx-plan-save-btn').onclick = () => {
             if (!activeElementForEditor) return;
             const newData = {};
@@ -1261,10 +1228,8 @@
             updateLiveOutput();
             txPlanModal.style.display = 'none';
         };
-        // **** END OF REPLACEMENT CODE ****
 
         // --- Treatment Plan Properties ---
-        // **** START OF REPLACEMENT CODE ****
         const openTxPlanProperties = (state, body) => {
             return `
                 <fieldset>
@@ -1279,15 +1244,12 @@
                 </fieldset>
             `;
         };
-        // **** END OF REPLACEMENT CODE ****
         
-        // **** START OF REPLACEMENT CODE ****
         const saveTxPlanProperties = (newState, element) => {
             newState.txRows = document.getElementById('prop-tx-rows').value.split('\n').filter(line => line.trim() !== '');
             newState.txSnippets = document.getElementById('prop-tx-snippets').value.split('\n').filter(line => line.trim() !== '');
             newState.txData = {}; // Reset data when properties change
         };
-        // **** END OF REPLACEMENT CODE ****
         // **** END OF NEW CODE ****
 
 
