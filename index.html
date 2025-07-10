@@ -76,7 +76,7 @@
 #tx-plan-table textarea { width: 100%; min-height: 60px; box-sizing: border-box; border: none; resize: vertical; }
 #tx-plan-table textarea:focus { outline: 1px solid var(--button-bg); }
 .priority-display { font-weight: bold; color: var(--danger-color); font-size: 1.2em; display: block; text-align: center; }
-	    
+#tx-plan-table .cell-content { display: flex; flex-direction: column; gap: 5px; }	    
     </style>
 </head>
 <body>
@@ -983,6 +983,7 @@
  
             else if (type === 'tx-plan') {
                 draggable.dataset.txRows = JSON.stringify(data.txRows || ["Oral Hygiene", "Operative", "Perio", "Oral Surgery", "Endo", "Pros", "Other"]);
+		draggable.dataset.txSnippets = JSON.stringify(data.txSnippets || []);
                 draggable.dataset.txData = JSON.stringify(data.txData || {});
             }	    
 	    
@@ -1042,6 +1043,7 @@
             // **** START OF NEW CODE for tx plan****
             else if (type === 'tx-plan') {
                 state.txRows = JSON.parse(element.dataset.txRows);
+		state.txSnippets = JSON.parse(element.dataset.txSnippets);
                 state.txData = JSON.parse(element.dataset.txData);
             }
             // **** END OF NEW CODE ****
@@ -1074,11 +1076,14 @@
                         for (let priority = 1; priority <= 5; priority++) {
                             let priorityItems = [];
                             state.txRows.forEach(rowName => {
-                                const key = `${rowName}-${className}`;
-                                if (state.txData[key] && state.txData[key].priority === priority) {
-                                    priorityItems.push(state.txData[key].text);
-                                }
-                            });
+		    const key = `${rowName}-${className}`;
+                        if (state.txData[key] && state.txData[key].priority === priority && state.txData[key].text.trim()) {
+                            // **** START OF MODIFIED LINE ****
+                            // Add the row name as a prefix to the treatment text
+                            priorityItems.push(`${rowName}: ${state.txData[key].text}`);
+                            // **** END OF MODIFIED LINE ****
+                        }
+                    });
                             if (priorityItems.length > 0) {
                                 classContent.push(`${priority}) ${priorityItems.join(', ')}`);
                             }
@@ -1148,6 +1153,9 @@
 // **** START OF NEW CODE for tx plan ****
         // --- Treatment Plan Modal Logic ---
         const txPlanModal = document.getElementById('tx-plan-modal');
+
+	    
+        // **** START OF REPLACEMENT CODE ****
         const openTxPlanEditor = (element) => {
             activeElementForEditor = element;
             const state = getElementState(element);
@@ -1159,6 +1167,9 @@
             const headerRow = thead.insertRow();
             headerRow.innerHTML = '<th>Test</th><th>CLASS 3</th><th>CLASS 2</th><th>CLASS 1</th>';
 
+            // Snippet Options HTML
+            const snippetOptionsHtml = state.txSnippets.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
             // Body
             const tbody = table.createTBody();
             state.txRows.forEach(rowName => {
@@ -1167,13 +1178,39 @@
                 ["CLASS 3", "CLASS 2", "CLASS 1"].forEach(className => {
                     const cell = row.insertCell();
                     const key = `${rowName}-${className}`;
-                    const data = state.txData[key] || { text: '', priority: '' };
+                    const data = state.txData[key] || { text: '', priority: 0 };
+                    
+                    // Priority Dropdown
+                    let priorityOptions = '<option value="0">--</option>';
+                    for(let i = 1; i <= 5; i++) {
+                        priorityOptions += `<option value="${i}" ${data.priority === i ? 'selected' : ''}>${i}</option>`;
+                    }
+
                     cell.innerHTML = `
-                        <span class="priority-display">${data.priority || ''}</span>
-                        <textarea data-key="${key}">${data.text}</textarea>
+                        <div class="cell-content">
+                            <select class="priority-select" data-key="${key}">${priorityOptions}</select>
+                            <textarea data-key="${key}">${data.text}</textarea>
+                            <select class="snippet-select"><option value="">-- Add Snippet --</option>${snippetOptionsHtml}</select>
+                        </div>
                     `;
                 });
             });
+
+            // Snippet adding logic
+            tbody.addEventListener('change', e => {
+                if (e.target.classList.contains('snippet-select')) {
+                    const select = e.target;
+                    if (select.value) {
+                        const textarea = select.previousElementSibling;
+                        textarea.value += (textarea.value.trim() ? ', ' : '') + select.value;
+                        select.selectedIndex = 0; // Reset snippet dropdown
+                    }
+                }
+            });
+
+            txPlanModal.style.display = 'block';
+        };
+        // **** END OF REPLACEMENT CODE ****
 
             // Auto-priority logic
             let nextPriority = 1 + Math.max(0, ...Object.values(state.txData).map(d => d.priority || 0));
@@ -1204,16 +1241,19 @@
             txPlanModal.style.display = 'block';
         };
         
+        // **** START OF REPLACEMENT CODE ****
         document.getElementById('tx-plan-save-btn').onclick = () => {
             if (!activeElementForEditor) return;
-            const state = getElementState(activeElementForEditor);
             const newData = {};
-            txPlanModal.querySelectorAll('tbody textarea').forEach(textarea => {
+            txPlanModal.querySelectorAll('tbody .cell-content').forEach(cellContent => {
+                const textarea = cellContent.querySelector('textarea');
+                const prioritySelect = cellContent.querySelector('.priority-select');
                 const key = textarea.dataset.key;
-                const priority = parseInt(textarea.previousElementSibling.textContent, 10);
+                const priority = parseInt(prioritySelect.value, 10);
                 const text = textarea.value.trim();
-                if(text) {
-                    newData[key] = { text, priority: priority || 99 }; // Save with priority
+                
+                if (text && priority > 0) {
+                    newData[key] = { text, priority };
                 }
             });
             activeElementForEditor.dataset.txData = JSON.stringify(newData);
@@ -1221,16 +1261,33 @@
             updateLiveOutput();
             txPlanModal.style.display = 'none';
         };
+        // **** END OF REPLACEMENT CODE ****
 
         // --- Treatment Plan Properties ---
+        // **** START OF REPLACEMENT CODE ****
         const openTxPlanProperties = (state, body) => {
-            return `<fieldset><legend>Treatment Plan Rows</legend><label>(one per line)</label><textarea id="prop-tx-rows" rows="8">${state.txRows.join('\n')}</textarea></fieldset>`;
+            return `
+                <fieldset>
+                    <legend>Treatment Plan Rows</legend>
+                    <label>(one per line)</label>
+                    <textarea id="prop-tx-rows" rows="8">${state.txRows.join('\n')}</textarea>
+                </fieldset>
+                <fieldset>
+                    <legend>Quick-Add Snippets</legend>
+                    <label>(one per line)</label>
+                    <textarea id="prop-tx-snippets" rows="6">${state.txSnippets.join('\n')}</textarea>
+                </fieldset>
+            `;
         };
+        // **** END OF REPLACEMENT CODE ****
         
+        // **** START OF REPLACEMENT CODE ****
         const saveTxPlanProperties = (newState, element) => {
             newState.txRows = document.getElementById('prop-tx-rows').value.split('\n').filter(line => line.trim() !== '');
-            newState.txData = {}; // Reset data when rows change
+            newState.txSnippets = document.getElementById('prop-tx-snippets').value.split('\n').filter(line => line.trim() !== '');
+            newState.txData = {}; // Reset data when properties change
         };
+        // **** END OF REPLACEMENT CODE ****
         // **** END OF NEW CODE ****
 
 
