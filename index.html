@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dental Note Maker - MAKER v1.0</title>
+    <title>Dental Note - MAKER</title>
     <style>
         :root {
             --bg-color: #f0f2f5; --main-bg: #ffffff; --section-bg: #f9f9f9;
@@ -74,7 +74,7 @@
     </style>
 </head>
 <body>
-    <h1>Dental Note Maker - MAKER v1.0</h1>
+    <h1>Dental Note - MAKER v1.1</h1>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>Header</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>Subjective</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>Objective</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>Assessment</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>Plan</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>Footer</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -118,7 +118,7 @@
       "type": "dropdown",
       "required": false,
       "prefixTab": true,
-      "prefixNewline": false,
+      "prefixNewline": true,
       "suffixNewline": false,
       "originalId": "0-1",
       "isHidden": false,
@@ -1054,8 +1054,8 @@
 		// **** START OF NEW CODE for double click**** 
 		// Add double-click functionality to the dropdown list 
 		document.getElementById('textbox-editor-select').addEventListener('dblclick', (e) => { 
-		// Trigger the same logic as the 'Add' button 
-		document.getElementById('textbox-editor-add-btn').click(); }); 
+		// Trigger the same logic as the 'Add' --> replace button 
+		document.getElementById('textbox-editor-replace-btn').click(); }); 
 		// **** END OF NEW CODE ****
 		
 		
@@ -1177,7 +1177,7 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 
 
 
--note maker 1.0b-   MG HORNING
+-electronic NAVMED 6600/13 JSON default-
 <script>
 // ===================================================================================
 //
