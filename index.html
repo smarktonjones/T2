@@ -71,6 +71,12 @@
         #endo-table th, #endo-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         #endo-table input { width: 100%; box-sizing: border-box; border: none; background: transparent; }
         #endo-editor-controls { display: flex; gap: 10px; padding: 10px 0; align-items: center; }
+
+        #tx-plan-table th, #tx-plan-table td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+#tx-plan-table textarea { width: 100%; min-height: 60px; box-sizing: border-box; border: none; resize: vertical; }
+#tx-plan-table textarea:focus { outline: 1px solid var(--button-bg); }
+.priority-display { font-weight: bold; color: var(--danger-color); font-size: 1.2em; display: block; text-align: center; }
+	    
     </style>
 </head>
 <body>
@@ -86,7 +92,11 @@
         <button id="reset-btn" class="control-btn">Reset Values</button>
     </div>
     <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard</button></div>
-    <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;"><div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
+    <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
+
+	            <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
+	    
+	    <div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
     <div id="properties-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="properties-title">Edit Properties</h2><span class="close-btn" data-modal-id="properties-modal">&times;</span></div><div class="modal-body" id="properties-body"></div><div class="modal-footer"><button id="properties-save-btn" class="control-btn">Save Changes</button></div></div></div>
     <div id="context-menu"><div id="ctx-properties">Properties...</div><div id="ctx-delete">Delete Element</div></div>
     <div id="endo-testing-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Endo Testing Results</h2><span class="close-btn" data-modal-id="endo-testing-modal">&times;</span></div><div class="modal-body"><div id="endo-editor-controls"><input type="text" id="endo-range-input" placeholder="e.g., 3-6, 14, 18-19"><button id="endo-range-add-btn" class="control-btn">Add Teeth</button></div><div style="overflow-x:auto;"><table id="endo-table"><thead></thead><tbody></tbody></table></div></div><div class="modal-footer"><button id="endo-testing-save-btn" class="control-btn">Save & Close</button></div></div></div>
@@ -94,6 +104,21 @@
     <div id="allergy-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Select Alerts</h2><span class="close-btn" data-modal-id="allergy-modal">&times;</span></div><div class="modal-body"><fieldset><legend>Common Alerts</legend><div id="allergy-list"></div></fieldset><hr><fieldset><legend>Custom Alert</legend><input type="text" id="custom-allergy-input" placeholder="e.g., Cats" style="width: 100%; box-sizing: border-box;"></fieldset></div><div class="modal-footer"><button id="allergy-save-btn" class="control-btn">Save Alerts</button></div></div></div>
     <div id="textbox-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Edit Text</h2><span class="close-btn" data-modal-id="textbox-editor-modal">&times;</span></div><div class="modal-body"><div id="textbox-editor-area"><textarea id="textbox-editor-textarea"></textarea><div id="textbox-editor-snippets"><select id="textbox-editor-select" size="10"></select><button id="textbox-editor-add-btn" class="control-btn">Add</button><button id="textbox-editor-replace-btn" class="control-btn" style="margin-top:5px;">Replace</button></div></div></div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (Shift+Enter)</button></div></div></div>
 
+        <!-- **** START OF NEW CODE for tx plan**** -->
+    <div id="tx-plan-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Treatment Plan</h2><span class="close-btn" data-modal-id="tx-plan-modal">×</span></div>
+            <div class="modal-body">
+                <table id="tx-plan-table" style="width:100%; border-collapse: collapse;">
+                    <!-- Table content will be generated by JavaScript -->
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button id="tx-plan-save-btn" class="control-btn">Save & Close</button>
+            </div>
+        </div>
+    </div>
+    <!-- **** END OF NEW CODE **** -->
 
 <script type="application/json" id="default-json-data">
 {
@@ -924,7 +949,16 @@
         const liveOutput = document.getElementById('live-output');
         
         // --- Helper Functions ---
-        const getBPStatus = (s, d) => { if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 80) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal'; };
+
+	    const updateTxPlanSummary = (element) => { 
+    const state = getElementState(element);
+    const summarySpan = element.querySelector('.tx-plan-summary');
+    const entryCount = Object.values(state.txData).filter(d => d.text && d.text.trim() !== '').length;
+    summarySpan.textContent = entryCount > 0 ? `Treatment Plan: ${entryCount} Entries` : 'Click to set Treatment Plan'; 
+};
+	    
+	    
+	    const getBPStatus = (s, d) => { if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 80) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal'; };
         const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
         const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
         const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
@@ -944,9 +978,15 @@
             if (data.required) draggable.dataset.required = 'true'; if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
             if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || "Click to edit..."; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
             else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
-            else if (type === 'bloodpressure') { draggable.dataset.discussSystolic = data.discussSystolic || '130'; draggable.dataset.discussDiastolic = data.discussDiastolic || '80'; draggable.dataset.checkboxSystolic = data.checkboxSystolic || '140'; draggable.dataset.checkboxDiastolic = data.checkboxDiastolic || '90'; }
-            else if (type === 'anesthetic') { draggable.dataset.anestheticTypes = JSON.stringify(data.anestheticTypes || [ { name: '2% Lidocaine', mg: 34, epi: 17 }, { name: '4% Septocaine', mg: 68, epi: 17 }, { name: '0.5% Marcaine', mg: 9, epi: 9 } ]); draggable.dataset.anestheticValues = JSON.stringify(data.anestheticValues || {}); draggable.dataset.includeTopical = data.includeTopical === false ? 'false' : 'true';}
-            else if (type === 'endo-testing') { draggable.dataset.endoTests = JSON.stringify(data.endoTests || ["Percussion", "Palpation", "Endo Ice", "Tooth Slooth", "Periodontal", "Mobility", "Transillumination"]); draggable.dataset.endoData = JSON.stringify(data.endoData || { teeth: [''], results: {} }); }
+            else if (type === 'bloodpressure') { draggable.dataset.discussSystolic = data.discussSystolic || '130'; draggable.dataset.discussDiastolic = data.discussDiastolic || '80'; draggable.dataset.checkboxSystolic = data.checkboxSystolic || '140'; draggable.dataset.checkboxDiastolic = data.checkboxDiastolic || '90'; }   
+	    else if (type === 'anesthetic') { draggable.dataset.anestheticTypes = JSON.stringify(data.anestheticTypes || [ { name: '2% Lidocaine', mg: 34, epi: 17 }, { name: '4% Septocaine', mg: 68, epi: 17 }, { name: '0.5% Marcaine', mg: 9, epi: 9 } ]); draggable.dataset.anestheticValues = JSON.stringify(data.anestheticValues || {}); draggable.dataset.includeTopical = data.includeTopical === false ? 'false' : 'true';}
+ 
+            else if (type === 'tx-plan') {
+                draggable.dataset.txRows = JSON.stringify(data.txRows || ["Oral Hygiene", "Operative", "Perio", "Oral Surgery", "Endo", "Pros", "Other"]);
+                draggable.dataset.txData = JSON.stringify(data.txData || {});
+            }	    
+	    
+	    else if (type === 'endo-testing') { draggable.dataset.endoTests = JSON.stringify(data.endoTests || ["Percussion", "Palpation", "Endo Ice", "Tooth Slooth", "Periodontal", "Mobility", "Transillumination"]); draggable.dataset.endoData = JSON.stringify(data.endoData || { teeth: [''], results: {} }); }
             draggable.draggable = true; draggable.id = `element-${Date.now()}-${Math.random()}`;
             draggable.addEventListener('dragstart', e => e.target.classList.add('dragging'));
             draggable.addEventListener('dragend', e => e.target.classList.remove('dragging'));
@@ -973,7 +1013,18 @@
             if (type === 'enhanced-textbox') { draggable.classList.add('enhanced-textbox'); const internalLabelHtml = data.internalLabel ? `<div class="internal-label">${data.internalLabel}</div>` : ''; draggable.innerHTML = `${internalLabelHtml}<div class="enhanced-textbox-preview">${data.content || data.defaultText || ''}</div>`; draggable.addEventListener('click', () => openTextboxEditor(draggable)); }
             else if (type === 'alert') { draggable.classList.add('alert-element'); draggable.innerHTML = `<span class="alert-display"></span>`; draggable.addEventListener('click', () => openAllergyModal(draggable)); updateAlertElementUI(draggable); }
             else if (type === 'anesthetic') { draggable.classList.add('anesthetic-element'); draggable.innerHTML = `<span class="anesthetic-summary"></span>`; updateAnestheticSummary(draggable); draggable.addEventListener('click', () => openAnestheticEditor(draggable)); }
-            else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
+
+	     // **** START OF NEW CODE for tx plan ****
+            else if (type === 'tx-plan') {
+                draggable.classList.add('tx-plan-element');
+                draggable.innerHTML = `<span class="tx-plan-summary"></span>`;
+                updateTxPlanSummary(draggable);
+                draggable.addEventListener('click', () => openTxPlanEditor(draggable));
+            }
+            // **** END OF NEW CODE ****
+	    
+	    
+	    else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
             else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
             else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-inputs"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
             else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; draggable.querySelectorAll('.psr-input').forEach(input => { input.addEventListener('input', () => { const index = parseInt(input.dataset.index, 10); const checkbox = draggable.querySelector(`.psr-asterisk[data-index="${index}"]`); if (input.value.includes('*')) { if (!checkbox.checked) checkbox.checked = true; } else { if (checkbox.checked) checkbox.checked = false; } const scorePart = input.value.replace(/\*/g, ''); if (scorePart.length > 1) input.value = scorePart.charAt(0) + (checkbox.checked ? '*' : ''); if (!scorePart.match(/^[0-4]?$/)) input.value = '' + (checkbox.checked ? '*' : ''); if (scorePart.length === 1 && scorePart.match(/[0-4]/)) { const nextIndex = PSR_AUTOFOCUS_MAP.get(index); if (nextIndex !== undefined) { const nextInput = draggable.querySelector(`.psr-input[data-index="${nextIndex}"]`); if (nextInput) { nextInput.focus(); nextInput.select(); } } } updatePSRElementUI(draggable); }); input.addEventListener('keydown', handlePSRTabbing); }); draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
@@ -987,6 +1038,14 @@
         const getElementState = (element) => {
             const type = element.dataset.type; const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true'};
             if (type === 'enhanced-textbox') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions); }
+
+            // **** START OF NEW CODE for tx plan****
+            else if (type === 'tx-plan') {
+                state.txRows = JSON.parse(element.dataset.txRows);
+                state.txData = JSON.parse(element.dataset.txData);
+            }
+            // **** END OF NEW CODE ****
+		    
             else if (type === 'alert') { state.alerts = JSON.parse(element.dataset.alerts || '[]'); }
             else if (type === 'painscale') { state.value = element.querySelector('.pain-slider').value; }
             else if (type === 'anesthetic') { state.anestheticTypes = JSON.parse(element.dataset.anestheticTypes); state.anestheticValues = JSON.parse(element.dataset.anestheticValues); state.includeTopical = element.dataset.includeTopical === 'true'; }
@@ -1005,6 +1064,33 @@
             document.querySelectorAll('.draggable-element').forEach(el => {
                 const state = getElementState(el); let content = '';
                 if (state.type === 'enhanced-textbox') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
+
+                // **** START OF NEW CODE for tx plan****
+                else if (state.type === 'tx-plan') {
+                    const classOrder = ["CLASS 3", "CLASS 2", "CLASS 1"];
+                    let planParts = [];
+                    classOrder.forEach(className => {
+                        let classContent = [];
+                        for (let priority = 1; priority <= 5; priority++) {
+                            let priorityItems = [];
+                            state.txRows.forEach(rowName => {
+                                const key = `${rowName}-${className}`;
+                                if (state.txData[key] && state.txData[key].priority === priority) {
+                                    priorityItems.push(state.txData[key].text);
+                                }
+                            });
+                            if (priorityItems.length > 0) {
+                                classContent.push(`${priority}) ${priorityItems.join(', ')}`);
+                            }
+                        }
+                        if (classContent.length > 0) {
+                            planParts.push(`${className}:\n     ${classContent.join('\n     ')}`);
+                        }
+                    });
+                    content = planParts.join('\n');
+                }
+                // **** END OF NEW CODE ****
+			
                 else if (state.type === 'anesthetic') { let an_parts = []; if (state.includeTopical) { an_parts.push('Topical Anesthetic.'); } for (const [name, carpules] of Object.entries(state.anestheticValues)) { if (carpules > 0) { const typeInfo = state.anestheticTypes.find(t => t.name === name); if (typeInfo) { const totalMg = parseFloat((typeInfo.mg * carpules).toPrecision(3)); const totalEpi = parseFloat((typeInfo.epi * carpules).toPrecision(3)); an_parts.push(`[${totalMg} MILLIGRAMS ${name} ${totalEpi} MICROGRAMS EPI.]`); } } } content = an_parts.join(' '); }
                 else if (state.type === 'endo-testing') { const data = state.endoData; const tests = state.endoTests; const activeTeethIndices = data.teeth.map((tooth, i) => (tooth && tooth.trim() !== '' && Object.values(data.results).some(testRow => testRow[i] && testRow[i].trim() !== '')) ? i : -1).filter(i => i !== -1); if (activeTeethIndices.length > 0) { const activeTeeth = activeTeethIndices.map(i => data.teeth[i]); const activeTests = tests.filter(testName => data.results[testName] && activeTeethIndices.some(i => data.results[testName][i] && data.results[testName][i].trim() !== '')); if (activeTests.length > 0) { const colWidths = activeTeeth.map((tooth, i) => { let maxWidth = tooth.length; activeTests.forEach(testName => { const result = data.results[testName]?.[activeTeethIndices[i]] || ''; if (result.length > maxWidth) maxWidth = result.length; }); return maxWidth; }); const header = 'Test'.padEnd(20) + ' | ' + activeTeeth.map((tooth, i) => tooth.padEnd(colWidths[i])).join(' | '); const separator = '-'.repeat(20) + '-+-' + colWidths.map(w => '-'.repeat(w)).join('-+-'); const rows = activeTests.map(testName => { const rowData = data.results[testName] || []; const rowResults = activeTeethIndices.map((toothIndex, i) => (rowData[toothIndex] || '').padEnd(colWidths[i])); return testName.padEnd(20) + ' | ' + rowResults.join(' | '); }); content = [header, separator, ...rows].join('\n'); } } }
                 else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
@@ -1057,7 +1143,98 @@
 		// Trigger the same logic as the 'Add' --> replace button 
 		document.getElementById('textbox-editor-replace-btn').click(); }); 
 		// **** END OF NEW CODE ****
-		
+
+
+// **** START OF NEW CODE for tx plan ****
+        // --- Treatment Plan Modal Logic ---
+        const txPlanModal = document.getElementById('tx-plan-modal');
+        const openTxPlanEditor = (element) => {
+            activeElementForEditor = element;
+            const state = getElementState(element);
+            const table = txPlanModal.querySelector('#tx-plan-table');
+            table.innerHTML = ''; // Clear old content
+
+            // Header
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            headerRow.innerHTML = '<th>Test</th><th>CLASS 3</th><th>CLASS 2</th><th>CLASS 1</th>';
+
+            // Body
+            const tbody = table.createTBody();
+            state.txRows.forEach(rowName => {
+                const row = tbody.insertRow();
+                row.insertCell().textContent = rowName;
+                ["CLASS 3", "CLASS 2", "CLASS 1"].forEach(className => {
+                    const cell = row.insertCell();
+                    const key = `${rowName}-${className}`;
+                    const data = state.txData[key] || { text: '', priority: '' };
+                    cell.innerHTML = `
+                        <span class="priority-display">${data.priority || ''}</span>
+                        <textarea data-key="${key}">${data.text}</textarea>
+                    `;
+                });
+            });
+
+            // Auto-priority logic
+            let nextPriority = 1 + Math.max(0, ...Object.values(state.txData).map(d => d.priority || 0));
+            tbody.addEventListener('focusin', (e) => {
+                if (e.target.tagName === 'TEXTAREA') {
+                    const key = e.target.dataset.key;
+                    if (!state.txData[key] || !state.txData[key].priority) {
+                        e.target.previousElementSibling.textContent = nextPriority;
+                    }
+                }
+            });
+            tbody.addEventListener('focusout', (e) => {
+                if (e.target.tagName === 'TEXTAREA') {
+                    const key = e.target.dataset.key;
+                    if (!state.txData[key] || !state.txData[key].priority) {
+                        if (e.target.value.trim() !== '') {
+                            state.txData[key] = { text: e.target.value, priority: nextPriority };
+                            nextPriority++;
+                        } else {
+                            e.target.previousElementSibling.textContent = ''; // Clear priority if no text entered
+                        }
+                    } else { // It already has a priority, just update the text
+                        state.txData[key].text = e.target.value;
+                    }
+                }
+            });
+            
+            txPlanModal.style.display = 'block';
+        };
+        
+        document.getElementById('tx-plan-save-btn').onclick = () => {
+            if (!activeElementForEditor) return;
+            const state = getElementState(activeElementForEditor);
+            const newData = {};
+            txPlanModal.querySelectorAll('tbody textarea').forEach(textarea => {
+                const key = textarea.dataset.key;
+                const priority = parseInt(textarea.previousElementSibling.textContent, 10);
+                const text = textarea.value.trim();
+                if(text) {
+                    newData[key] = { text, priority: priority || 99 }; // Save with priority
+                }
+            });
+            activeElementForEditor.dataset.txData = JSON.stringify(newData);
+            updateTxPlanSummary(activeElementForEditor);
+            updateLiveOutput();
+            txPlanModal.style.display = 'none';
+        };
+
+        // --- Treatment Plan Properties ---
+        const openTxPlanProperties = (state, body) => {
+            return `<fieldset><legend>Treatment Plan Rows</legend><label>(one per line)</label><textarea id="prop-tx-rows" rows="8">${state.txRows.join('\n')}</textarea></fieldset>`;
+        };
+        
+        const saveTxPlanProperties = (newState, element) => {
+            newState.txRows = document.getElementById('prop-tx-rows').value.split('\n').filter(line => line.trim() !== '');
+            newState.txData = {}; // Reset data when rows change
+        };
+        // **** END OF NEW CODE ****
+
+
+	    
 		
 		document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; };
 		
@@ -1083,6 +1260,14 @@ document.getElementById('textbox-editor-textarea').addEventListener('keydown', (
             const state = getElementState(element); const body = document.getElementById('properties-body'); let mainPropsHtml = '', formattingHtml = '', generalPropsHtml = '';
             if (state.type === 'enhanced-textbox') { mainPropsHtml = `<fieldset><legend>Labels & Text</legend><label for="prop-internal-label">Internal Label (for maker only)</label><input type="text" id="prop-internal-label" value="${state.internalLabel}"><label for="prop-prefix-label">Prefix Label (for note output)</label><input type="text" id="prop-prefix-label" value="${state.prefixLabel}"><label for="prop-default-text">Default Text</label><input type="text" id="prop-default-text" value="${state.defaultText}"></fieldset><fieldset><legend>Dropdown Phrases</legend><label for="prop-dropdown-options">(one per line)</label><textarea id="prop-dropdown-options" rows="6">${state.dropdownOptions.join('\n')}</textarea></fieldset>`; }
             else if (state.type === 'anesthetic') { mainPropsHtml = `<fieldset><legend>Anesthetic Types</legend><div id="prop-anesthetic-types"></div><button id="prop-add-anesthetic-type" class="control-btn" style="margin-top:10px;">+ Add Type</button></fieldset>`; }
+
+            // **** START OF NEW CODE for tx plan****
+            else if (state.type === 'tx-plan') { mainPropsHtml = openTxPlanProperties(state, body); }
+            // **** END OF NEW CODE ****
+
+
+
+		    
             else if (state.type === 'endo-testing') { mainPropsHtml = `<fieldset><legend>Test Rows</legend><label>(one per line)</label><textarea id="prop-endo-tests" rows="8">${state.endoTests.join('\n')}</textarea></fieldset>`; }
             else if (state.type === 'bloodpressure') { mainPropsHtml = `<fieldset><legend>Discussion Threshold</legend><label>Systolic &ge;:</label><input type="number" id="prop-discuss-s" value="${state.discussSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-discuss-d" value="${state.discussDiastolic}"></fieldset><fieldset><legend>"Prior to Tx" Checkbox Trigger</legend><label>Systolic &ge;:</label><input type="number" id="prop-checkbox-s" value="${state.checkboxSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-checkbox-d" value="${state.checkboxDiastolic}"></fieldset>`; }
             else if (state.type === 'dropdown') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label><hr><fieldset><legend>Dropdown Options</legend><label for="prop-options">(one per line)</label><textarea id="prop-options" rows="6">${state.options.join('\n')}</textarea></fieldset>`; }
@@ -1095,6 +1280,11 @@ document.getElementById('textbox-editor-textarea').addEventListener('keydown', (
             const oldState = getElementState(element); const newState = { ...oldState };
             if (newState.type === 'enhanced-textbox') { newState.internalLabel = document.getElementById('prop-internal-label').value; newState.prefixLabel = document.getElementById('prop-prefix-label').value; newState.defaultText = document.getElementById('prop-default-text').value; newState.dropdownOptions = document.getElementById('prop-dropdown-options').value.split('\n').filter(Boolean); if (oldState.content === oldState.defaultText) { newState.content = newState.defaultText; } }
             else if (newState.type === 'anesthetic') { const newTypes = []; document.querySelectorAll('#prop-anesthetic-types .prop-anesthetic-row').forEach(row => { const name = row.querySelector('.prop-anesthetic-name').value.trim(); const mg = parseFloat(row.querySelector('.prop-anesthetic-mg').value); const epi = parseFloat(row.querySelector('.prop-anesthetic-epi').value); if (name && !isNaN(mg) && !isNaN(epi)) { newTypes.push({ name, mg, epi }); } }); newState.anestheticTypes = newTypes; newState.anestheticValues = {}; }
+
+            // **** START OF NEW CODE for tx plan****
+            else if (newState.type === 'tx-plan') { saveTxPlanProperties(newState, element); }
+            // **** END OF NEW CODE ****
+		    
             else if (newState.type === 'endo-testing') { newState.endoTests = document.getElementById('prop-endo-tests').value.split('\n').filter(line => line.trim() !== ''); const currentData = JSON.parse(element.dataset.endoData); newState.endoData = { teeth: currentData.teeth, results: {} }; }
             else if (newState.type === 'bloodpressure') { newState.discussSystolic = document.getElementById('prop-discuss-s').value; newState.discussDiastolic = document.getElementById('prop-discuss-d').value; newState.checkboxSystolic = document.getElementById('prop-checkbox-s').value; newState.checkboxDiastolic = document.getElementById('prop-checkbox-d').value; }
             else if (newState.type === 'dropdown') { newState.required = document.getElementById('prop-required').checked; newState.options = document.getElementById('prop-options').value.split('\n').filter(Boolean); newState.selected = newState.options[0] || ''; }
