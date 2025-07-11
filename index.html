@@ -128,7 +128,7 @@
       "required": false,
       "prefixTab": false,
       "prefixNewline": false,
-      "suffixNewline": false,
+      "suffixNewline": true,
       "originalId": "0-0",
       "isHidden": false,
       "doNotReset": false,
@@ -138,23 +138,6 @@
         "**SEPARATION EXAM (T-2)**  "
       ],
       "selected": "**PERIODIC ORAL EXAM (T-2)**"
-    },
-    {
-      "type": "dropdown",
-      "required": false,
-      "prefixTab": true,
-      "prefixNewline": false,
-      "suffixNewline": false,
-      "originalId": "0-1",
-      "isHidden": false,
-      "doNotReset": false,
-      "options": [
-        "FLIGHT STATUS: N/A",
-        "FLIGHT STATUS: AVIATOR",
-        "FLIGHT STATUS: AC",
-        "FLIGHT STATUS: AW"
-      ],
-      "selected": "FLIGHT STATUS: N/A"
     },
     {
       "type": "alert",
@@ -178,17 +161,97 @@
       "originalId": "0-3",
       "isHidden": true,
       "doNotReset": false,
-      "content": " Reviewed in PowerChart. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
+      "content": " Reviewed. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
       "internalLabel": "",
       "prefixLabel": "",
       "defaultText": "Click to edit...",
       "dropdownOptions": []
     },
     {
-      "type": "bloodpressure",
+      "type": "dropdown",
       "required": false,
       "prefixTab": true,
       "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "5-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "options": [
+        "LEARNING NEEDS ASSESSMENT:  Language: English. ",
+        "LEARNING NEEDS ASSESSMENT:  Language: ESOL. ",
+        "LEARNING NEEDS ASSESSMENT:  Language: Other. "
+      ],
+      "selected": "LEARNING NEEDS ASSESSMENT:  Language: English. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "5-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "options": [
+        "Learning Type: Written/Verbal. ",
+        "Learning Type: Written. ",
+        "Learning Type: Verbal. "
+      ],
+      "selected": "Learning Type: Written/Verbal. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "5-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "options": [
+        "Impairments: None. ",
+        "Impairments: Hearing Aid. ",
+        "Impairments: Other. "
+      ],
+      "selected": "Impairments: None. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "5-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "options": [
+        "Cultural: None.",
+        "Cultural: Other."
+      ],
+      "selected": "Cultural: None."
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "options": [
+        "FLIGHT STATUS: N/A",
+        "FLIGHT STATUS: AVIATOR",
+        "FLIGHT STATUS: AC",
+        "FLIGHT STATUS: AW"
+      ],
+      "selected": "FLIGHT STATUS: N/A"
+    },
+    {
+      "type": "bloodpressure",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
       "suffixNewline": false,
       "originalId": "0-4",
       "isHidden": false,
@@ -345,7 +408,14 @@
       "internalLabel": "Radiographic Findings",
       "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
       "defaultText": "No Pathology Noted.",
-      "dropdownOptions": []
+      "dropdownOptions": [
+        "Antral Pseudocyst Maxillary Sinus",
+        "Periradicular Radiolucency #",
+        "Condensing Osteitis #",
+        "Retained Root Tip #",
+        "Periapical Cemento-Osseous Dysplasia",
+        "Idiopathic Osteosclerosis"
+      ]
     },
     {
       "type": "enhanced-textbox",
@@ -361,7 +431,7 @@
       "prefixLabel": "CARIES/DEFECTIVE RESTORATIONS: ",
       "defaultText": "None",
       "dropdownOptions": [
-        "None."
+        "#"
       ]
     },
     {
@@ -378,7 +448,9 @@
       "prefixLabel": "INCIPIENT CARIES: ",
       "defaultText": "None",
       "dropdownOptions": [
-        "None. "
+        "#",
+        "Generalized Facial White Spot Lesions",
+        "Overhang #"
       ]
     },
     {
@@ -395,7 +467,13 @@
       "prefixLabel": "SOFT TISSUE / OCS: ",
       "defaultText": "None. ",
       "dropdownOptions": [
-        "None. "
+        "Mandibular Tori",
+        "Apthous Ulcer",
+        "Palatal Torus",
+        "Fibroma",
+        "Tonsillectomy",
+        "Geographic Tongue",
+        "Fissured Tongue"
       ]
     },
     {
@@ -414,7 +492,9 @@
       "dropdownOptions": [
         "Radiographic Calculus",
         "Heavy Calculus",
-        "OH-"
+        "OH--",
+        "Recession",
+        "Toothbrush Abrasion"
       ]
     },
     {
@@ -500,7 +580,13 @@
       "internalLabel": "TMJ",
       "prefixLabel": "TMJ: ",
       "defaultText": "WNL.",
-      "dropdownOptions": []
+      "dropdownOptions": [
+        "Bilateral Click",
+        "Nocturnal Bruxism",
+        "Daytime Clenching",
+        "Masseter Tenderness",
+        "Temporal Headaches"
+      ]
     },
     {
       "type": "enhanced-textbox",
@@ -515,7 +601,12 @@
       "internalLabel": "Occlusion",
       "prefixLabel": "OCCLUSION: ",
       "defaultText": "WNL.",
-      "dropdownOptions": []
+      "dropdownOptions": [
+        "Bonded Retainer 22-27",
+        "Bonded Retainer 6-11",
+        "Crossbite ",
+        "Anterior Open Bite"
+      ]
     },
     {
       "type": "enhanced-textbox",
@@ -550,7 +641,10 @@
       "internalLabel": "Other Findings",
       "prefixLabel": "OTHER FINDINGS: ",
       "defaultText": "WNL.",
-      "dropdownOptions": []
+      "dropdownOptions": [
+        "Toothbrush Abrasion",
+        "Heavy Occlusal Wear"
+      ]
     },
     {
       "type": "psr",
@@ -785,28 +879,28 @@
       ]
     },
     {
-      "type": "enhanced-textbox",
+      "type": "tx-plan",
       "required": false,
-      "prefixTab": true,
+      "prefixTab": false,
       "prefixNewline": true,
       "suffixNewline": true,
-      "originalId": "4-2",
       "isHidden": false,
       "doNotReset": false,
-      "content": "RDH",
-      "internalLabel": "Next Visit",
-      "prefixLabel": "NEXT VISIT:  ",
-      "defaultText": "Click to edit...",
-      "dropdownOptions": [
-        "RECALL",
+      "txRows": [
+        "Oral Hygiene",
+        "Operative",
+        "Perio",
+        "Oral Surgery",
+        "Endo",
+        "Pros",
+        "Other"
+      ],
+      "txSnippets": [
         "RDH",
-        "RDH SRP",
-        "CLASS 3 OPERATIVE: ",
-        "CLASS 2 OPERATIVE: ",
-        "CEREC: ",
-        "ADDP: ",
-        "EVALUATION: "
-      ]
+        "SRP",
+        "RECALL"
+      ],
+      "txData": {}
     }
   ],
   "footer": [
@@ -836,69 +930,6 @@
       "doNotReset": false,
       "formatType": "newline",
       "customChars": ""
-    },
-    {
-      "type": "dropdown",
-      "required": false,
-      "prefixTab": false,
-      "prefixNewline": true,
-      "suffixNewline": false,
-      "originalId": "5-2",
-      "isHidden": false,
-      "doNotReset": false,
-      "options": [
-        "LEARNING NEEDS ASSESSMENT:  Language: English",
-        "LEARNING NEEDS ASSESSMENT:  Language: ESOL",
-        "LEARNING NEEDS ASSESSMENT:  Language: Other"
-      ],
-      "selected": "LEARNING NEEDS ASSESSMENT:  Language: English"
-    },
-    {
-      "type": "dropdown",
-      "required": false,
-      "prefixTab": true,
-      "prefixNewline": false,
-      "suffixNewline": false,
-      "originalId": "5-3",
-      "isHidden": false,
-      "doNotReset": false,
-      "options": [
-        "Learning Type: Written/Verbal",
-        "Learning Type: Written",
-        "Learning Type: Verbal"
-      ],
-      "selected": "Learning Type: Written/Verbal"
-    },
-    {
-      "type": "dropdown",
-      "required": false,
-      "prefixTab": true,
-      "prefixNewline": false,
-      "suffixNewline": false,
-      "originalId": "5-4",
-      "isHidden": false,
-      "doNotReset": false,
-      "options": [
-        "Impairments: None",
-        "Impairments: Hearing Aid",
-        "Impairments: Other"
-      ],
-      "selected": "Impairments: None"
-    },
-    {
-      "type": "dropdown",
-      "required": false,
-      "prefixTab": true,
-      "prefixNewline": false,
-      "suffixNewline": true,
-      "originalId": "5-5",
-      "isHidden": false,
-      "doNotReset": false,
-      "options": [
-        "Cultural: None",
-        "Cultural: Other"
-      ],
-      "selected": "Cultural: None"
     },
     {
       "type": "enhanced-textbox",
