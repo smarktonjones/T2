@@ -113,7 +113,7 @@
     </style>
 </head>
 <body>
-    <h1>Dental Note - MAKER v1.3</h1>
+    <h1>Dental Note - MAKER</h1><h2> v1.4</h2>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>Header</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>Subjective</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>Objective</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>Assessment</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>Plan</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>Footer</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -973,7 +973,7 @@
       "originalId": "5-6",
       "isHidden": false,
       "doNotReset": true,
-      "content": "MG HORNING DDS\n1912969445",
+      "content": "",
       "internalLabel": "Dentist Block",
       "prefixLabel": "",
       "defaultText": "Click to edit...",
@@ -1229,7 +1229,7 @@
             // Header
             const thead = table.createTHead();
             const headerRow = thead.insertRow();
-            headerRow.innerHTML = '<th>Test</th><th>CLASS 3</th><th>CLASS 2</th><th>CLASS 1</th>';
+            headerRow.innerHTML = '<th>Department</th><th>CLASS 3</th><th>CLASS 2</th><th>CLASS 1</th>';
 
             // Snippet Options HTML
             const snippetOptionsHtml = state.txSnippets.map(opt => `<option value="${opt}">${opt}</option>`).join('');
