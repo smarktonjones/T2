@@ -72,11 +72,44 @@
         #endo-table input { width: 100%; box-sizing: border-box; border: none; background: transparent; }
         #endo-editor-controls { display: flex; gap: 10px; padding: 10px 0; align-items: center; }
 
-        #tx-plan-table th, #tx-plan-table td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
-#tx-plan-table textarea { width: 100%; min-height: 60px; box-sizing: border-box; border: none; resize: vertical; }
-#tx-plan-table textarea:focus { outline: 1px solid var(--button-bg); }
-.priority-display { font-weight: bold; color: var(--danger-color); font-size: 1.2em; display: block; text-align: center; }
-#tx-plan-table .cell-content { display: flex; flex-direction: column; gap: 5px; }	    
+
+        /* **** START OF NEW CSS **** */
+
+        /* Style for the "Priority Level" text */
+        #tx-plan-table .priority-label {
+            font-size: 0.8em;
+            color: #555;
+            display: block;
+        }
+
+        /* Style the row-header cells (Oral Hygiene, etc.) */
+        #tx-plan-table .tx-row-header {
+            background-color: #f2f2f2; /* Light gray background */
+            color: #0050b3;          /* Bold blue text */
+            font-weight: bold;
+        }
+
+        /* Style the textarea for a different default color */
+        #tx-plan-table textarea {
+            background-color: #f8f9fa; /* A very light gray */
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 5px;
+            transition: background-color 0.2s, border-color 0.2s; /* Smooth transition */
+        }
+        
+        /* Style the textarea when it has content */
+        #tx-plan-table textarea.has-content {
+            background-color: #fff;
+            border-color: var(--success-color); /* Green border */
+            outline: 2px solid transparent; /* Prevents default focus outline from clashing */
+        }
+
+        /* **** END OF NEW CSS **** */
+
+
+
+	    
     </style>
 </head>
 <body>
@@ -975,7 +1008,7 @@
         // --- State and Constants ---
         let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null;
         const SECTIONS = ['header', 'subjective', 'objective', 'assessment', 'plan', 'footer'];
-        const ALLERGY_LIST = ["None", "PREGNANCY", "Penicillin", "Amoxicillin", "Codeine", "Aspirin", "NSAIDs", "Sulfa Drugs", "Local Anesthetics", "Latex", "Iodine", "Erythromycin", "Tetracycline", "Metals (Nickel, etc.)", "Acrylic/Resins", "Eugenol", "Fluoride", "Cinnamon", "Peanuts", "Tree Nuts", "Soy"];
+        const ALLERGY_LIST = ["None", "PREGNANCY", "Penicillin", "Amoxicillin", "Codeine", "Aspirin", "NSAIDs", "Sulfa Drugs", "Local Anesthetics", "Latex", "Iodine", "Erythromycin", "Tetracycline", "Metals (Nickel, etc.)", "IV Contrast Dye", "Eugenol", "Shellfish", "Cinnamon", "Peanuts", "Tree Nuts", "Soy"];
         const PSR_AUTOFOCUS_MAP = new Map([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
         const liveOutput = document.getElementById('live-output');
         
@@ -1185,6 +1218,8 @@
         // --- Treatment Plan Modal Logic ---
         const txPlanModal = document.getElementById('tx-plan-modal');
 
+        // **** START OF REPLACEMENT CODE with upgraded visibility ****
+
         const openTxPlanEditor = (element) => {
             activeElementForEditor = element;
             const state = getElementState(element);
@@ -1203,42 +1238,62 @@
             const tbody = table.createTBody();
             state.txRows.forEach(rowName => {
                 const row = tbody.insertRow();
-                row.insertCell().textContent = rowName;
+                // Change 1: Add a class to the row header cell
+                row.insertCell().outerHTML = `<td class="tx-row-header">${rowName}</td>`;
+
                 ["CLASS 3", "CLASS 2", "CLASS 1"].forEach(className => {
                     const cell = row.insertCell();
                     const key = `${rowName}-${className}`;
                     const data = state.txData[key] || { text: '', priority: 1 };
                     
-                    // Priority Dropdown
                     let priorityOptions = '<option value="0">--</option>';
                     for(let i = 1; i <= 5; i++) {
                         priorityOptions += `<option value="${i}" ${data.priority === i ? 'selected' : ''}>${i}</option>`;
                     }
 
+                    // Change 2: Add the "Priority Level" label and the `has-content` class if needed
+                    const hasContentClass = data.text ? 'has-content' : '';
                     cell.innerHTML = `
                         <div class="cell-content">
-                            <select class="priority-select" data-key="${key}">${priorityOptions}</select>
-                            <textarea data-key="${key}">${data.text}</textarea>
+                            <div>
+                                <label class="priority-label">Priority Level</label>
+                                <select class="priority-select" data-key="${key}">${priorityOptions}</select>
+                            </div>
+                            <textarea class="${hasContentClass}" data-key="${key}">${data.text}</textarea>
                             <select class="snippet-select"><option value="">-- Add Snippet --</option>${snippetOptionsHtml}</select>
                         </div>
                     `;
                 });
             });
 
-            // Snippet adding logic
+            // Snippet adding and has-content logic
             tbody.addEventListener('change', e => {
                 if (e.target.classList.contains('snippet-select')) {
                     const select = e.target;
                     if (select.value) {
-                        const textarea = select.previousElementSibling;
+                        const textarea = select.closest('.cell-content').querySelector('textarea');
                         textarea.value += (textarea.value.trim() ? ', ' : '') + select.value;
-                        select.selectedIndex = 0; // Reset snippet dropdown
+                        textarea.classList.add('has-content'); // Add class when snippet is added
+                        select.selectedIndex = 0;
+                    }
+                }
+            });
+
+            // Change 3: Add input event listener to toggle the green border
+            tbody.addEventListener('input', e => {
+                if (e.target.tagName === 'TEXTAREA') {
+                    if (e.target.value.trim() !== '') {
+                        e.target.classList.add('has-content');
+                    } else {
+                        e.target.classList.remove('has-content');
                     }
                 }
             });
 
             txPlanModal.style.display = 'block';
-        }; // <-- The correctly placed closing brace for the openTxPlanEditor function
+        };
+
+        // **** END OF REPLACEMENT CODE ****
 
         document.getElementById('tx-plan-save-btn').onclick = () => {
             if (!activeElementForEditor) return;
