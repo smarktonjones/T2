@@ -16,6 +16,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
         h1 { text-align: center; margin-top: 0; }
 		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold;}
+		h5 { text-align: center; margin-top: 0; font-weight: light;}	    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
         .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); }
@@ -113,7 +114,7 @@
     </style>
 </head>
 <body>
-    <h1>Dental Note - MAKER</h1><h2> v1.4</h2>
+    <h1>Dental Note - MAKER</h1><h5> v1.4</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>Header</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>Subjective</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>Objective</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>Assessment</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>Plan</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>Footer</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -976,7 +977,7 @@
       "content": "",
       "internalLabel": "Dentist Block",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "MG HORNING DDS  1912969445"
       ]
