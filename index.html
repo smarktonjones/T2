@@ -914,7 +914,7 @@
       "prefixLabel": "",
       "defaultText": "Click to edit...",
       "dropdownOptions": [
-        ""
+        "MG HORNING DDS  1912969445"
       ]
     },
     {
@@ -1077,7 +1077,7 @@
                             let priorityItems = [];
                             state.txRows.forEach(rowName => {
 		    const key = `${rowName}-${className}`;
-                        if (state.txData[key] && state.txData[key].priority === priority && state.txData[key].text.trim()) {
+                        if (state.txData[key] && state.txData[key].priority === priority && state.txData[key].text.trim() !== '') {
                             // **** START OF MODIFIED LINE ****
                             // Add the row name as a prefix to the treatment text
                             priorityItems.push(`${rowName}: ${state.txData[key].text}`);
@@ -1176,7 +1176,7 @@
                 ["CLASS 3", "CLASS 2", "CLASS 1"].forEach(className => {
                     const cell = row.insertCell();
                     const key = `${rowName}-${className}`;
-                    const data = state.txData[key] || { text: '', priority: 0 };
+                    const data = state.txData[key] || { text: '', priority: 1 };
                     
                     // Priority Dropdown
                     let priorityOptions = '<option value="0">--</option>';
