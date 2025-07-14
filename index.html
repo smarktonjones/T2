@@ -1366,18 +1366,7 @@
 		
 		document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; };
 		
-		
-		// **** START OF NEW CODE for shift+enter****
-document.getElementById('textbox-editor-textarea').addEventListener('keydown', (event) => {
-    // Check if Shift + Enter was pressed
-    if (event.shiftKey && event.key === 'Enter') {
-        // Prevent the default action of adding a new line
-        event.preventDefault();
-        // Programmatically click the save button
-        document.getElementById('textbox-editor-save-btn').click();
-    }
-});
-// **** END OF NEW CODE ****
+
 		
 		
 		
@@ -1425,8 +1414,37 @@ document.getElementById('textbox-editor-textarea').addEventListener('keydown', (
         
         // --- Event Listeners (FIXED ORDER) ---
         
-		
-		
+	// **** START OF REPLACEMENT CODE ****
+
+// Global keyboard shortcut handler for all modals
+document.addEventListener('keydown', (event) => {
+    if (event.shiftKey && event.key === 'Enter') {
+        // Find which modal is currently visible
+        const anesModal = document.getElementById('anesthetic-editor-modal');
+        const textModal = document.getElementById('textbox-editor-modal');
+        const endoModal = document.getElementById('endo-testing-modal');
+        const allergyModal = document.getElementById('allergy-modal');
+        const txPlanModal = document.getElementById('tx-plan-modal'); // Add this line
+
+        // Prevent default browser action (like adding a newline)
+        event.preventDefault();
+
+        // Click the correct save button based on which modal is open
+        if (getComputedStyle(anesModal).display !== 'none') {
+            document.getElementById('anesthetic-editor-save-btn').click();
+        } else if (getComputedStyle(textModal).display !== 'none') {
+            document.getElementById('textbox-editor-save-btn').click();
+        } else if (getComputedStyle(endoModal).display !== 'none') {
+            document.getElementById('endo-testing-save-btn').click();
+        } else if (getComputedStyle(allergyModal).display !== 'none') {
+            document.getElementById('allergy-save-btn').click();
+        } else if (getComputedStyle(txPlanModal).display !== 'none') { // Add this else if block
+            document.getElementById('tx-plan-save-btn').click();
+        }
+    }
+});
+
+// **** END OF REPLACEMENT CODE ****	
 		
 		// New, smarter logic for closing modals by clicking the backdrop
 document.querySelectorAll('.modal').forEach(modal => {
