@@ -114,7 +114,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.4</h5>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.5</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -1062,7 +1062,17 @@
             draggable.dataset.type = type;
             if (data.doNotReset) draggable.dataset.doNotReset = 'true';
             if (data.originalId) draggable.dataset.originalId = data.originalId;
-            if (data.required) draggable.dataset.required = 'true'; if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
+            if (data.required) draggable.dataset.required = 'true'; 
+
+		            // **** START OF NEW CODE for width****
+            // Check for and apply the custom width
+            if (data.width) {
+                draggable.style.width = data.width;
+                draggable.dataset.width = data.width;
+            }
+            // **** END OF NEW CODE ****
+		
+		if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
             if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || "Click to edit..."; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
             else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
             else if (type === 'bloodpressure') { draggable.dataset.discussSystolic = data.discussSystolic || '130'; draggable.dataset.discussDiastolic = data.discussDiastolic || '80'; draggable.dataset.checkboxSystolic = data.checkboxSystolic || '140'; draggable.dataset.checkboxDiastolic = data.checkboxDiastolic || '90'; }   
@@ -1124,7 +1134,7 @@
         };
 
         const getElementState = (element) => {
-            const type = element.dataset.type; const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true'};
+            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || ''};
             if (type === 'enhanced-textbox') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions); }
 
             // **** START OF NEW CODE for tx plan****
@@ -1390,7 +1400,25 @@
             else if (state.type === 'dropdown') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label><hr><fieldset><legend>Dropdown Options</legend><label for="prop-options">(one per line)</label><textarea id="prop-options" rows="6">${state.options.join('\n')}</textarea></fieldset>`; }
             else if (state.type === 'alert' || state.type === 'painscale' || state.type === 'checkbox') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label>`; }
             generalPropsHtml = `<fieldset><legend>General Options</legend><label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label><label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element</label></fieldset>`;
-            if (state.type !== 'formatter' && !state.type.startsWith('label-')) { formattingHtml = `<fieldset><legend>Formatting</legend><label><input type="checkbox" id="prop-prefix-newline" ${state.prefixNewline ? 'checked' : ''}> Add Newline Before</label><label><input type="checkbox" id="prop-prefix-tab" ${state.prefixTab ? 'checked' : ''}> Add Tab Before</label><label><input type="checkbox" id="prop-suffix-newline" ${state.suffixNewline ? 'checked' : ''}> Add Newline After</label></fieldset>`; }
+
+
+
+		
+            // **** START OF REPLACEMENT for width****
+            if (state.type !== 'formatter') { // Formatters don't need sizing
+                generalPropsHtml = `<fieldset><legend>Sizing & Display</legend>
+                    <label>Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
+                    <hr style="margin:10px 0;">
+                    <label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label>
+                    <label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element's value</label>
+                </fieldset>`;
+            } else {
+                generalPropsHtml = ''; // No options for formatter
+            }
+            // **** END OF REPLACEMENT ****
+
+
+		
             body.innerHTML = mainPropsHtml + formattingHtml + generalPropsHtml; if (state.type === 'anesthetic') { const container = document.getElementById('prop-anesthetic-types'); state.anestheticTypes.forEach(type => container.appendChild(createAnestheticTypeRow(type))); document.getElementById('prop-add-anesthetic-type').onclick = () => container.appendChild(createAnestheticTypeRow()); } document.getElementById('properties-modal').style.display = 'block'; document.getElementById('properties-save-btn').onclick = () => saveProperties(element);
         };
         const saveProperties = (element) => {
@@ -1407,6 +1435,15 @@
             else if (newState.type === 'dropdown') { newState.required = document.getElementById('prop-required').checked; newState.options = document.getElementById('prop-options').value.split('\n').filter(Boolean); newState.selected = newState.options[0] || ''; }
             else if(newState.type === 'painscale' || newState.type === 'alert' || newState.type === 'checkbox') { newState.required = document.getElementById('prop-required').checked; }
             newState.isHidden = document.getElementById('prop-hidden').checked; newState.doNotReset = document.getElementById('prop-no-reset').checked;
+
+            // **** START OF NEW CODE for width****
+            const widthInput = document.getElementById('prop-width');
+            if (widthInput) {
+                newState.width = widthInput.value.trim();
+            }
+            // **** END OF NEW CODE ****
+
+		
             if (newState.type !== 'formatter' && !newState.type.startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
             const newElement = createElement(newState.type, newState); element.replaceWith(newElement); updateLiveOutput(); document.getElementById('properties-modal').style.display = 'none';
         };
