@@ -1,0 +1,102 @@
+# Dental Note Maker - MAKER
+
+This is a single-file HTML/JavaScript application designed to create custom dental note templates. Its primary purpose is to build a streamlined note-taker for **MHS GENESIS T-2 dental exams**, but it is flexible enough to create any kind of structured note format.
+
+The application works like a set of digital Lego blocks. You start with a basic layout and add, arrange, and customize various "elements" to build your perfect note-taking tool. Once your template is complete, you can export it as a JSON file, which can be shared or embedded back into the tool to serve as a new default.
+
+
+## Core Features
+
+- **Drag-and-Drop Interface:** Easily arrange elements within and between sections (Header, Subjective, Objective, Assessment, Plan, Footer).
+- **Customizable Elements:** Each element has unique properties that can be modified by right-clicking.
+- **Live Preview:** A text box at the bottom shows a real-time preview of the final note output as you build your template.
+- **JSON Import/Export:** Save your complete layout and all default settings to a `.json` file for backup, sharing, or versioning.
+- **Embedded Default:** Set a new default template by simply pasting your exported JSON data directly into the HTML file.
+- **Non-Destructive Reset:** The "Reset Values" button reverts all element inputs to their default state without changing your carefully crafted layout.
+
+## How to Use the Maker
+
+1.  **Open the File:** Download the `index.html` file and open it in a modern web browser (like Chrome, Firefox, or Edge).
+2.  **Add Elements:** Click the `+` button in any section (Header, SOAP, Footer) to open the "Add New Element" modal. Click on an element type to add it to that section.
+3.  **Arrange Layout:** Click and drag any element to move it around. You can move elements within a section or drag them to a different section entirely.
+4.  **Edit Properties:** **Right-click** any element to bring up a context menu. Select "Properties..." to customize its behavior, default text, options, and formatting.
+5.  **Lock Layout:** Once you are happy with the element positions, check the "Lock Layout" box in the control panel to prevent accidental dragging.
+
+---
+
+## Element Guide
+
+Each element serves a specific purpose for efficient note-taking.
+
+### Clinical & Interactive Elements
+
+-   **Pop-up Text Box:** The most versatile element. It appears as a button showing a preview of its text.
+    -   **Clicking** it opens a large pop-up editor for easy text entry.
+    -   The editor includes a dropdown of pre-defined "phrases" or "snippets" that can be quickly added to the text.
+    -   **Properties:** You can define a non-printing **Internal Label** for organization, a **Prefix Label** that appears in the final note (e.g., "CC:"), the **Default Text**, and the list of **Dropdown Phrases**.
+-   **Anesthetic Calculator:** A button that opens an editor to calculate anesthetic dosages.
+    -   Enter the number of carpules (in 0.25 increments) for different anesthetics.
+    *   Includes a checkbox to prepend "Topical Anesthetic." to the note.
+    -   **Properties:** Allows you to add, remove, or modify the types of anesthetics and their default mg/epi values.
+-   **Endo Testing Table:** A button that opens a powerful table editor for endodontic test results.
+    -   Rows are the tests (e.g., Percussion, Palpation) and columns are for tooth numbers.
+    -   Quickly populate columns using the "Add Tooth Range" feature (e.g., "3-6, 14").
+    -   The final note output is a perfectly formatted, monospaced table that only includes teeth and tests with actual results.
+    -   **Properties:** You can customize the list of default test rows.
+-   **Allergy/Alert Selector:** A critical safety element. It's a color-coded button that opens a modal to select from a list of common allergies, pregnancy status, or custom alerts.
+    -   The button is **Orange** (blank), **Green** (None selected), or **Red** (Alerts active).
+-   **Pain Scale:** A simple 0-10 slider that outputs `PAIN: X/10` in the note.
+-   **Blood Pressure:** Two input boxes for systolic/diastolic readings. The element's border changes color based on AHA guidelines.
+    -   **Properties:** You can set custom thresholds to trigger a "(BP discussed)" warning and to make a "BP Prior to Tx" checkbox appear.
+-   **PSR (Periodontal Screening):** A 3x2 grid for entering PSR scores.
+    -   Features automatic focus-jumping for rapid data entry (`1->2->3->4->5->6`).
+    -   Includes checkboxes for adding `*` to scores and a text area for an asterisk description.
+
+### Basic Elements
+
+-   **Simple Dropdown:** A standard dropdown menu.
+    -   **Properties:** You can define the list of options.
+-   **Checkbox:** A simple checkbox with an associated text label. The text is only added to the note if the box is checked.
+-   **Formatter:** An invisible element used to add a newline, a tab, or custom characters to the final note for precise formatting control.
+-   **Red/Black Label:** A simple text label visible only within the maker interface. It is **not included** in the final note and is used for instructions or section dividers.
+
+---
+
+## Saving and Loading Templates (JSON Workflow)
+
+### Exporting Your Template
+
+Once you have arranged and configured all your elements perfectly, click the **"Export JSON"** button. This will save a `dental-note-template.json` file to your computer. This file contains everything about your layout: the position, content, and all properties of every element.
+
+### Importing a Template
+
+To temporarily load a template during a session, click the **"Import JSON File..."** button and select a `.json` file that you previously exported. The entire layout will be replaced with the content of that file.
+
+### Setting a New Embedded Default
+
+This is the most powerful feature for creating a personalized version of the tool.
+
+1.  **Export your desired layout** to a `.json` file as described above.
+2.  **Open that `.json` file** in a simple text editor (like Notepad, TextEdit, VS Code).
+3.  **Select all the text** (`Ctrl+A` or `Cmd+A`) and **copy it** (`Ctrl+C` or `Cmd+C`).
+4.  **Open the `index.html` file** of the maker application in a text editor.
+5.  **Scroll down** to find the section marked with `=== EMBEDDED DEFAULT JSON DATA ===`. It looks like this:
+    ```html
+    <!-- ... comments ... -->
+    <script type="application/json" id="default-json-data">
+    {
+      "header": [],
+      "subjective": [],
+      "objective": [],
+      "assessment": [],
+      "plan": [],
+      "footer": []
+    }
+    </script>
+    <!-- ... main script starts here ... -->
+    ```
+6.  **Delete the existing content** inside that `<script>` tag (the curly braces `{...}`).
+7.  **Paste your copied JSON data** directly into that space.
+8.  **Save the `index.html` file.**
+
+The next time you open this `index.html` file in your browser, it will automatically load your custom layout as the new default.
