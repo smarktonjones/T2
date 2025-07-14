@@ -1453,54 +1453,49 @@
         
 	// **** START OF REPLACEMENT CODE ****
 
-// Global keyboard shortcut handler for all modals
+// **** START OF NEW, COMBINED CODE ****
+
+// A single, global shortcut handler for Shift+Enter
 document.addEventListener('keydown', (event) => {
-    if (event.shiftKey && event.key === 'Enter') {
-        // Find which modal is currently visible
-        const anesModal = document.getElementById('anesthetic-editor-modal');
-        const textModal = document.getElementById('textbox-editor-modal');
-        const endoModal = document.getElementById('endo-testing-modal');
-        const allergyModal = document.getElementById('allergy-modal');
-        const txPlanModal = document.getElementById('tx-plan-modal'); // Add this line
-
-        // Prevent default browser action (like adding a newline)
-        event.preventDefault();
-
-        // Click the correct save button based on which modal is open
-        if (getComputedStyle(anesModal).display !== 'none') {
-            document.getElementById('anesthetic-editor-save-btn').click();
-        } else if (getComputedStyle(textModal).display !== 'none') {
-            document.getElementById('textbox-editor-save-btn').click();
-        } else if (getComputedStyle(endoModal).display !== 'none') {
-            document.getElementById('endo-testing-save-btn').click();
-        } else if (getComputedStyle(allergyModal).display !== 'none') {
-            document.getElementById('allergy-save-btn').click();
-        } else if (getComputedStyle(txPlanModal).display !== 'none') { // Add this else if block
-            document.getElementById('tx-plan-save-btn').click();
-        }
+    // Only proceed if the specific key combination is pressed
+    if (!event.shiftKey || event.key !== 'Enter') {
+        return;
     }
-});
 
-// **** END OF REPLACEMENT CODE ****	
+    // --- CONTEXT-SENSITIVE ROUTING ---
 
-// Global keyboard shortcut for "Copy to Clipboard"
-document.addEventListener('keydown', (event) => {
-    if (event.shiftKey && event.key === 'Enter') {
-        // Check if any modal is currently open. If so, do nothing.
-        const isModalOpen = document.querySelector('.modal[style*="display: block"]');
-        if (isModalOpen) {
-            return; 
-        }
+    // Check if any modal is currently visible
+    const anesModal = document.getElementById('anesthetic-editor-modal');
+    const textModal = document.getElementById('textbox-editor-modal');
+    const endoModal = document.getElementById('endo-testing-modal');
+    const allergyModal = document.getElementById('allergy-modal');
+    const txPlanModal = document.getElementById('tx-plan-modal');
+    const propsModal = document.getElementById('properties-modal');
+    
+    // Prevent the default browser action (e.g., adding a newline in a textarea)
+    event.preventDefault();
 
-        // If no modals are open, prevent any default browser action
-        event.preventDefault();
-
-        // Programmatically click the main copy button
+    // ROUTE 1: A modal is open, so click its save button.
+    if (getComputedStyle(anesModal).display !== 'none') {
+        document.getElementById('anesthetic-editor-save-btn').click();
+    } else if (getComputedStyle(textModal).display !== 'none') {
+        document.getElementById('textbox-editor-save-btn').click();
+    } else if (getComputedStyle(endoModal).display !== 'none') {
+        document.getElementById('endo-testing-save-btn').click();
+    } else if (getComputedStyle(allergyModal).display !== 'none') {
+        document.getElementById('allergy-save-btn').click();
+    } else if (getComputedStyle(txPlanModal).display !== 'none') {
+        document.getElementById('tx-plan-save-btn').click();
+    } else if (getComputedStyle(propsModal).display !== 'none') {
+        document.getElementById('properties-save-btn').click();
+    } 
+    // ROUTE 2: No modals are open, so perform the global copy action.
+    else {
         document.getElementById('copy-btn-top').click();
     }
 });
 
-
+// **** END OF NEW, COMBINED CODE ****
 
 	    
 		// New, smarter logic for closing modals by clicking the backdrop
