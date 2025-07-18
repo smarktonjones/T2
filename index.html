@@ -51,7 +51,15 @@
         .alert-active { background-color: var(--danger-color); border-color: var(--danger-color)!important; }
         .bp-element input[type="number"] { width: 45px; text-align: center; }
         .bp-prior-tx-container { display: none; } .bp-prior-tx-container.visible { display: block; }
-        .bp-normal { border-color: var(--bp-normal); } .bp-elevated { border-color: #ffc107; } .bp-stage1 { border-color: var(--warning-color); } .bp-stage2 { border-color: var(--danger-color); } .bp-crisis { border-color: #8b0000; animation: pulse 1.5s infinite; }
+        
+/* **** START OF MODIFIED CSS to take precedence over other colors **** */
+.bp-normal { border-color: var(--bp-normal) !important; } 
+.bp-elevated { border-color: #ffc107 !important; } 
+.bp-stage1 { border-color: var(--warning-color) !important; } 
+.bp-stage2 { border-color: var(--danger-color) !important; } 
+.bp-crisis { border-color: #8b0000 !important; animation: pulse 1.5s infinite; }
+/* **** END OF MODIFIED CSS **** */
+	    
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--bp-crisis); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
         .psr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-family: monospace; }
         .psr-sextant { text-align: center; } .psr-sextant label { font-size: 0.8em; color: #555; display: block; }
