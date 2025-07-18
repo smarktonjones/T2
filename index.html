@@ -1360,28 +1360,35 @@
             showFeedback("Copied to Treatment Plan!");
         };
 
-        textboxEditorTextarea.addEventListener('contextmenu', (e) => {
-            if (textboxEditorTextarea.selectionStart !== textboxEditorTextarea.selectionEnd) {
-                e.preventDefault();
-                
-                const menuWidth = textSelectionMenu.offsetWidth;
-                const menuHeight = textSelectionMenu.offsetHeight;
-                let x = e.clientX;
-                let y = e.clientY + window.scrollY;
+// **** START OF REPLACEMENT CODE to fix on more secure computers ****
 
-                // Ensure menu doesn't go off-screen
-                if (x + menuWidth > window.innerWidth) {
-                    x = window.innerWidth - menuWidth - 5;
-                }
-                if (y + menuHeight > window.innerHeight) {
-                    y = window.innerHeight - menuHeight - 5;
-                }
+textboxEditorTextarea.addEventListener('contextmenu', (e) => {
+    // Prevent the default browser menu IMMEDIATELY and UNCONDITIONALLY.
+    e.preventDefault();
 
-                textSelectionMenu.style.left = `${x}px`;
-                textSelectionMenu.style.top = `${y}px`;
-                textSelectionMenu.style.display = 'block';
-            }
-        });
+    // NOW, check if text is selected. If not, we just do nothing and the user sees no menu.
+    if (textboxEditorTextarea.selectionStart !== textboxEditorTextarea.selectionEnd) {
+        
+        const menuWidth = textSelectionMenu.offsetWidth;
+        const menuHeight = textSelectionMenu.offsetHeight;
+        let x = e.clientX;
+        let y = e.clientY + window.scrollY;
+
+        // Ensure menu doesn't go off-screen
+        if (x + menuWidth > window.innerWidth) {
+            x = window.innerWidth - menuWidth - 5;
+        }
+        if (y + menuHeight > document.documentElement.scrollHeight) {
+            y = document.documentElement.scrollHeight - menuHeight - 5;
+        }
+
+        textSelectionMenu.style.left = `${x}px`;
+        textSelectionMenu.style.top = `${y}px`;
+        textSelectionMenu.style.display = 'block';
+    }
+});
+
+// **** END OF REPLACEMENT CODE ****
 
         document.querySelectorAll('.selection-menu-item').forEach(item => {
             item.addEventListener('click', () => {
