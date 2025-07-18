@@ -1567,6 +1567,19 @@
             else if (state.type === 'bloodpressure') { mainPropsHtml = `<fieldset><legend>Discussion Threshold</legend><label>Systolic &ge;:</label><input type="number" id="prop-discuss-s" value="${state.discussSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-discuss-d" value="${state.discussDiastolic}"></fieldset><fieldset><legend>"Prior to Tx" Checkbox Trigger</legend><label>Systolic &ge;:</label><input type="number" id="prop-checkbox-s" value="${state.checkboxSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-checkbox-d" value="${state.checkboxDiastolic}"></fieldset>`; }
             else if (state.type === 'dropdown') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label><hr><fieldset><legend>Dropdown Options</legend><label for="prop-options">(one per line)</label><textarea id="prop-options" rows="6">${state.options.join('\n')}</textarea></fieldset>`; }
             else if (state.type === 'alert' || state.type === 'painscale' || state.type === 'checkbox') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label>`; }
+
+    // --- Formatting Properties  ---
+
+    if (state.type !== 'formatter' && !state.type.startsWith('label-')) { 
+        formattingHtml = `<fieldset><legend>Formatting</legend>
+            <label><input type="checkbox" id="prop-prefix-newline" ${state.prefixNewline ? 'checked' : ''}> Add Newline Before</label>
+            <label><input type="checkbox" id="prop-prefix-tab" ${state.prefixTab ? 'checked' : ''}> Add Tab Before</label>
+            <label><input type="checkbox" id="prop-suffix-newline" ${state.suffixNewline ? 'checked' : ''}> Add Newline After</label>
+        </fieldset>`; 
+    }
+
+
+		
             generalPropsHtml = `<fieldset><legend>General Options</legend><label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label><label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element</label></fieldset>`;
 
 
