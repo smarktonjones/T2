@@ -146,13 +146,7 @@
     <div id="properties-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="properties-title">Edit Properties</h2><span class="close-btn" data-modal-id="properties-modal">&times;</span></div><div class="modal-body" id="properties-body"></div><div class="modal-footer"><button id="properties-save-btn" class="control-btn">Save Changes</button></div></div></div>
     <div id="context-menu"><div id="ctx-properties">Properties...</div><div id="ctx-delete">Delete Element</div></div>
 
-    <!-- **** START OF NEW CODE for tx plan copy/paste**** -->
-    <!-- Custom context menu for text selection inside the textbox editor -->
-    <div id="text-selection-menu" style="display: none; position: absolute; z-index: 11000; background: white; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-radius: 4px; padding: 5px 0; min-width: 180px;">
-        <div class="selection-menu-item" data-target-class="CLASS 3">Send to Operative Class 3</div>
-        <div class="selection-menu-item" data-target-class="CLASS 2">Send to Operative Class 2</div>
-        <div class="selection-menu-item" data-target-class="CLASS 1">Send to Operative Class 1</div>
-    </div>
+  
 
     <!-- Feedback message toast -->
     <div id="action-feedback" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 12000; transition: opacity 0.5s;"></div>
@@ -161,7 +155,31 @@
     <div id="endo-testing-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Endo Testing Results</h2><span class="close-btn" data-modal-id="endo-testing-modal">&times;</span></div><div class="modal-body"><div id="endo-editor-controls"><input type="text" id="endo-range-input" placeholder="e.g., 3-6, 14, 18-19"><button id="endo-range-add-btn" class="control-btn">Add Teeth</button></div><div style="overflow-x:auto;"><table id="endo-table"><thead></thead><tbody></tbody></table></div></div><div class="modal-footer"><button id="endo-testing-save-btn" class="control-btn">Save & Close</button></div></div></div>
     <div id="anesthetic-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Set Anesthetic Amounts</h2><span class="close-btn" data-modal-id="anesthetic-editor-modal">&times;</span></div><div class="modal-body"><div style="padding-bottom:15px; border-bottom:1px solid #eee; margin-bottom:15px;"><label><input type="checkbox" id="anesthetic-topical-check"> Include Topical Anesthetic</label></div><div id="anesthetic-editor-list"></div></div><div class="modal-footer"><button id="anesthetic-editor-save-btn" class="control-btn">Save & Close</button></div></div></div>
     <div id="allergy-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Select Alerts</h2><span class="close-btn" data-modal-id="allergy-modal">&times;</span></div><div class="modal-body"><fieldset><legend>Common Alerts</legend><div id="allergy-list"></div></fieldset><hr><fieldset><legend>Custom Alert</legend><input type="text" id="custom-allergy-input" placeholder="e.g., Cats" style="width: 100%; box-sizing: border-box;"></fieldset></div><div class="modal-footer"><button id="allergy-save-btn" class="control-btn">Save Alerts</button></div></div></div>
-    <div id="textbox-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Edit Text</h2><span class="close-btn" data-modal-id="textbox-editor-modal">&times;</span></div><div class="modal-body"><div id="textbox-editor-area"><textarea id="textbox-editor-textarea"></textarea><div id="textbox-editor-snippets"><select id="textbox-editor-select" size="10"></select><button id="textbox-editor-add-btn" class="control-btn">Add</button><button id="textbox-editor-replace-btn" class="control-btn" style="margin-top:5px;">Replace</button></div></div></div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (Shift+Enter)</button></div></div></div>
+    <div id="textbox-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Edit Text</h2><span class="close-btn" data-modal-id="textbox-editor-modal">&times;</span></div><div class="modal-body">
+	    
+<!-- **** START OF MODIFIED HTML for class to tx plan **** -->
+<div id="textbox-editor-area">
+    <textarea id="textbox-editor-textarea"></textarea>
+
+    <!-- NEW container for action buttons that appear on text selection -->
+    <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
+        <b>Send Selected Text To:</b><br>
+        <button class="control-btn selection-action-btn" data-target-class="CLASS 3">Op Class 3</button>
+        <button class="control-btn selection-action-btn" data-target-class="CLASS 2">Op Class 2</button>
+        <button class="control-btn selection-action-btn" data-target-class="CLASS 1">Op Class 1</button>
+    </div>
+
+    <div id="textbox-editor-snippets">
+        <select id="textbox-editor-select" size="10"></select>
+        <div id="textbox-editor-buttons"> <!-- Added a wrapper div -->
+            <button id="textbox-editor-add-btn" class="control-btn">Add</button>
+            <button id="textbox-editor-replace-btn" class="control-btn">Replace</button>
+        </div>
+    </div>
+</div>
+<!-- **** END OF MODIFIED HTML **** -->
+    
+    </div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (Shift+Enter)</button></div></div></div>
 
         <!-- **** START OF NEW CODE for tx plan**** -->
     <div id="tx-plan-modal" class="modal">
@@ -1330,11 +1348,13 @@
         
         // --- UI & Event Handlers ---
 
-	// **** START OF NEW CODE for tx plan copy/paste****
-        // --- Textbox Selection-to-Treatment-Plan Logic ---
-        const textSelectionMenu = document.getElementById('text-selection-menu');
-        const textboxEditorTextarea = document.getElementById('textbox-editor-textarea');
+        // **** START OF REPLACEMENT JAVASCRIPT ****
 
+        // --- Textbox Selection-to-Treatment-Plan Logic ---
+        const textboxEditorTextarea = document.getElementById('textbox-editor-textarea');
+        const selectionActionsDiv = document.getElementById('selection-actions');
+
+        // This function runs when a user clicks one of the "Send To" buttons
         const copySelectedTextToTxPlan = (targetClass) => {
             const selectedText = textboxEditorTextarea.value.substring(textboxEditorTextarea.selectionStart, textboxEditorTextarea.selectionEnd).trim();
             if (!selectedText) return;
@@ -1346,11 +1366,11 @@
             }
 
             const state = getElementState(txPlanElement);
-            const key = `Operative-${targetClass}`; // Hardcoded to "Operative" row as requested
+            const key = `Operative-${targetClass}`; // Hardcoded to "Operative" row
 
             const existingEntry = state.txData[key] || { text: '', priority: 0 };
             const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
-            const newPriority = existingEntry.priority > 0 ? existingEntry.priority : 1; // Default to priority 1 if new
+            const newPriority = existingEntry.priority > 0 ? existingEntry.priority : 1; // Default to priority 1
 
             state.txData[key] = { text: newText, priority: newPriority };
 
@@ -1359,45 +1379,28 @@
             updateLiveOutput();
             showFeedback("Copied to Treatment Plan!");
         };
-
-// **** START OF REPLACEMENT CODE to fix on more secure computers ****
-
-textboxEditorTextarea.addEventListener('contextmenu', (e) => {
-    // Prevent the default browser menu IMMEDIATELY and UNCONDITIONALLY.
-    e.preventDefault();
-
-    // NOW, check if text is selected. If not, we just do nothing and the user sees no menu.
-    if (textboxEditorTextarea.selectionStart !== textboxEditorTextarea.selectionEnd) {
         
-        const menuWidth = textSelectionMenu.offsetWidth;
-        const menuHeight = textSelectionMenu.offsetHeight;
-        let x = e.clientX;
-        let y = e.clientY + window.scrollY;
-
-        // Ensure menu doesn't go off-screen
-        if (x + menuWidth > window.innerWidth) {
-            x = window.innerWidth - menuWidth - 5;
-        }
-        if (y + menuHeight > document.documentElement.scrollHeight) {
-            y = document.documentElement.scrollHeight - menuHeight - 5;
-        }
-
-        textSelectionMenu.style.left = `${x}px`;
-        textSelectionMenu.style.top = `${y}px`;
-        textSelectionMenu.style.display = 'block';
-    }
-});
-
-// **** END OF REPLACEMENT CODE ****
-
-        document.querySelectorAll('.selection-menu-item').forEach(item => {
-            item.addEventListener('click', () => {
-                copySelectedTextToTxPlan(item.dataset.targetClass);
-                textSelectionMenu.style.display = 'none';
-            });
+        // Listen for clicks on any of our new action buttons
+        selectionActionsDiv.addEventListener('click', (e) => {
+            if (e.target.classList.contains('selection-action-btn')) {
+                copySelectedTextToTxPlan(e.target.dataset.targetClass);
+            }
         });
-        // **** END OF NEW CODE ****    
-	    
+
+        // Listen for any change in text selection within the document
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            const isTextareaFocused = document.activeElement === textboxEditorTextarea;
+            
+            // Show the action bar only if the textarea is focused and has selected text
+            if (isTextareaFocused && selection.toString().trim().length > 0) {
+                selectionActionsDiv.style.display = 'block';
+            } else {
+                selectionActionsDiv.style.display = 'none';
+            }
+        });
+        
+        // **** END OF REPLACEMENT JAVASCRIPT ****
 	    
 	    
 	    
