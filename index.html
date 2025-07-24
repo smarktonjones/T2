@@ -1333,26 +1333,31 @@
                 const activeTests = tests.filter(testName => data.results[testName] && activeTeethIndices.some(i => data.results[testName][i] && data.results[testName][i].trim() !== ''));
                 
                 if (activeTests.length > 0) {
-                    const tabThreshold = 6; // The number of characters before alignment might break
+                    // Define the non-breaking space character for padding
+                    const nbsp = '\u00A0'; 
 
-                    // Function to add the correct number of tabs based on text length
-                    const addSmartTabs = (text) => {
-                        return text + (text.length < tabThreshold ? '\t\t' : '\t');
-                    };
-
-                    // Change "Test" to "Endo Tests" and apply smart tabbing
-                    let header = addSmartTabs("Endo Tests");
-                    header += activeTeeth.map(tooth => addSmartTabs(tooth)).join('');
-
-                    const rows = activeTests.map(testName => {
-                        let rowString = addSmartTabs(testName);
-                        const rowData = data.results[testName] || [];
-                        const rowResults = activeTeethIndices.map(toothIndex => rowData[toothIndex] || '');
-                        rowString += rowResults.map(result => addSmartTabs(result)).join('');
-                        return rowString;
+                    // 1. Calculate the maximum width needed for each column
+                    const colWidths = activeTeeth.map((tooth, i) => {
+                        let maxWidth = tooth.length;
+                        activeTests.forEach(testName => {
+                            const result = data.results[testName]?.[activeTeethIndices[i]] || '';
+                            if (result.length > maxWidth) maxWidth = result.length;
+                        });
+                        return maxWidth;
                     });
 
-                    content = [header, ...rows].join('\n');
+                    // 2. Build the output using padEnd and the non-breaking space
+                    const header = 'Endo Tests'.padEnd(20, nbsp) + ' | ' + activeTeeth.map((tooth, i) => tooth.padEnd(colWidths[i], nbsp)).join(' | ');
+                    
+                    const separator = '-'.repeat(20) + '-+-' + colWidths.map(w => '-'.repeat(w)).join('-+-');
+                    
+                    const rows = activeTests.map(testName => {
+                        const rowData = data.results[testName] || [];
+                        const rowResults = activeTeethIndices.map((toothIndex, i) => (rowData[toothIndex] || '').padEnd(colWidths[i], nbsp));
+                        return testName.padEnd(20, nbsp) + ' | ' + rowResults.join(' | ');
+                    });
+                    
+                    content = [header, separator, ...rows].join('\n');
                 }
             }
         }
