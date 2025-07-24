@@ -1317,7 +1317,49 @@
                 // **** END OF NEW CODE ****
 			
                 else if (state.type === 'anesthetic') { let an_parts = []; if (state.includeTopical) { an_parts.push('Topical Anesthetic.'); } for (const [name, carpules] of Object.entries(state.anestheticValues)) { if (carpules > 0) { const typeInfo = state.anestheticTypes.find(t => t.name === name); if (typeInfo) { const totalMg = parseFloat((typeInfo.mg * carpules).toPrecision(3)); const totalEpi = parseFloat((typeInfo.epi * carpules).toPrecision(3)); an_parts.push(`[${totalMg} MILLIGRAMS ${name} ${totalEpi} MICROGRAMS EPI.]`); } } } content = an_parts.join(' '); }
-                else if (state.type === 'endo-testing') { const data = state.endoData; const tests = state.endoTests; const activeTeethIndices = data.teeth.map((tooth, i) => (tooth && tooth.trim() !== '' && Object.values(data.results).some(testRow => testRow[i] && testRow[i].trim() !== '')) ? i : -1).filter(i => i !== -1); if (activeTeethIndices.length > 0) { const activeTeeth = activeTeethIndices.map(i => data.teeth[i]); const activeTests = tests.filter(testName => data.results[testName] && activeTeethIndices.some(i => data.results[testName][i] && data.results[testName][i].trim() !== '')); if (activeTests.length > 0) { const colWidths = activeTeeth.map((tooth, i) => { let maxWidth = tooth.length; activeTests.forEach(testName => { const result = data.results[testName]?.[activeTeethIndices[i]] || ''; if (result.length > maxWidth) maxWidth = result.length; }); return maxWidth; }); const header = 'Test'.padEnd(20) + ' | ' + activeTeeth.map((tooth, i) => tooth.padEnd(colWidths[i])).join(' | '); const separator = '-'.repeat(20) + '-+-' + colWidths.map(w => '-'.repeat(w)).join('-+-'); const rows = activeTests.map(testName => { const rowData = data.results[testName] || []; const rowResults = activeTeethIndices.map((toothIndex, i) => (rowData[toothIndex] || '').padEnd(colWidths[i])); return testName.padEnd(20) + ' | ' + rowResults.join(' | '); }); content = [header, separator, ...rows].join('\n'); } } }
+
+			
+        // **** START OF REPLACEMENT CODE BLOCK for tab delimited endo testing ****
+
+        else if (state.type === 'endo-testing') {
+            const data = state.endoData; 
+            const tests = state.endoTests;
+            const activeTeethIndices = data.teeth
+                .map((tooth, i) => (tooth && tooth.trim() !== '' && Object.values(data.results).some(testRow => testRow[i] && testRow[i].trim() !== '')) ? i : -1)
+                .filter(i => i !== -1);
+            
+            if (activeTeethIndices.length > 0) {
+                const activeTeeth = activeTeethIndices.map(i => data.teeth[i]);
+                const activeTests = tests.filter(testName => data.results[testName] && activeTeethIndices.some(i => data.results[testName][i] && data.results[testName][i].trim() !== ''));
+                
+                if (activeTests.length > 0) {
+                    const tabThreshold = 6; // The number of characters before alignment might break
+
+                    // Function to add the correct number of tabs based on text length
+                    const addSmartTabs = (text) => {
+                        return text + (text.length < tabThreshold ? '\t\t' : '\t');
+                    };
+
+                    // Change "Test" to "Endo Tests" and apply smart tabbing
+                    let header = addSmartTabs("Endo Tests");
+                    header += activeTeeth.map(tooth => addSmartTabs(tooth)).join('');
+
+                    const rows = activeTests.map(testName => {
+                        let rowString = addSmartTabs(testName);
+                        const rowData = data.results[testName] || [];
+                        const rowResults = activeTeethIndices.map(toothIndex => rowData[toothIndex] || '');
+                        rowString += rowResults.map(result => addSmartTabs(result)).join('');
+                        return rowString;
+                    });
+
+                    content = [header, ...rows].join('\n');
+                }
+            }
+        }
+
+        // **** END OF REPLACEMENT CODE BLOCK ****
+
+			
                 else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
                 else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
                 else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
