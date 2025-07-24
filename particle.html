@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Particle Simulation - Corrected Final</title>
+    <style>
+        /* CSS from previous version - remains unchanged */
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #000; color: #eee;}
+        #controlsContainer { position: absolute; top: 10px; left: 10px; z-index: 10; transition: transform 0.3s ease-in-out; }
+        #controlsContainer.hidden { transform: translateX(-110%); }
+        #controlsPanel { background-color: rgba(10,10,25,0.92); padding: 15px; border-radius: 8px; color: #fff; display: flex; flex-direction: column; gap: 10px; width: 460px;  max-height: 90vh; overflow-y: auto; border: 1px solid #335; }
+        .control-group { display: grid; grid-template-columns: 210px 1fr 40px;  align-items: center; gap: 8px; }
+        .control-group.checkbox-special label:first-child { grid-column: 1 / 3; }
+        .control-group.checkbox-special input[type="checkbox"] { grid-column: 3 / 4; justify-self: end; }
+        .control-group label, .control-group input[type="checkbox"] + label { font-size: 0.85em; }
+        .control-group input[type="range"] { width: 100%; }
+        .control-group span { text-align: right; font-size: 0.85em; }
+        button { padding: 8px 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; font-size: 0.85em; margin-top: 5px;}
+        button:hover { background-color: #0056b3; }
+        button:active { transform: translateY(1px); }
+        button.active { background-color: #28a745; }
+        button.active:hover { background-color: #1e7e34; }
+        .control-section-title { font-size: 0.9em; font-weight: bold; margin-top: 10px; margin-bottom: 0px; color: #cce; border-bottom: 1px solid #446; padding-bottom: 3px; }
+        input[type="range"]:disabled, input[type="checkbox"]:disabled + label, input[type="checkbox"]:disabled { opacity: 0.4; }
+        #toggleControlsButton { position: absolute; top: 10px; left: 10px; z-index: 20; background-color: rgba(50,50,80,0.8); padding: 10px 15px; border-radius: 0 5px 5px 0;}
+        #info { position: absolute; bottom: 10px; left: 10px; color: #aaa; font-size: 0.8em; z-index: 5;}
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 5px; padding-left: 5px;}
+        .checkbox-group input[type="checkbox"] { margin-right: 5px; transform: scale(1.1);}
+    </style>
+</head>
+<body>
+    <button id="toggleControlsButton">Hide Controls</button>
+    <div id="controlsContainer">
+        <div id="controlsPanel">
+            <!-- All HTML Controls as before -->
+            <div class="control-section-title">Simulation & Particles</div>
+            <div class="control-group"> <label for="numPointsSlider">Number of Particles:</label> <input type="range" id="numPointsSlider" min="50" max="2800" value="1590" step="10"> <span id="numPointsValue">200</span> </div>
+            <div class="control-group"> <label for="boundingSphereRadiusSlider">Bounding Sphere Radius:</label> <input type="range" id="boundingSphereRadiusSlider" min="5" max="50" value="25" step="1"> <span id="boundingSphereRadiusValue">15</span> </div>
+            <div class="control-group"> <label for="boundaryOutcomeFactorSlider">Boundary Outcome Factor:</label> <input type="range" id="boundaryOutcomeFactorSlider" min="0.0" max="2.0" value="1.0" step="0.1"> <span id="boundaryOutcomeFactorValue">2.0</span> </div>
+            <div class="checkbox-group"> <input type="checkbox" id="enableTrailsCheckbox"> <label for="enableTrailsCheckbox">Enable Particle Trails</label> </div>
+            <div class="control-group"> <label for="trailLengthSlider">Trail Length:</label> <input type="range" id="trailLengthSlider" min="2" max="200" value="100" step="1" disabled> <span id="trailLengthValue">20</span> </div>
+            <div class="control-group"> <label for="avgSpeedSlider">Avg Particle Speed:</label> <input type="range" id="avgSpeedSlider" min="0.1" max="5" value="0.8" step="0.1"> <span id="avgSpeedValue">0.8</span> </div>
+            <div class="control-group"> <label for="animSpeedSlider">Animation Speed:</label> <input type="range" id="animSpeedSlider" min="0.1" max="5" value="1" step="0.1"> <span id="animSpeedValue">1.0</span> </div>
+            <div class="control-section-title">Attraction & Collision</div>
+            <div class="control-group"> <label for="numAttractorsSlider">Fixed Attractors:</label> <input type="range" id="numAttractorsSlider" min="0" max="10" value="0" step="1"> <span id="numAttractorsValue">1</span> </div>
+            <div class="control-group"> <label for="attractorSpreadSlider">Fixed Attr. Spread (R):</label> <input type="range" id="attractorSpreadSlider" min="0" max="10" value="0" step="0.5"> <span id="attractorSpreadValue">0.0</span> </div>
+            <div class="control-group"> <label for="attractorStrengthSlider">Fixed Attr. Gravity:</label> <input type="range" id="attractorStrengthSlider" min="-20" max="20" value="5" step="0.01"> <span id="attractorStrengthValue">5.00</span> </div>
+            <div class="control-group"> <label for="attractorStrengthMultiplierSlider">Fixed Attr. Gravity Multiplier:</label> <input type="range" id="attractorStrengthMultiplierSlider" min="0.5" max="3.0" value="1.0" step="0.1"> <span id="attractorStrengthMultiplierValue">1.0</span> </div>
+            <div class="control-group checkbox-special"> <label for="enableDipoleCheckbox">Enable Attractor Dipole Field</label> <input type="checkbox" id="enableDipoleCheckbox"> </div>
+            <div class="control-group"> <label for="dipoleFieldStrengthSlider">Dipole Field Strength:</label> <input type="range" id="dipoleFieldStrengthSlider" min="1" max="50" value="10" step="0.1" disabled> <span id="dipoleFieldStrengthValue">10</span> </div>
+            <div class="control-group"> <label for="particleChargeSlider">Particle "Charge":</label> <input type="range" id="particleChargeSlider" min="-10" max="10" value="-1" step="0.1" disabled> <span id="particleChargeValue">-1.0</span> </div>
+            <div class="control-group checkbox-special"> <label for="particlesAttractCheckbox">Particles Attract Each Other</label> <input type="checkbox" id="particlesAttractCheckbox"> </div>
+            <div class="control-group"> <label for="particleAttractionStrengthSlider">Particle Attr. Strength:</label> <input type="range" id="particleAttractionStrengthSlider" min="-10" max="10" value="10" step="0.01"> <span id="particleAttractionStrengthValue">0.01</span> </div>
+            <div class="control-group"> <label for="particleAttractionDistanceSlider">Particle Attr. Max Dist:</label> <input type="range" id="particleAttractionDistanceSlider" min="0.1" max="20" value="7.5" step="0.1"> <span id="particleAttractionDistanceValue">2.0</span> </div>
+            <div class="checkbox-group">  <input type="checkbox" id="enableCollisionsCheckbox"> <label for="enableCollisionsCheckbox">Enable Particle Collisions</label> </div>
+            <div class="control-group">  <label for="collisionRestitutionSlider">Collision Restitution:</label> <input type="range" id="collisionRestitutionSlider" min="0.1" max="1.0" value="0.8" step="0.01" enabled> <span id="collisionRestitutionValue">0.8</span> </div>
+            <div class="control-group">  <label for="collisionOutcomeFactorSlider">Collision Outcome Factor:</label> <input type="range" id="collisionOutcomeFactorSlider" min="0.0" max="2.0" value="0.9" step="0.01" enabled> <span id="collisionOutcomeFactorValue">0.95</span> </div>
+            <div class="control-section-title">Appearance</div>
+            <button id="togglePointStyleButton">Style: Sharp Squares</button> <button id="toggleBlurButton">Enable Blur</button>
+            <div class="control-group"> <label for="blurDiameterSlider">Blur Diameter:</label> <input type="range" id="blurDiameterSlider" min="0.05" max="5" value="0.57" step="0.01" enabled> <span id="blurDiameterValue">0.3</span> </div>
+            <div class="control-section-title">Coloring</div>
+            <button id="toggleColorModeButton">Color Mode: Speed</button> <button id="updateColorsButton">Refresh Particle Colors</button>
+            <div class="control-section-title">Interaction & Rotation</div>
+            <button id="toggleInertialSpinButton">Enable Inertial Spin</button>
+            <div class="control-group"> <label for="inertiaFactorSlider">Inertia Factor:</label> <input type="range" id="inertiaFactorSlider" min="1" max="30" value="7" step="0.5" disabled> <span id="inertiaFactorValue">7.0</span> </div>
+            <div class="control-group"> <label for="autoRotateSpeedSlider">Auto-Rotate Speed:</label> <input type="range" id="autoRotateSpeedSlider" min="-30" max="30" value=".25" step="0.5"> <span id="autoRotateSpeedValue">0.0</span> </div>
+            <div class="control-section-title">Background</div>
+            <button id="toggleBgAnimationButton">Animate Background</button>
+            <div class="control-group"> <label for="bgAnimationSpeedSlider">BG Anim Speed:</label> <input type="range" id="bgAnimationSpeedSlider" min="0.01" max="0.5" value="0.05" step="0.01" disabled> <span id="bgAnimationSpeedValue">0.05</span> </div>
+        </div>
+    </div>
+    <div id="info">Mouse: Rotate (LMB), Pan (RMB), Zoom (Scroll). N-body default. Boundary/Collision outcomes have chance.</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // --- Global Variable Declarations ---
+        let scene, camera, renderer, pointsObject, controls;
+        let particlesData = [], particleTrails = []; 
+        const clock = new THREE.Clock();
+        
+        let boundingSphereRadius, boundingSphereRadiusSq, boundaryOutcomeFactor; 
+        let particlesAttractEachOther, particleAttractionStrength, particleAttractionMaxDistance, particleAttractionMaxDistanceSq; 
+        let areCollisionsEnabled, collisionRestitution,  collisionOutcomeFactor; 
+        const PARTICLE_RADIUS = 0.05, PARTICLE_MASS = 1.0;
+        let areTrailsEnabled, trailLength;
+        const TRAIL_BASE_OPACITY = 0.3, TRAIL_BLURRED_OPACITY_FACTOR = 0.7, TRAIL_LINE_WIDTH = 1; 
+        let numPoints, averageParticleSpeed, animationSpeedFactor;
+        
+        let numAttractors, attractors = [], attractorObjects = [], dipolePoleObjects = [], attractorSpreadRadius, attractorStrength, baseCentralPull, attractorStrengthMultiplier;
+        let isDipoleEnabled, dipoleFieldStrength, particleCharge;
+        const DIPOLE_SEPARATION = 0.5;
+
+        let pointStyle, isBlurActive, blurDiameter, softCircleTexture, originalPointSize;
+        let colorizationMode, isBgColorAnimated, bgColorAnimationSpeed, currentBgHue, defaultBgColor;
+        let isInertialSpinEnabled, isDraggingForSpin, spinVelocityX, lastSpinMouseX, lastSpinTime, inertiaFactor, MAX_AUTO_ROTATE_SPEED_CAP, autoRotateSpeed;
+        let areControlsVisible;
+
+        let controlsContainer, toggleControlsButton,
+            numPointsSlider, numPointsValue, boundingSphereRadiusSlider, boundingSphereRadiusValue, boundaryOutcomeFactorSlider, boundaryOutcomeFactorValue,
+            enableTrailsCheckbox, trailLengthSlider, trailLengthValue,
+            avgSpeedSlider, avgSpeedValue, animSpeedSlider, animSpeedValue,
+            numAttractorsSlider, numAttractorsValue, attractorSpreadSlider, attractorSpreadValue, attractorStrengthSlider, attractorStrengthValue, attractorStrengthMultiplierSlider, attractorStrengthMultiplierValue, 
+            enableDipoleCheckbox, dipoleFieldStrengthSlider, dipoleFieldStrengthValue, particleChargeSlider, particleChargeValue,
+            particlesAttractCheckbox, particleAttractionStrengthSlider, particleAttractionStrengthValue, particleAttractionDistanceSlider, particleAttractionDistanceValue,
+            enableCollisionsCheckbox, collisionRestitutionSlider, collisionRestitutionValue, collisionOutcomeFactorSlider, collisionOutcomeFactorValue,
+            togglePointStyleButton, toggleBlurButton, blurDiameterSlider, blurDiameterValue,
+            toggleColorModeButton, updateColorsButton,
+            toggleInertialSpinButton, inertiaFactorSlider, inertiaFactorValue,
+            autoRotateSpeedSlider, autoRotateSpeedValue,
+            toggleBgAnimationButton, bgAnimationSpeedSlider, bgAnimationSpeedValue;
+
+        // --- Function Definitions (All defined before init() is called) ---
+
+        function createSoftCircleTexture() { 
+            const canvas = document.createElement('canvas'); const size = 64; canvas.width = size; canvas.height = size;
+            const context = canvas.getContext('2d'); const centerX = size / 2, centerY = size / 2, radius = size / 2 * 0.9;
+            const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)'); gradient.addColorStop(0.3, 'rgba(255,255,255,0.8)'); gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            context.beginPath(); context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false); context.fillStyle = gradient; context.fill();
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function initDOMReferences() {
+            controlsContainer = document.getElementById('controlsContainer'); toggleControlsButton = document.getElementById('toggleControlsButton');
+            numPointsSlider = document.getElementById('numPointsSlider'); numPointsValue = document.getElementById('numPointsValue');
+            boundingSphereRadiusSlider = document.getElementById('boundingSphereRadiusSlider');  boundingSphereRadiusValue = document.getElementById('boundingSphereRadiusValue');   
+            boundaryOutcomeFactorSlider = document.getElementById('boundaryOutcomeFactorSlider');  boundaryOutcomeFactorValue = document.getElementById('boundaryOutcomeFactorValue');   
+            enableTrailsCheckbox = document.getElementById('enableTrailsCheckbox'); trailLengthSlider = document.getElementById('trailLengthSlider'); trailLengthValue = document.getElementById('trailLengthValue');
+            avgSpeedSlider = document.getElementById('avgSpeedSlider'); avgSpeedValue = document.getElementById('avgSpeedValue');
+            animSpeedSlider = document.getElementById('animSpeedSlider'); animSpeedValue = document.getElementById('animSpeedValue');
+            numAttractorsSlider = document.getElementById('numAttractorsSlider'); numAttractorsValue = document.getElementById('numAttractorsValue');
+            attractorSpreadSlider = document.getElementById('attractorSpreadSlider'); attractorSpreadValue = document.getElementById('attractorSpreadValue');
+            attractorStrengthSlider = document.getElementById('attractorStrengthSlider'); attractorStrengthValue = document.getElementById('attractorStrengthValue');
+            attractorStrengthMultiplierSlider = document.getElementById('attractorStrengthMultiplierSlider'); attractorStrengthMultiplierValue = document.getElementById('attractorStrengthMultiplierValue');   
+            enableDipoleCheckbox = document.getElementById('enableDipoleCheckbox'); dipoleFieldStrengthSlider = document.getElementById('dipoleFieldStrengthSlider'); dipoleFieldStrengthValue = document.getElementById('dipoleFieldStrengthValue'); particleChargeSlider = document.getElementById('particleChargeSlider'); particleChargeValue = document.getElementById('particleChargeValue');
+            particlesAttractCheckbox = document.getElementById('particlesAttractCheckbox');  particleAttractionStrengthSlider = document.getElementById('particleAttractionStrengthSlider');  particleAttractionStrengthValue = document.getElementById('particleAttractionStrengthValue');  particleAttractionDistanceSlider = document.getElementById('particleAttractionDistanceSlider');  particleAttractionDistanceValue = document.getElementById('particleAttractionDistanceValue'); 
+            enableCollisionsCheckbox = document.getElementById('enableCollisionsCheckbox');  collisionRestitutionSlider = document.getElementById('collisionRestitutionSlider');  collisionRestitutionValue = document.getElementById('collisionRestitutionValue');    collisionOutcomeFactorSlider = document.getElementById('collisionOutcomeFactorSlider');  collisionOutcomeFactorValue = document.getElementById('collisionOutcomeFactorValue');   
+            togglePointStyleButton = document.getElementById('togglePointStyleButton'); toggleBlurButton = document.getElementById('toggleBlurButton'); blurDiameterSlider = document.getElementById('blurDiameterSlider'); blurDiameterValue = document.getElementById('blurDiameterValue');
+            toggleColorModeButton = document.getElementById('toggleColorModeButton'); updateColorsButton = document.getElementById('updateColorsButton');
+            toggleInertialSpinButton = document.getElementById('toggleInertialSpinButton'); inertiaFactorSlider = document.getElementById('inertiaFactorSlider'); inertiaFactorValue = document.getElementById('inertiaFactorValue');
+            autoRotateSpeedSlider = document.getElementById('autoRotateSpeedSlider'); autoRotateSpeedValue = document.getElementById('autoRotateSpeedValue');
+            toggleBgAnimationButton = document.getElementById('toggleBgAnimationButton'); bgAnimationSpeedSlider = document.getElementById('bgAnimationSpeedSlider'); bgAnimationSpeedValue = document.getElementById('bgAnimationSpeedValue');
+        }
+
+        function updateAllSliderValues() {
+            if (numPointsValue && numPointsSlider) numPointsValue.textContent = numPointsSlider.value;
+            if (boundingSphereRadiusValue && boundingSphereRadiusSlider) boundingSphereRadiusValue.textContent = parseFloat(boundingSphereRadiusSlider.value).toFixed(0); 
+            if (boundaryOutcomeFactorValue && boundaryOutcomeFactorSlider) boundaryOutcomeFactorValue.textContent = parseFloat(boundaryOutcomeFactorSlider.value).toFixed(1); 
+            if (trailLengthValue && trailLengthSlider) trailLengthValue.textContent = trailLengthSlider.value;
+            if (avgSpeedValue && avgSpeedSlider) avgSpeedValue.textContent = parseFloat(avgSpeedSlider.value).toFixed(1);
+            if (animSpeedValue && animSpeedSlider) animSpeedValue.textContent = parseFloat(animSpeedSlider.value).toFixed(1);
+            if (numAttractorsValue && numAttractorsSlider) numAttractorsValue.textContent = numAttractorsSlider.value;
+            if (attractorSpreadValue && attractorSpreadSlider) attractorSpreadValue.textContent = parseFloat(attractorSpreadSlider.value).toFixed(1);
+            if (attractorStrengthValue && attractorStrengthSlider) attractorStrengthValue.textContent = parseFloat(attractorStrengthSlider.value).toFixed(2);
+            if (attractorStrengthMultiplierValue && attractorStrengthMultiplierSlider) attractorStrengthMultiplierValue.textContent = parseFloat(attractorStrengthMultiplierSlider.value).toFixed(1); 
+            if (dipoleFieldStrengthValue && dipoleFieldStrengthSlider) dipoleFieldStrengthValue.textContent = parseFloat(dipoleFieldStrengthSlider.value).toFixed(0);
+            if (particleChargeValue && particleChargeSlider) particleChargeValue.textContent = parseFloat(particleChargeSlider.value).toFixed(1);
+            if (particleAttractionStrengthValue && particleAttractionStrengthSlider) particleAttractionStrengthValue.textContent = parseFloat(particleAttractionStrengthSlider.value).toExponential(1); 
+            if (particleAttractionDistanceValue && particleAttractionDistanceSlider) particleAttractionDistanceValue.textContent = parseFloat(particleAttractionDistanceSlider.value).toFixed(1); 
+            if (collisionRestitutionValue && collisionRestitutionSlider) collisionRestitutionValue.textContent = parseFloat(collisionRestitutionSlider.value).toFixed(2); 
+            if (collisionOutcomeFactorValue && collisionOutcomeFactorSlider) collisionOutcomeFactorValue.textContent = parseFloat(collisionOutcomeFactorSlider.value).toFixed(1); 
+            if (blurDiameterValue && blurDiameterSlider) blurDiameterValue.textContent = parseFloat(blurDiameterSlider.value).toFixed(2);
+            if (inertiaFactorValue && inertiaFactorSlider) inertiaFactorValue.textContent = parseFloat(inertiaFactorSlider.value).toFixed(1);
+            if (autoRotateSpeedValue && autoRotateSpeedSlider) autoRotateSpeedValue.textContent = parseFloat(autoRotateSpeedSlider.value).toFixed(1);
+            if (bgAnimationSpeedValue && bgAnimationSpeedSlider) bgAnimationSpeedValue.textContent = parseFloat(bgAnimationSpeedSlider.value).toFixed(2);
+        }
+        
+        function resetParticle(particle) {
+            const r_pos_factor = Math.cbrt(Math.random()); 
+            const r_pos = r_pos_factor * (boundingSphereRadius * 0.7) + (boundingSphereRadius * 0.1); 
+            const phi_pos = Math.acos(-1 + (2 * Math.random())); 
+            const theta_pos = Math.random() * Math.PI * 2;
+            particle.position.set( 
+                r_pos * Math.sin(phi_pos) * Math.cos(theta_pos), 
+                r_pos * Math.sin(phi_pos) * Math.sin(theta_pos), 
+                r_pos * Math.cos(phi_pos) 
+            );
+            const speed = averageParticleSpeed * (0.5 + Math.random() * 0.8); 
+            let initialVelocityDir = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+            if (initialVelocityDir.lengthSq() === 0) initialVelocityDir.set(1,0,0); 
+            particle.velocity.copy(initialVelocityDir.normalize().multiplyScalar(speed));
+            particle.history = []; 
+        }
+
+        function clearTrails() {
+            particleTrails.forEach(trail => { if (trail) { scene.remove(trail); if (trail.geometry) trail.geometry.dispose(); if (trail.material) trail.material.dispose(); } });
+            particleTrails = [];
+        }
+
+        function recreateParticlesAndTrails() {
+            if (pointsObject) { scene.remove(pointsObject); pointsObject.geometry.dispose(); if (pointsObject.material && pointsObject.material.map) pointsObject.material.map.dispose(); if (pointsObject.material) pointsObject.material.dispose(); pointsObject = null; }
+            clearTrails(); particlesData = [];
+            const particlePositions = new Float32Array(numPoints * 3); const particleColors = new Float32Array(numPoints * 3);
+            const defaultParticleColor = new THREE.Color(0xffffff); originalPointSize = 0.03 + numPoints / 100000; 
+            for (let i = 0; i < numPoints; i++) {
+                const particle = { position: new THREE.Vector3(), velocity: new THREE.Vector3(), color: new THREE.Color(defaultParticleColor), history: []  };
+                resetParticle(particle); 
+                particlesData.push(particle); particle.position.toArray(particlePositions, i * 3); particle.color.toArray(particleColors, i * 3); 
+                if (areTrailsEnabled) {
+                    const trailMaterial = new THREE.LineBasicMaterial({ color: particle.color, linewidth: TRAIL_LINE_WIDTH, transparent: true, opacity: isBlurActive ? TRAIL_BASE_OPACITY * TRAIL_BLURRED_OPACITY_FACTOR : TRAIL_BASE_OPACITY, depthWrite: false });
+                    const trailGeometry = new THREE.BufferGeometry(); const trailLine = new THREE.Line(trailGeometry, trailMaterial);
+                    scene.add(trailLine); particleTrails.push(trailLine); 
+                }
+            }
+            const pointsGeometry = new THREE.BufferGeometry(); pointsGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3)); pointsGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+            const pointsMaterial = new THREE.PointsMaterial({ size: originalPointSize, vertexColors: true, sizeAttenuation: true });
+            pointsObject = new THREE.Points(pointsGeometry, pointsMaterial); scene.add(pointsObject);
+            updatePointMaterialStyle(); updateParticleColors(); updateTrailMaterials(); 
+        }
+
+        function updatePointMaterialStyle() { 
+            if (!pointsObject || !pointsObject.material) return; const mat = pointsObject.material;
+            if (isBlurActive) { mat.map = softCircleTexture; mat.size = blurDiameter; mat.transparent = true; mat.blending = THREE.AdditiveBlending; mat.depthWrite = false;  }
+            else {  mat.depthWrite = true;
+                if (pointStyle === 'soft_circle') { mat.map = softCircleTexture; mat.size = originalPointSize; mat.transparent = true;  mat.blending = THREE.NormalBlending;  }
+                else {  mat.map = null;  mat.size = originalPointSize; mat.transparent = false; mat.blending = THREE.NormalBlending; }
+            } mat.needsUpdate = true;
+        }
+
+        function updateTrailMaterials() {
+            if (!areTrailsEnabled || !particleTrails || particleTrails.length === 0) return; 
+            for (let i = 0; i < particleTrails.length; i++) {
+                if (particleTrails[i] && particleTrails[i].material && particlesData[i] && particlesData[i].color) { 
+                    particleTrails[i].material.color.copy(particlesData[i].color);
+                    particleTrails[i].material.opacity = isBlurActive ? TRAIL_BASE_OPACITY * TRAIL_BLURRED_OPACITY_FACTOR : TRAIL_BASE_OPACITY;
+                    particleTrails[i].material.needsUpdate = true; 
+                }
+            }
+        }
+        
+        function updateParticles(deltaTime) { 
+            if (!pointsObject || !particlesData || particlesData.length === 0) return; 
+            const positionsAttribute = pointsObject.geometry.attributes.position;
+            const delta = deltaTime * animationSpeedFactor;
+            const forceVector = new THREE.Vector3(); 
+
+            // Apply forces and update velocities/positions
+            for (let i = 0; i < particlesData.length; i++) {
+                const particle = particlesData[i];
+                if (!particle) continue; 
+                
+                const totalAcceleration = new THREE.Vector3(0,0,0); 
+
+                if (areTrailsEnabled) {
+                    particle.history.push(particle.position.clone());
+                    if (particle.history.length > trailLength) {
+                        particle.history.shift(); 
+                    }
+                }
+
+                if (numAttractors > 0) {
+                    for (let j = 0; j < attractors.length; j++) {
+                        const attractorCenter = attractors[j];
+                        if (!attractorCenter) continue;
+                        
+                        forceVector.subVectors(attractorCenter, particle.position);
+                        let distSq = forceVector.lengthSq();
+                        if (distSq > 0.0001) { 
+                            let currentAttractorEffectiveStrength = attractorStrength;
+                            if (attractorStrengthMultiplier !== 1.0 && j > 0) {
+                                currentAttractorEffectiveStrength *= Math.pow(attractorStrengthMultiplier, j);
+                            }
+                            const forceMagnitude = currentAttractorEffectiveStrength / (distSq + 0.1); 
+                            totalAcceleration.add(forceVector.clone().normalize().multiplyScalar(forceMagnitude));
+                        }
+
+                        if (isDipoleEnabled) {
+                            const northPolePos = attractorCenter.clone().add(new THREE.Vector3(0, DIPOLE_SEPARATION, 0));
+                            const southPolePos = attractorCenter.clone().add(new THREE.Vector3(0, -DIPOLE_SEPARATION, 0));
+
+                            forceVector.subVectors(particle.position, northPolePos);
+                            distSq = forceVector.lengthSq();
+                            if (distSq > 0.0001) {
+                                const forceMagnitude = (dipoleFieldStrength * -particleCharge) / (distSq + 0.01);
+                                totalAcceleration.add(forceVector.normalize().multiplyScalar(forceMagnitude));
+                            }
+                            
+                            forceVector.subVectors(southPolePos, particle.position);
+                            distSq = forceVector.lengthSq();
+                            if (distSq > 0.0001) {
+                                const forceMagnitude = (dipoleFieldStrength * particleCharge) / (distSq + 0.01);
+                                totalAcceleration.add(forceVector.normalize().multiplyScalar(forceMagnitude));
+                            }
+                        }
+                    }
+                }
+
+                if (particlesAttractEachOther) {
+                    for (let j = 0; j < particlesData.length; j++) {
+                        if (i === j) continue; 
+                        const otherParticle = particlesData[j];
+                        if (!otherParticle) continue;
+                        forceVector.subVectors(otherParticle.position, particle.position);
+                        const distSq = forceVector.lengthSq();
+                        if (distSq < particleAttractionMaxDistanceSq && distSq > 0.0001) { 
+                            const forceMagnitude = particleAttractionStrength / (distSq + 0.001); 
+                            totalAcceleration.add(forceVector.normalize().multiplyScalar(forceMagnitude));
+                        }
+                    }
+                }
+                
+                if (baseCentralPull > 0 && numAttractors === 0 && !particlesAttractEachOther) { 
+                    const originPullDir = particle.position.clone().negate();
+                    const distToOriginSq = particle.position.lengthSq();
+                    if (distToOriginSq > 0.01) {
+                         totalAcceleration.add(originPullDir.normalize().multiplyScalar(baseCentralPull * Math.sqrt(distToOriginSq) * 0.05)); 
+                    }
+                }
+
+                particle.velocity.add(totalAcceleration.multiplyScalar(delta));
+                const maxSpeed = averageParticleSpeed * (particlesAttractEachOther ? 15 : 5); 
+                if (particle.velocity.lengthSq() > maxSpeed * maxSpeed) {
+                    particle.velocity.normalize().multiplyScalar(maxSpeed);
+                }
+                particle.position.add(particle.velocity.clone().multiplyScalar(delta));
+            }
+
+            if (areCollisionsEnabled) {
+                for (let i = 0; i < particlesData.length; i++) {
+                    const p1 = particlesData[i]; if (!p1) continue;
+                    for (let j = i + 1; j < particlesData.length; j++) {
+                        const p2 = particlesData[j]; if (!p2) continue;
+                        const distVec = new THREE.Vector3().subVectors(p2.position, p1.position);
+                        const dist = distVec.length();
+                        const minDist = PARTICLE_RADIUS * 2; 
+                        if (dist < minDist) { 
+                            const randCollision = Math.random(); let collisionOutcomeProcessed = false;
+                            if (collisionOutcomeFactor > 1.0) { 
+                                const creationChance = Math.min(1.0, collisionOutcomeFactor - 1.0);
+                                if (randCollision < creationChance) {
+                                    const boostFactor = 1.5 + Math.random() * 1.5; const primaryParticle = (Math.random() < 0.5) ? p1 : p2; const secondaryParticle = (primaryParticle === p1) ? p2 : p1;
+                                    primaryParticle.velocity.multiplyScalar(boostFactor); const pushDirection = new THREE.Vector3().subVectors(secondaryParticle.position, primaryParticle.position).normalize();
+                                    if (pushDirection.lengthSq() > 0) { secondaryParticle.velocity.add(pushDirection.multiplyScalar(averageParticleSpeed * 0.3)); }
+                                    secondaryParticle.velocity.clampLength(0, averageParticleSpeed * 10); primaryParticle.velocity.clampLength(0, averageParticleSpeed * 20); 
+                                    const penetration = minDist - dist; if (penetration > 0) { const normal = distVec.normalize(); const correction = normal.clone().multiplyScalar(penetration * 0.51); p1.position.sub(correction); p2.position.add(correction); }
+                                    collisionOutcomeProcessed = true;
+                                }
+                            } else if (collisionOutcomeFactor < 1.0) { 
+                                const deletionChance = Math.min(1.0, 1.0 - collisionOutcomeFactor);
+                                if (randCollision < deletionChance) { if (Math.random() < 0.5) resetParticle(p1); else resetParticle(p2); collisionOutcomeProcessed = true; }
+                            }
+                            if (!collisionOutcomeProcessed) { 
+                                const penetration = minDist - dist; const normal = distVec.clone().normalize(); const correction = normal.clone().multiplyScalar(penetration * 0.51); p1.position.sub(correction); p2.position.add(correction);
+                                const v1 = p1.velocity.clone(); const v2 = p2.velocity.clone(); const collisionNormal = normal.clone(); 
+                                const v1nScalar = v1.dot(collisionNormal); const v2nScalar = v2.dot(collisionNormal);
+                                const v1t = v1.clone().sub(collisionNormal.clone().multiplyScalar(v1nScalar)); const v2t = v2.clone().sub(collisionNormal.clone().multiplyScalar(v2nScalar));
+                                const v1nScalarNew = v1nScalar * (1 - collisionRestitution) / 2 + v2nScalar * (1 + collisionRestitution) / 2;
+                                const v2nScalarNew = v1nScalar * (1 + collisionRestitution) / 2 + v2nScalar * (1 - collisionRestitution) / 2;
+                                const v1nNew = collisionNormal.clone().multiplyScalar(v1nScalarNew); const v2nNew = collisionNormal.clone().multiplyScalar(v2nScalarNew);
+                                p1.velocity.copy(v1t.add(v1nNew)); p2.velocity.copy(v2t.add(v2nNew));
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (let i = 0; i < particlesData.length; i++) {
+                const particle = particlesData[i]; if (!particle) continue;
+                if (particle.position.lengthSq() > boundingSphereRadiusSq) {
+                    const rand = Math.random(); let actionTaken = false;
+                    if (boundaryOutcomeFactor > 1.0) { 
+                        const bounceChance = Math.min(1.0, boundaryOutcomeFactor - 1.0);
+                        if (rand < bounceChance) { const normalToBoundary = particle.position.clone().normalize().negate(); particle.velocity.reflect(normalToBoundary).multiplyScalar(collisionRestitution); particle.position.copy(normalToBoundary.negate().multiplyScalar(boundingSphereRadius * 0.995)); actionTaken = true; }
+                    } else if (boundaryOutcomeFactor < 1.0) { 
+                        const deleteChance = Math.min(1.0, 1.0 - boundaryOutcomeFactor);
+                        if (rand < deleteChance) { resetParticle(particle); actionTaken = true; }
+                    }
+                    if (!actionTaken) { resetParticle(particle); }
+                }
+                if (positionsAttribute) { positionsAttribute.setXYZ(i, particle.position.x, particle.position.y, particle.position.z); }
+                if (areTrailsEnabled && particleTrails[i] && particle.history.length > 1) {
+                    particleTrails[i].geometry.setFromPoints(particle.history);
+                } else if (areTrailsEnabled && particleTrails[i]) {
+                    particleTrails[i].geometry.setFromPoints([]); 
+                }
+            }
+            if (positionsAttribute) positionsAttribute.needsUpdate = true;
+        }
+        
+        function updateParticleColors() {  
+            if (!pointsObject || !pointsObject.geometry || !pointsObject.geometry.attributes.color || !particlesData || particlesData.length === 0) return;  
+            const particleColorsAttribute = pointsObject.geometry.attributes.color; let minVal = Infinity, maxVal = -Infinity; const values = [];  
+            if (colorizationMode === 'speed') { for (let i = 0; i < particlesData.length; i++) { if (!particlesData[i] || !particlesData[i].velocity) continue;  const val = particlesData[i].velocity.length(); values.push(val); if (val < minVal) minVal = val; if (val > maxVal) maxVal = val;} } 
+            else {  const center = new THREE.Vector3(0,0,0);  for (let i = 0; i < particlesData.length; i++) { if (!particlesData[i] || !particlesData[i].position) continue;  const val = particlesData[i].position.distanceTo(center); values.push(val); if (val < minVal) minVal = val; if (val > maxVal) maxVal = val;} }              
+            const range = (maxVal - minVal) > 0.001 ? (maxVal - minVal) : 1; const tempColor = new THREE.Color(); 
+            for (let i = 0; i < particlesData.length; i++) { if (!particlesData[i] || !particlesData[i].color || values[i] === undefined) continue;  
+                const normalizedValue = (values[i] - minVal) / range; tempColor.setHSL(normalizedValue * 0.75, 1.0, 0.5);  
+                particlesData[i].color.copy(tempColor);  particleColorsAttribute.setXYZ(i, tempColor.r, tempColor.g, tempColor.b); 
+            } 
+            particleColorsAttribute.needsUpdate = true; updateTrailMaterials();  
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('resize', onWindowResize, false);
+            if (toggleControlsButton) toggleControlsButton.addEventListener('click', () => { areControlsVisible = !areControlsVisible; if (controlsContainer) controlsContainer.classList.toggle('hidden', !areControlsVisible); if (toggleControlsButton) toggleControlsButton.textContent = areControlsVisible ? "Hide Controls" : "Show Controls"; if (controlsContainer && controlsContainer.offsetWidth && toggleControlsButton) toggleControlsButton.style.left = areControlsVisible ? (controlsContainer.offsetWidth + 15) + 'px' : '10px'; });
+            if (controlsContainer && controlsContainer.offsetWidth && toggleControlsButton) { toggleControlsButton.style.left = (controlsContainer.offsetWidth + 15) + 'px';}
+            if (numPointsSlider) numPointsSlider.addEventListener('input', (e) => { numPoints = parseInt(e.target.value); if(numPointsValue) numPointsValue.textContent = numPoints; recreateParticlesAndTrails(); });
+            if (boundingSphereRadiusSlider) boundingSphereRadiusSlider.addEventListener('input', (e) => { boundingSphereRadius = parseFloat(e.target.value); boundingSphereRadiusSq = boundingSphereRadius * boundingSphereRadius; if(boundingSphereRadiusValue) boundingSphereRadiusValue.textContent = boundingSphereRadius.toFixed(0);});
+            if (boundaryOutcomeFactorSlider) boundaryOutcomeFactorSlider.addEventListener('input', (e) => { boundaryOutcomeFactor = parseFloat(e.target.value); if(boundaryOutcomeFactorValue) boundaryOutcomeFactorValue.textContent = boundaryOutcomeFactor.toFixed(1);});
+            if (enableTrailsCheckbox) enableTrailsCheckbox.addEventListener('change', (e) => { areTrailsEnabled = e.target.checked; if (areTrailsEnabled) { recreateParticlesAndTrails(); } else { clearTrails(); } updateButtonStates();});
+            if (trailLengthSlider) trailLengthSlider.addEventListener('input', (e) => { trailLength = parseInt(e.target.value); if(trailLengthValue) trailLengthValue.textContent = trailLength; });
+            if (avgSpeedSlider) avgSpeedSlider.addEventListener('input', (e) => { averageParticleSpeed = parseFloat(e.target.value); if(avgSpeedValue) avgSpeedValue.textContent = averageParticleSpeed.toFixed(1); recreateParticlesAndTrails(); });
+            if (animSpeedSlider) animSpeedSlider.addEventListener('input', (e) => { animationSpeedFactor = parseFloat(e.target.value); if(animSpeedValue) animSpeedValue.textContent = animationSpeedFactor.toFixed(1); });
+            if (numAttractorsSlider) numAttractorsSlider.addEventListener('input', (e) => { numAttractors = parseInt(e.target.value); if(numAttractorsValue) numAttractorsValue.textContent = numAttractors; recreateAttractors(); });
+            if (attractorSpreadSlider) attractorSpreadSlider.addEventListener('input', (e) => { attractorSpreadRadius = parseFloat(e.target.value); if(attractorSpreadValue) attractorSpreadValue.textContent = attractorSpreadRadius.toFixed(1); recreateAttractors(); });
+            if (attractorStrengthSlider) attractorStrengthSlider.addEventListener('input', (e) => { attractorStrength = parseFloat(e.target.value); if(attractorStrengthValue) attractorStrengthValue.textContent = attractorStrength.toFixed(2); });
+            if (attractorStrengthMultiplierSlider) attractorStrengthMultiplierSlider.addEventListener('input', (e) => { attractorStrengthMultiplier = parseFloat(e.target.value); if(attractorStrengthMultiplierValue) attractorStrengthMultiplierValue.textContent = attractorStrengthMultiplier.toFixed(1); });
+            if (enableDipoleCheckbox) enableDipoleCheckbox.addEventListener('change', (e) => { isDipoleEnabled = e.target.checked; recreateAttractors(); updateButtonStates(); });
+            if (dipoleFieldStrengthSlider) dipoleFieldStrengthSlider.addEventListener('input', (e) => { dipoleFieldStrength = parseFloat(e.target.value); if(dipoleFieldStrengthValue) dipoleFieldStrengthValue.textContent = dipoleFieldStrength.toFixed(0);});
+            if (particleChargeSlider) particleChargeSlider.addEventListener('input', (e) => { particleCharge = parseFloat(e.target.value); if(particleChargeValue) particleChargeValue.textContent = particleCharge.toFixed(1);});
+            if (particlesAttractCheckbox) particlesAttractCheckbox.addEventListener('change', (e) => { particlesAttractEachOther = e.target.checked; updateButtonStates(); });
+            if (particleAttractionStrengthSlider) particleAttractionStrengthSlider.addEventListener('input', (e) => { particleAttractionStrength = parseFloat(e.target.value); if(particleAttractionStrengthValue) particleAttractionStrengthValue.textContent = particleAttractionStrength.toExponential(1);});
+            if (particleAttractionDistanceSlider) particleAttractionDistanceSlider.addEventListener('input', (e) => { particleAttractionMaxDistance = parseFloat(e.target.value); particleAttractionMaxDistanceSq = particleAttractionMaxDistance * particleAttractionMaxDistance; if(particleAttractionDistanceValue) particleAttractionDistanceValue.textContent = particleAttractionMaxDistance.toFixed(1);});
+            if (enableCollisionsCheckbox) enableCollisionsCheckbox.addEventListener('change', (e) => { areCollisionsEnabled = e.target.checked; updateButtonStates(); });
+            if (collisionRestitutionSlider) collisionRestitutionSlider.addEventListener('input', (e) => { collisionRestitution = parseFloat(e.target.value); if(collisionRestitutionValue) collisionRestitutionValue.textContent = collisionRestitution.toFixed(2);}); 
+            if (collisionOutcomeFactorSlider) collisionOutcomeFactorSlider.addEventListener('input', (e) => { collisionOutcomeFactor = parseFloat(e.target.value); if(collisionOutcomeFactorValue) collisionOutcomeFactorValue.textContent = collisionOutcomeFactor.toFixed(1);});
+            if (togglePointStyleButton) togglePointStyleButton.addEventListener('click', () => { pointStyle = (pointStyle === 'square') ? 'soft_circle' : 'square'; updatePointMaterialStyle(); updateButtonStates(); });
+            if (toggleBlurButton) toggleBlurButton.addEventListener('click', () => { isBlurActive = !isBlurActive; updatePointMaterialStyle(); updateTrailMaterials(); updateButtonStates(); });
+            if (blurDiameterSlider) blurDiameterSlider.addEventListener('input', (e) => { blurDiameter = parseFloat(e.target.value); if(blurDiameterValue) blurDiameterValue.textContent = blurDiameter.toFixed(2); if (isBlurActive && pointsObject) { pointsObject.material.size = blurDiameter; } });
+            if (toggleColorModeButton) toggleColorModeButton.addEventListener('click', () => { colorizationMode = (colorizationMode === 'speed') ? 'distance_center' : 'speed'; updateParticleColors(); updateTrailMaterials(); updateButtonStates(); });
+            if (updateColorsButton) updateColorsButton.addEventListener('click', () => { updateParticleColors(); updateTrailMaterials(); });
+            if (toggleInertialSpinButton) toggleInertialSpinButton.addEventListener('click', () => { isInertialSpinEnabled = !isInertialSpinEnabled; if (!isInertialSpinEnabled && controls && controls.autoRotate && spinVelocityX !== 0) { controls.autoRotate = false; spinVelocityX = 0; } else if (isInertialSpinEnabled && autoRotateSpeed !== 0 && controls) { controls.autoRotate = false; } updateButtonStates(); });
+            if (inertiaFactorSlider) inertiaFactorSlider.addEventListener('input', (e) => { inertiaFactor = parseFloat(e.target.value); if(inertiaFactorValue) inertiaFactorValue.textContent = inertiaFactor.toFixed(1); });
+            if (autoRotateSpeedSlider) autoRotateSpeedSlider.addEventListener('input', (e) => { autoRotateSpeed = parseFloat(e.target.value); if(autoRotateSpeedValue) autoRotateSpeedValue.textContent = autoRotateSpeed.toFixed(1); if ((!isInertialSpinEnabled || spinVelocityX === 0) && controls) { controls.autoRotateSpeed = autoRotateSpeed; controls.autoRotate = autoRotateSpeed !== 0; } });
+            if (toggleBgAnimationButton) toggleBgAnimationButton.addEventListener('click', () => { isBgColorAnimated = !isBgColorAnimated; if (!isBgColorAnimated && renderer) renderer.setClearColor(defaultBgColor); updateButtonStates(); });
+            if (bgAnimationSpeedSlider) bgAnimationSpeedSlider.addEventListener('input', (e) => { bgColorAnimationSpeed = parseFloat(e.target.value); if(bgAnimationSpeedValue) bgAnimationSpeedValue.textContent = bgColorAnimationSpeed.toFixed(2); });
+            
+            if(renderer && renderer.domElement) { renderer.domElement.addEventListener('mousedown', onCanvasMouseDown, false); window.addEventListener('mousemove', onWindowMouseMove, false); window.addEventListener('mouseup', onWindowMouseUp, false); }
+        }
+
+        function updateButtonStates() {
+            if(!enableTrailsCheckbox) return; 
+            enableTrailsCheckbox.checked = areTrailsEnabled;
+            if (trailLengthSlider) trailLengthSlider.disabled = !areTrailsEnabled;
+            if (particlesAttractCheckbox) particlesAttractCheckbox.checked = particlesAttractEachOther; 
+            if (particleAttractionStrengthSlider) particleAttractionStrengthSlider.disabled = !particlesAttractEachOther; 
+            if (particleAttractionDistanceSlider) particleAttractionDistanceSlider.disabled = !particlesAttractEachOther; 
+            if (enableCollisionsCheckbox) enableCollisionsCheckbox.checked = areCollisionsEnabled;
+            if (collisionRestitutionSlider) collisionRestitutionSlider.disabled = !areCollisionsEnabled; 
+            if (collisionOutcomeFactorSlider) collisionOutcomeFactorSlider.disabled = !areCollisionsEnabled; 
+            if (enableDipoleCheckbox) enableDipoleCheckbox.checked = isDipoleEnabled;
+            if (dipoleFieldStrengthSlider) dipoleFieldStrengthSlider.disabled = !isDipoleEnabled;
+            if (particleChargeSlider) particleChargeSlider.disabled = !isDipoleEnabled;
+            if (togglePointStyleButton) togglePointStyleButton.textContent = `Style: ${pointStyle === 'square' ? 'Sharp Squares' : 'Soft Circles'}`;
+            if (toggleBlurButton) { toggleBlurButton.textContent = isBlurActive ? "Disable Blur" : "Enable Blur"; toggleBlurButton.classList.toggle('active', isBlurActive); }
+            if (blurDiameterSlider) blurDiameterSlider.disabled = !isBlurActive;
+            if (toggleColorModeButton) toggleColorModeButton.textContent = `Color Mode: ${colorizationMode === 'speed' ? 'Speed' : 'Distance'}`;
+            if (toggleInertialSpinButton) { toggleInertialSpinButton.textContent = isInertialSpinEnabled ? "Disable Inertial Spin" : "Enable Inertial Spin"; toggleInertialSpinButton.classList.toggle('active', isInertialSpinEnabled); }
+            if (inertiaFactorSlider) inertiaFactorSlider.disabled = !isInertialSpinEnabled;
+            if (toggleBgAnimationButton) { toggleBgAnimationButton.textContent = isBgColorAnimated ? "Stop BG Animation" : "Animate Background"; toggleBgAnimationButton.classList.toggle('active', isBgColorAnimated); }
+            if (bgAnimationSpeedSlider) bgAnimationSpeedSlider.disabled = !isBgColorAnimated;
+        }
+
+        function recreateAttractors() { 
+            if (!scene) return;  
+            attractorObjects.forEach(obj => scene.remove(obj)); 
+            dipolePoleObjects.forEach(obj => scene.remove(obj)); 
+            attractorObjects = []; attractors = []; dipolePoleObjects = [];
+            const attractorGeometry = new THREE.SphereGeometry(0.15, 16, 16); 
+            const attractorMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); 
+            const posPoleGeo = new THREE.SphereGeometry(0.08, 8, 8);
+            const posPoleMat = new THREE.MeshBasicMaterial({ color: 0x0088ff }); 
+            const negPoleGeo = new THREE.SphereGeometry(0.08, 8, 8);
+            const negPoleMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 }); 
+            if (numAttractors > 0) { 
+                for (let i = 0; i < numAttractors; i++) {
+                    const r = (numAttractors > 1) ? attractorSpreadRadius * Math.cbrt(Math.random()) : 0;
+                    const phi = Math.acos(-1 + (2 * Math.random())); 
+                    const theta = Math.random() * Math.PI * 2;
+                    const attractorPos = (numAttractors > 1) ? new THREE.Vector3(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi)) : new THREE.Vector3(0,0,0);
+                    attractors.push(attractorPos);
+                } 
+            } 
+            attractors.forEach(pos => { 
+                const mesh = new THREE.Mesh(attractorGeometry, attractorMaterial); 
+                mesh.position.copy(pos); 
+                scene.add(mesh); 
+                attractorObjects.push(mesh); 
+                if (isDipoleEnabled) {
+                    const posPole = new THREE.Mesh(posPoleGeo, posPoleMat);
+                    posPole.position.copy(pos).add(new THREE.Vector3(0, DIPOLE_SEPARATION, 0));
+                    scene.add(posPole);
+                    dipolePoleObjects.push(posPole);
+                    const negPole = new THREE.Mesh(negPoleGeo, negPoleMat);
+                    negPole.position.copy(pos).add(new THREE.Vector3(0, -DIPOLE_SEPARATION, 0));
+                    scene.add(negPole);
+                    dipolePoleObjects.push(negPole);
+                }
+            });
+        }
+        
+        function onCanvasMouseDown(event) { if (isInertialSpinEnabled && event.button === 0) { isDraggingForSpin = true; if(controls) controls.autoRotate = false; lastSpinMouseX = event.clientX; lastSpinTime = performance.now(); spinVelocityX = 0;}};
+        function onWindowMouseMove(event) { if (isDraggingForSpin) { const currentTime = performance.now(); const deltaTime = currentTime - lastSpinTime; if (deltaTime > 0) { const deltaX = event.clientX - lastSpinMouseX; spinVelocityX = deltaX / deltaTime; } lastSpinMouseX = event.clientX; lastSpinTime = currentTime;}};
+        function onWindowMouseUp(event) { if (isDraggingForSpin && event.button === 0) { isDraggingForSpin = false; if (Math.abs(spinVelocityX) > 0.01 && controls) {  let targetAutoRotateSpeed = spinVelocityX * inertiaFactor;  controls.autoRotateSpeed = Math.max(-MAX_AUTO_ROTATE_SPEED_CAP, Math.min(MAX_AUTO_ROTATE_SPEED_CAP, targetAutoRotateSpeed)); controls.autoRotate = true; } else if (controls) {  controls.autoRotateSpeed = autoRotateSpeed; controls.autoRotate = autoRotateSpeed !== 0; spinVelocityX = 0; }}};
+        
+        function init() {
+            initDOMReferences(); 
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            if (boundingSphereRadiusSlider) { boundingSphereRadius = parseFloat(boundingSphereRadiusSlider.value); } else { boundingSphereRadius = 15.0; }
+            boundingSphereRadiusSq = boundingSphereRadius * boundingSphereRadius; 
+            camera.position.z = boundingSphereRadius + 10; 
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(defaultBgColor);
+            document.body.appendChild(renderer.domElement);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; controls.dampingFactor = 0.05; controls.autoRotate = false; 
+            softCircleTexture = createSoftCircleTexture();
+            numPoints = 200; averageParticleSpeed = 0.8; animationSpeedFactor = 1.0; trailLength = 20; areTrailsEnabled = false; pointStyle = 'square'; isBlurActive = false; blurDiameter = 0.3;
+            numAttractors = 1; attractorSpreadRadius = 0; attractorStrength = 5; attractorStrengthMultiplier = 1.0;
+            isDipoleEnabled = false; dipoleFieldStrength = 10; particleCharge = -1.0;
+            particlesAttractEachOther = false; particleAttractionStrength = 0.00005; particleAttractionMaxDistance = 2.0; 
+            areCollisionsEnabled = false; collisionRestitution = 0.8; collisionOutcomeFactor = 1.0;
+            isInertialSpinEnabled = false; inertiaFactor = 7.0; autoRotateSpeed = 0;
+            isBgColorAnimated = false; bgColorAnimationSpeed = 0.05; currentBgHue = 0; defaultBgColor = new THREE.Color(0x000000);
+            areControlsVisible = true; originalPointSize = 0.05; baseCentralPull = 0.001;
+            if (numPointsSlider) numPoints = parseInt(numPointsSlider.value); 
+            if (boundaryOutcomeFactorSlider) boundaryOutcomeFactor = parseFloat(boundaryOutcomeFactorSlider.value);
+            if (enableTrailsCheckbox) areTrailsEnabled = enableTrailsCheckbox.checked;
+            if (trailLengthSlider) trailLength = parseInt(trailLengthSlider.value);
+            if (avgSpeedSlider) averageParticleSpeed = parseFloat(avgSpeedSlider.value);
+            if (animSpeedSlider) animationSpeedFactor = parseFloat(animSpeedSlider.value); 
+            if (numAttractorsSlider) numAttractors = parseInt(numAttractorsSlider.value); 
+            if (attractorSpreadSlider) attractorSpreadRadius = parseFloat(attractorSpreadSlider.value); 
+            if (attractorStrengthSlider) attractorStrength = parseFloat(attractorStrengthSlider.value); 
+            if (attractorStrengthMultiplierSlider) attractorStrengthMultiplier = parseFloat(attractorStrengthMultiplierSlider.value);
+            if (enableDipoleCheckbox) isDipoleEnabled = enableDipoleCheckbox.checked;
+            if (dipoleFieldStrengthSlider) dipoleFieldStrength = parseFloat(dipoleFieldStrengthSlider.value);
+            if (particleChargeSlider) particleCharge = parseFloat(particleChargeSlider.value);
+            if (particlesAttractCheckbox) particlesAttractEachOther = particlesAttractCheckbox.checked; 
+            if (particleAttractionStrengthSlider) particleAttractionStrength = parseFloat(particleAttractionStrengthSlider.value); 
+            if (particleAttractionDistanceSlider) { particleAttractionMaxDistance = parseFloat(particleAttractionDistanceSlider.value); particleAttractionMaxDistanceSq = particleAttractionMaxDistance * particleAttractionMaxDistance; }
+            if (enableCollisionsCheckbox) areCollisionsEnabled = enableCollisionsCheckbox.checked; 
+            if (collisionRestitutionSlider) collisionRestitution = parseFloat(collisionRestitutionSlider.value); 
+            if (collisionOutcomeFactorSlider) collisionOutcomeFactor = parseFloat(collisionOutcomeFactorSlider.value); 
+            if (blurDiameterSlider) blurDiameter = parseFloat(blurDiameterSlider.value); 
+            if (bgAnimationSpeedSlider) bgColorAnimationSpeed = parseFloat(bgAnimationSpeedSlider.value); 
+            if (inertiaFactorSlider) inertiaFactor = parseFloat(inertiaFactorSlider.value);
+            if (autoRotateSpeedSlider) autoRotateSpeed = parseFloat(autoRotateSpeedSlider.value);
+            updateAllSliderValues(); 
+            recreateAttractors();
+            recreateParticlesAndTrails();
+            setupEventListeners(); 
+            updateButtonStates(); 
+            if (controls) { controls.autoRotateSpeed = autoRotateSpeed; controls.autoRotate = autoRotateSpeed !== 0; }
+        }
+
+        function animate() { 
+            requestAnimationFrame(animate); 
+            const deltaTime = clock.getDelta(); 
+            if(controls) controls.update();  
+            updateParticles(deltaTime);  
+            if (isBgColorAnimated) { 
+                currentBgHue += bgColorAnimationSpeed * deltaTime * 0.1; currentBgHue %= 1.0; 
+                const bgColor = new THREE.Color().setHSL(currentBgHue, 0.9, 0.15);  
+                if (renderer) renderer.setClearColor(bgColor); 
+            } 
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+
+        function onWindowResize() { 
+             if (camera && renderer && controlsContainer && toggleControlsButton) {  
+                camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); 
+                renderer.setSize(window.innerWidth, window.innerHeight); 
+                if (areControlsVisible && controlsContainer.offsetWidth) { 
+                    if (toggleControlsButton) toggleControlsButton.style.left = (controlsContainer.offsetWidth + 15) + 'px'; 
+                }
+            }
+        }
+        
+        // --- Main Execution ---
+        init();
+        animate();
+    </script>
+</body>
+</html>
