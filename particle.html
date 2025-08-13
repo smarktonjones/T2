@@ -168,21 +168,31 @@
             if (bgAnimationSpeedValue && bgAnimationSpeedSlider) bgAnimationSpeedValue.textContent = parseFloat(bgAnimationSpeedSlider.value).toFixed(2);
         }
         
-        function resetParticle(particle) {
-            const r_pos_factor = Math.cbrt(Math.random()); 
-            const r_pos = r_pos_factor * (boundingSphereRadius * 0.7) + (boundingSphereRadius * 0.1); 
-            const phi_pos = Math.acos(-1 + (2 * Math.random())); 
-            const theta_pos = Math.random() * Math.PI * 2;
-            particle.position.set( 
-                r_pos * Math.sin(phi_pos) * Math.cos(theta_pos), 
-                r_pos * Math.sin(phi_pos) * Math.sin(theta_pos), 
-                r_pos * Math.cos(phi_pos) 
+function resetParticle(particle) {
+            // --- CHANGE: Create particles in a flat disc on the X-Z plane ---
+            const maxRadius = boundingSphereRadius * 0.5; // Start within half the boundary
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * maxRadius;
+
+            particle.position.set(
+                Math.cos(angle) * radius,
+                0, // Set Y to 0 to keep it flat
+                Math.sin(angle) * radius
             );
-            const speed = averageParticleSpeed * (0.5 + Math.random() * 0.8); 
-            let initialVelocityDir = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-            if (initialVelocityDir.lengthSq() === 0) initialVelocityDir.set(1,0,0); 
-            particle.velocity.copy(initialVelocityDir.normalize().multiplyScalar(speed));
-            particle.history = []; 
+           
+            const speed = averageParticleSpeed * (0.8 + Math.random() * 0.4);
+           
+            // --- CHANGE: Give a tangential velocity for a spinning effect ---
+            let tangent = new THREE.Vector3(-particle.position.z, 0, particle.position.x);
+            if (tangent.lengthSq() === 0) tangent.set(1,0,0); // Failsafe for particle at origin
+           
+            particle.velocity.copy(tangent.normalize().multiplyScalar(speed));
+           
+            // Optional: Add a small random component to the velocity to make it less perfect
+            particle.velocity.x += (Math.random() - 0.5) * 0.1;
+            particle.velocity.z += (Math.random() - 0.5) * 0.1;
+
+            particle.history = []; // Clear trail history
         }
 
         function clearTrails() {
