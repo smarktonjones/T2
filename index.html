@@ -1479,15 +1479,6 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
     textarea.value = selectedValue;
 };
 
-// Also attach the Shift+Enter shortcut to the dropdown select list
-document.getElementById('textbox-editor-select').addEventListener('keydown', (event) => {
-    if (event.shiftKey && event.key === 'Enter') {
-        // Prevent any default browser action for Enter on a select list
-        event.preventDefault();
-        // Programmatically click the save button
-        document.getElementById('textbox-editor-save-btn').click();
-    }
-		
 		
 		// **** START OF NEW CODE for double click**** 
 		// Add double-click functionality to the dropdown list 
@@ -1714,20 +1705,18 @@ document.getElementById('textbox-editor-select').addEventListener('keydown', (ev
         
         // --- Event Listeners (FIXED ORDER) ---
         
-	// **** START OF REPLACEMENT CODE ****
 
-// **** START OF NEW, COMBINED CODE ****
 
-// A single, global shortcut handler for Shift+Enter
+// A single, global shortcut handler for Shift+Enter that routes actions based on context.
 document.addEventListener('keydown', (event) => {
-    // Only proceed if the specific key combination is pressed
+    // Only proceed if the specific key combination is pressed.
     if (!event.shiftKey || event.key !== 'Enter') {
         return;
     }
 
     // --- CONTEXT-SENSITIVE ROUTING ---
 
-    // Check if any modal is currently visible
+    // Find which modal is currently visible
     const anesModal = document.getElementById('anesthetic-editor-modal');
     const textModal = document.getElementById('textbox-editor-modal');
     const endoModal = document.getElementById('endo-testing-modal');
@@ -1738,11 +1727,20 @@ document.addEventListener('keydown', (event) => {
     // Prevent the default browser action (e.g., adding a newline in a textarea)
     event.preventDefault();
 
-    // ROUTE 1: A modal is open, so click its save button.
-    if (getComputedStyle(anesModal).display !== 'none') {
-        document.getElementById('anesthetic-editor-save-btn').click();
-    } else if (getComputedStyle(textModal).display !== 'none') {
+    // ** NEW, MORE SPECIFIC CHECK **
+    // Check if the focus is inside the textbox editor's dropdown. This is a special case.
+    if (getComputedStyle(textModal).display !== 'none' && document.activeElement.id === 'textbox-editor-select') {
+         // Stop the event from bubbling up further, preventing the global copy.
+        event.stopPropagation();
         document.getElementById('textbox-editor-save-btn').click();
+        return; // Exit the function immediately
+    }
+
+    // ROUTE 1: A modal is open, so click its save button.
+    if (getComputedStyle(textModal).display !== 'none') {
+        document.getElementById('textbox-editor-save-btn').click();
+    } else if (getComputedStyle(anesModal).display !== 'none') {
+        document.getElementById('anesthetic-editor-save-btn').click();
     } else if (getComputedStyle(endoModal).display !== 'none') {
         document.getElementById('endo-testing-save-btn').click();
     } else if (getComputedStyle(allergyModal).display !== 'none') {
@@ -1757,8 +1755,6 @@ document.addEventListener('keydown', (event) => {
         document.getElementById('copy-btn-top').click();
     }
 });
-
-// **** END OF NEW, COMBINED CODE ****
 
 	    
 		// New, smarter logic for closing modals by clicking the backdrop
