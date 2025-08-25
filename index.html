@@ -1055,7 +1055,7 @@
       "content": "Default",
       "internalLabel": "Dental Technician Name",
       "prefixLabel": "DENTAL TECHNICIAN: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "SANDERSON",
         "LEONARDSON",
@@ -1095,7 +1095,7 @@
       "content": "",
       "internalLabel": "Dentist Block",
       "prefixLabel": "DENTAL OFFICER: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "MG HORNING DDS  1912969445",
         "JA HOGAN",
@@ -1112,14 +1112,14 @@
       "prefixNewline": true,
       "suffixNewline": false,
       "originalId": "5-3",
-      "isHidden": true,
+      "isHidden": false,
       "doNotReset": true,
       "width": "",
-      "content": "  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      ",
+      "content": "",
       "internalLabel": "Signature Block",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
-      "dropdownOptions": []
+      "defaultText": "",
+      "dropdownOptions": ["  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "]
     }
   ]
 }
@@ -1463,7 +1463,23 @@
 	    
 	    
 	    
-	    const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; document.getElementById('textbox-editor-replace-btn').onclick = () => { if (!activeElementForEditor) return; document.getElementById('textbox-editor-textarea').value = document.getElementById('textbox-editor-select').value; }; 
+	    const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
+		
+
+
+document.getElementById('textbox-editor-replace-btn').onclick = () => {
+    if (!activeElementForEditor) return;
+    const textarea = document.getElementById('textbox-editor-textarea');
+    const select = document.getElementById('textbox-editor-select');
+
+    // Get the selected value and replace the user-typed '\\n' with a real newline character.
+    const selectedValue = select.value.replace(/\\n/g, '\n');
+
+    // This is a standard textarea, so we can just assign the processed value directly.
+    textarea.value = selectedValue;
+};
+
+
 		
 		
 		// **** START OF NEW CODE for double click**** 
