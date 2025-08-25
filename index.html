@@ -1467,9 +1467,6 @@
 																																																						    // Get the selected value and replace the placeholder '\n' with a real newline character.
     const selectedValue = select.value.replace(/\\n/g, '\n');																																																																																									  
 																																																																																																												const selectedValue = select.value; if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; document.getElementById('textbox-editor-replace-btn').onclick = () => { if (!activeElementForEditor) return; document.getElementById('textbox-editor-textarea').value = document.getElementById('textbox-editor-select').value; }; 
-
-    // Get the selected value and replace the placeholder '\n' with a real newline character.
-    const selectedValue = select.value.replace(/\\n/g, '\n');
 		
 		
 		// **** START OF NEW CODE for double click**** 
