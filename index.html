@@ -1479,7 +1479,14 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
     textarea.value = selectedValue;
 };
 
-
+// Also attach the Shift+Enter shortcut to the dropdown select list
+document.getElementById('textbox-editor-select').addEventListener('keydown', (event) => {
+    if (event.shiftKey && event.key === 'Enter') {
+        // Prevent any default browser action for Enter on a select list
+        event.preventDefault();
+        // Programmatically click the save button
+        document.getElementById('textbox-editor-save-btn').click();
+    }
 		
 		
 		// **** START OF NEW CODE for double click**** 
