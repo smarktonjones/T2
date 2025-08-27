@@ -1814,12 +1814,88 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 		
 		
 		
-        // --- Initial Setup ---
-        const loadJsonData = (jsonString) => { try { const state = JSON.parse(jsonString); renderState(state); alert('Template loaded successfully!'); } catch (err) { console.error("JSON Parse Error:", err); alert('Error: Invalid JSON data.'); } };
-        const renderState = (state) => { document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = ''); SECTIONS.forEach((sectionId, secIndex) => { const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`); const elements = state[sectionId] || []; if (zone && Array.isArray(elements)) { elements.forEach((item, itemIndex) => { item.originalId = `${secIndex}-${itemIndex}`; zone.appendChild(createElement(item.type, item)); }); } }); lastLoadedState = JSON.parse(JSON.stringify(state)); updateLiveOutput(); };	    
-        const defaultJsonText = document.getElementById('default-json-data').textContent;
-        if (defaultJsonText.trim().length > 2) { try { const defaultState = JSON.parse(defaultJsonText); renderState(defaultState); } catch { console.error("Could not parse embedded default JSON. Starting blank."); renderState({}); } } else { renderState({}); }
+// **** START OF CODE for Initial Setup ****
 
+const loadJsonData = (jsonString, isStartup = false) => {
+    try {
+        const state = JSON.parse(jsonString);
+        renderState(state);
+        if (!isStartup) {
+            alert('Template loaded successfully!');
+        }
+    } catch (err) {
+        console.error("JSON Parse Error:", err);
+        if (!isStartup) {
+            alert('Error: Invalid JSON data.');
+        }
+        // If an external/embedded config fails on startup, we'll continue to the next fallback.
+        return false;
+    }
+    return true;
+};
+
+const renderState = (state) => {
+    document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
+    document.querySelectorAll('.element-changed').forEach(el => el.classList.remove('element-changed'));
+    lastLoadedState = new Map();
+    SECTIONS.forEach((sectionId, secIndex) => {
+        const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+        const elements = state[sectionId] || [];
+        if (zone && Array.isArray(elements)) {
+            elements.forEach((item, itemIndex) => {
+                item.uniqueId = item.uniqueId || `element-default-${secIndex}-${itemIndex}`;
+                lastLoadedState.set(item.uniqueId, JSON.parse(JSON.stringify(item)));
+                zone.appendChild(createElement(item.type, item));
+            });
+        }
+    });
+    updateLiveOutput();
+    const lockToggle = document.getElementById('lock-layout-toggle');
+    if (lockToggle.checked) {
+        lockToggle.dispatchEvent(new Event('change'));
+    }
+};
+
+// START THE CONFIGURATION CASCADE
+
+// Priority 2: Try to load from the embedded JSON data first.
+const defaultJsonText = document.getElementById('default-json-data').textContent;
+if (defaultJsonText && defaultJsonText.trim().length > 2) {
+    console.log("Loading from embedded JSON data.");
+    // We pass 'true' to suppress the success alert on startup.
+    const success = loadJsonData(defaultJsonText, true);
+    if (!success) {
+        // If the embedded JSON is invalid, fall back to a blank slate.
+        // This prevents a broken default from bricking the app.
+        console.error("Embedded JSON is invalid. Starting with a blank slate.");
+        renderState({});
+    }
+} else {
+    // Priority 3: If no embedded JSON, fallback to trying an external config.json file.
+    fetch('config.json')
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            }
+            throw new Error('config.json not found');
+        })
+        .then(data => {
+            console.log("Loading from external config.json");
+            if (!loadJsonData(data, true)) {
+                 throw new Error('Failed to parse external config.json');
+            }
+        })
+        .catch(error => {
+            // Priority 4: If everything else fails, start with a blank slate.
+            console.log(error.message + ". Starting with a blank slate.");
+            renderState({});
+        });
+}
+
+// **** END OF CODE for Initial Setup ****
+
+
+		
     // **** START OF NEW, CORRECTED CODE for lock and drag****
     // This runs only ONCE after the initial layout is built and will not interfere with subsequent drag events.
     const lockToggle = document.getElementById('lock-layout-toggle');
