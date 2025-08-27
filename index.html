@@ -1717,12 +1717,6 @@ document.addEventListener('keydown', (event) => {
 
     // --- CONTEXT-SENSITIVE ROUTING ---
 
-    // Prevent the default browser action (e.g., adding a newline in a textarea)
-    event.preventDefault();
-
-    // ** NEW LOGIC: Use a flag to track if the event has been handled by a modal **
-    let eventWasHandled = false;
-
     // Find which modal is currently visible
     const anesModal = document.getElementById('anesthetic-editor-modal');
     const textModal = document.getElementById('textbox-editor-modal');
@@ -1731,35 +1725,49 @@ document.addEventListener('keydown', (event) => {
     const txPlanModal = document.getElementById('tx-plan-modal');
     const propsModal = document.getElementById('properties-modal');
     
-    // ROUTE 1: A modal is open, so click its save button and set the flag.
+    // Prevent the default browser action (e.g., adding a newline in a textarea)
+    event.preventDefault();
+
+    // ** NEW, MORE SPECIFIC CHECK **
+    // Check if the focus is inside the textbox editor's dropdown. This is a special case.
+    if (getComputedStyle(textModal).display !== 'none' && document.activeElement.id === 'textbox-editor-select') {
+         // Stop the event from bubbling up further, preventing the global copy.
+        event.stopPropagation();
+        document.getElementById('textbox-editor-save-btn').click();
+        return; // Exit the function immediately
+    }
+
+    // ROUTE 1: A modal is open, so click its save button.
     if (getComputedStyle(textModal).display !== 'none') {
         document.getElementById('textbox-editor-save-btn').click();
-        eventWasHandled = true;
     } else if (getComputedStyle(anesModal).display !== 'none') {
         document.getElementById('anesthetic-editor-save-btn').click();
-        eventWasHandled = true;
     } else if (getComputedStyle(endoModal).display !== 'none') {
         document.getElementById('endo-testing-save-btn').click();
-        eventWasHandled = true;
     } else if (getComputedStyle(allergyModal).display !== 'none') {
         document.getElementById('allergy-save-btn').click();
-        eventWasHandled = true;
     } else if (getComputedStyle(txPlanModal).display !== 'none') {
         document.getElementById('tx-plan-save-btn').click();
-        eventWasHandled = true;
     } else if (getComputedStyle(propsModal).display !== 'none') {
         document.getElementById('properties-save-btn').click();
-        eventWasHandled = true;
     } 
-    
-    // ROUTE 2: If the event was NOT handled by any modal, perform the global copy action.
-    if (!eventWasHandled) {
+    // ROUTE 2: No modals are open, so perform the global copy action.
+    else {
         document.getElementById('copy-btn-top').click();
     }
 });
 
+	    
+		// New, smarter logic for closing modals by clicking the backdrop
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('mousedown', (e) => {
+        // Close the modal ONLY if the mousedown event is on the backdrop itself
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
 
-		
 // Separate listener for closing the context menu
         // **** START OF MODIFIED CODE to include tx plan copy/paste****
         window.addEventListener('mousedown', (e) => {
