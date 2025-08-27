@@ -1,0 +1,917 @@
+{
+  "header": [
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "0-0",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "**PERIODIC ORAL EXAM (T-2)**",
+        "**INITIAL ORAL EXAM (T-1)**",
+        "**RETIREMENT EXAM (T-2)**",
+        "**SEPARATION EXAM (T-2)**  "
+      ],
+      "selected": "**PERIODIC ORAL EXAM (T-2)**"
+    },
+    {
+      "type": "alert",
+      "required": true,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "0-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "alerts": [
+        "None"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-2",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": " Reviewed. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "0-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "LEARNING NEEDS:  Language: English. ",
+        "LEARNING NEEDS:  Language: ESOL. ",
+        "LEARNING NEEDS:  Language: Other. "
+      ],
+      "selected": "LEARNING NEEDS:  Language: English. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "Learning Type: Written/Verbal. ",
+        "Learning Type: Written. ",
+        "Learning Type: Verbal. "
+      ],
+      "selected": "Learning Type: Written/Verbal. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "Impairments: None. ",
+        "Impairments: Hearing Aid. ",
+        "Impairments: Other. "
+      ],
+      "selected": "Impairments: None. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "0-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "Cultural: None.",
+        "Cultural: Other."
+      ],
+      "selected": "Cultural: None."
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "FLIGHT STATUS: N/A",
+        "FLIGHT STATUS: AVIATOR",
+        "FLIGHT STATUS: AC",
+        "FLIGHT STATUS: AW"
+      ],
+      "selected": "FLIGHT STATUS: N/A"
+    },
+    {
+      "type": "bloodpressure",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-8",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "systolic": "120",
+      "diastolic": "80",
+      "isPriorTxChecked": false,
+      "discussSystolic": "135",
+      "discussDiastolic": "90",
+      "checkboxSystolic": "150",
+      "checkboxDiastolic": "95"
+    }
+  ],
+  "subjective": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "1-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "S:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None",
+      "internalLabel": "CC:",
+      "prefixLabel": "PRESENTING COMPLAINT: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "painscale",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "value": "0"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None",
+      "internalLabel": "Tobacco / Vaping",
+      "prefixLabel": "TOBACCO/VAPING: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "Vaping",
+        "Cigarettes",
+        "Smokeless Tobacco",
+        "Nicotene pouches",
+        "0.5 Pack Per Day",
+        "0.5 Can Per Day"
+      ]
+    }
+  ],
+  "objective": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "2-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "O:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "2-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "BWX: TODAY",
+        "BWX: REVIEWED",
+        "BWX: N/A",
+        " "
+      ],
+      "selected": "BWX: TODAY"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "2-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "PANO: REVIEWED",
+        "PANO: TODAY",
+        "PANO: N/A",
+        " "
+      ],
+      "selected": "PANO: REVIEWED"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "2-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": " ",
+      "internalLabel": "Radiographs Other",
+      "prefixLabel": "",
+      "defaultText": " ",
+      "dropdownOptions": [
+        "PA #: "
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "No Pathology Noted.",
+      "internalLabel": "Radiographic Findings",
+      "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
+      "defaultText": "No Pathology Noted.",
+      "dropdownOptions": [
+        "Antral Pseudocyst Maxillary Sinus",
+        "Periradicular Radiolucency #",
+        "Condensing Osteitis #",
+        "Retained Root Tip #",
+        "Periapical Cemento-Osseous Dysplasia",
+        "Idiopathic Osteosclerosis"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "100%",
+      "content": "None.",
+      "internalLabel": "Caries / Defective",
+      "prefixLabel": "CARIES/DEFECTIVE RESTORATIONS: ",
+      "defaultText": "None",
+      "dropdownOptions": [
+        "#"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "100%",
+      "content": "None. ",
+      "internalLabel": "Incipient",
+      "prefixLabel": "INCIPIENT CARIES: ",
+      "defaultText": "None",
+      "dropdownOptions": [
+        "#",
+        "Generalized Facial White Spot Lesions",
+        "Overhang #"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL.",
+      "internalLabel": "Soft Tissue / OCS",
+      "prefixLabel": "SOFT TISSUE / OCS: ",
+      "defaultText": "None. ",
+      "dropdownOptions": [
+        "Mandibular Tori",
+        "Apthous Ulcer",
+        "Palatal Torus",
+        "Fibroma",
+        "Tonsillectomy",
+        "Geographic Tongue",
+        "Fissured Tongue"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-8",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "Periodontal",
+      "prefixLabel": "PERIO: ",
+      "defaultText": "None. ",
+      "dropdownOptions": [
+        "Radiographic Calculus",
+        "Heavy Calculus",
+        "OH--",
+        "Recession",
+        "Toothbrush Abrasion"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-9",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "Endodontic",
+      "prefixLabel": "ENDO: ",
+      "defaultText": "None.",
+      "dropdownOptions": []
+    },
+    {
+      "type": "endo-testing",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-10",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "endoTests": [
+        "Percussion",
+        "Palpation",
+        "Endo Ice",
+        "Tooth Slooth",
+        "Periodontal",
+        "Mobility",
+        "Transillumination"
+      ],
+      "endoData": {
+        "teeth": [
+          "",
+          ""
+        ],
+        "results": {
+          "Percussion": [
+            "",
+            ""
+          ],
+          "Palpation": [
+            "",
+            ""
+          ],
+          "Endo Ice": [
+            "",
+            ""
+          ],
+          "Tooth Slooth": [
+            "",
+            ""
+          ],
+          "Periodontal": [
+            "",
+            ""
+          ],
+          "Mobility": [
+            "",
+            ""
+          ],
+          "Transillumination": [
+            "",
+            ""
+          ]
+        }
+      }
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-11",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "TMJ",
+      "prefixLabel": "TMJ: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Bilateral Click",
+        "Nocturnal Bruxism",
+        "Daytime Clenching",
+        "Masseter Tenderness",
+        "Temporal Headaches"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-12",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "Occlusion",
+      "prefixLabel": "OCCLUSION: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Bonded Retainer 22-27",
+        "Bonded Retainer 6-11",
+        "Crossbite ",
+        "Anterior Open Bite",
+        "Crowding"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-13",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "40%",
+      "content": "WNL. ",
+      "internalLabel": "Oral Surgery",
+      "prefixLabel": "ORAL SURGERY: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Missing: 1,16,17,32",
+        "1,16,17,32 Present",
+        "Unerupted - ",
+        "Communicating - "
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-14",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "40%",
+      "content": "WNL. ",
+      "internalLabel": "Other Findings",
+      "prefixLabel": "OTHER FINDINGS: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Toothbrush Abrasion",
+        "Heavy Occlusal Wear"
+      ]
+    },
+    {
+      "type": "psr",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-15",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "scores": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "asterisks": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "asteriskNote": ""
+    }
+  ],
+  "assessment": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "A:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None.",
+      "internalLabel": "Diagnosis of CC",
+      "prefixLabel": "DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT: ",
+      "defaultText": "None",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "Gingivitis Localized",
+      "internalLabel": "Perio Diagnosis",
+      "prefixLabel": "PERIO DIAGNOSIS: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "Gingivitis Localized",
+        "Gingivitis Generalized",
+        "Healthy",
+        "Periodontitis Stage I",
+        "Periodontitis Stage II",
+        "Periodontitis Stage III",
+        "Periodontitis Stage IV",
+        "Grade A",
+        "Grade B",
+        "Grade C"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None.",
+      "internalLabel": "Endo Diagnosis",
+      "prefixLabel": "ENDO DIAGNOSIS",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "None",
+        "Normal Apical Tissues",
+        "Symptomatic Apical Periodontitis",
+        "Asymptomatic Apical Periodontitis",
+        "Chronic Apical Abscess",
+        "Acute Apical Abscess",
+        "Condensing Osteitis",
+        "Reversible Pulpitis",
+        "Symptomatic Irreversible Pulpitis",
+        "Asymptomatic Irreversible Pulpitis",
+        "Pulpal Necrosis",
+        "Previously Treated"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None.",
+      "internalLabel": "Oral Surgery Diagnosis",
+      "prefixLabel": "ORAL SURGERY DIAGNOSIS: ",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "Non-functional",
+        "Non-restorable",
+        "Insufficient Arch Length"
+      ]
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "CARIES RISK: Low",
+        "CARIES RISK: Moderate",
+        "CARIES RISK: High"
+      ],
+      "selected": "CARIES RISK: Low"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "PERIO RISK: Low",
+        "PERIO RISK: Moderate",
+        "PERIO RISK: High"
+      ],
+      "selected": "PERIO RISK: Low"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "CANCER RISK: Low",
+        "CANCER RISK: Moderate",
+        "CANCER RISK: High"
+      ],
+      "selected": "CANCER RISK: Low"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-8",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "Findings reviewed / Patient informed and consents to Treatment Plan.",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    }
+  ],
+  "plan": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "4-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "P:   CHARTING OF TREATMENT PLAN IN DENTRIX",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "4-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "",
+      "internalLabel": "Caries Risk Management",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "Caries Risk Management: OHI",
+        "Caries Risk Management: Fluoride Treatments x 4",
+        "Caries Risk Management: Prevident 5000: 2 Tubes. 2 Refills. Use as directed.",
+        "Caries Risk Management: Peridex Rinse: 1 bottle. Swish with 15ml BID for 2 weeks."
+      ]
+    },
+    {
+      "type": "tx-plan",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "4-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "txRows": [
+        "Oral Hygiene",
+        "Operative",
+        "Perio",
+        "Oral Surgery",
+        "Endo",
+        "Pros",
+        "Other"
+      ],
+      "txSnippets": [
+        "RDH",
+        "SRP",
+        "RECALL"
+      ],
+      "txData": {
+        "Oral Hygiene-CLASS 2": {
+          "text": "RDH",
+          "priority": 1
+        }
+      }
+    }
+  ],
+  "footer": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "5-0",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "content": "Default",
+      "internalLabel": "Dental Technician Name",
+      "prefixLabel": "DENTAL TECHNICIAN: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "SANDERSON",
+        "LEONARDSON",
+        "DUPREY",
+        "PHILLIPS",
+        "BYRD",
+        "MITCHELL",
+        "STEWART",
+        "MORRIS",
+        "BABCOCK",
+        "TURNER"
+      ]
+    },
+    {
+      "type": "formatter",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "5-1",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "formatType": "newline",
+      "customChars": ""
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "5-2",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "content": "",
+      "internalLabel": "Dentist Block",
+      "prefixLabel": "DENTAL OFFICER: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "MG HORNING DDS  1912969445",
+        "JA HOGAN",
+        "RJ ALOVA",
+        "BW HANES",
+        "CL ROBERTS",
+        "RA NARDELLA"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "5-3",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "content": "",
+      "internalLabel": "Signature Block",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "
+      ]
+    }
+  ]
+}
