@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- version as of 27AUG2025 mgh -->
+<!-- version as of 25AUG2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dental Exam Maker</title>
+    <title>Dental Note - MAKER</title>
     <style>
         :root {
             --bg-color: #f0f2f5; --main-bg: #ffffff; --section-bg: #f9f9f9;
@@ -135,7 +135,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.7a</h5>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.7c</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -1794,7 +1794,7 @@ document.querySelectorAll('.modal').forEach(modal => {
         const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.json'; fileInput.style.display = 'none'; document.body.appendChild(fileInput);
         document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (re) => { loadJsonData(re.target.result); }; reader.readAsText(file); e.target.value = ''; });
-        document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'config.json'; a.click(); URL.revokeObjectURL(a.href); };
+        document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dental-note-template.json'; a.click(); URL.revokeObjectURL(a.href); };
         document.getElementById('reset-btn').addEventListener('click', resetValues);
         document.getElementById('view-hidden-toggle').addEventListener('change', (e) => { if (e.target.checked) { document.body.classList.add('show-hidden-elements'); } else { document.body.classList.remove('show-hidden-elements'); }});
         
@@ -1814,88 +1814,12 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 		
 		
 		
-// **** START OF CODE for Initial Setup ****
+        // --- Initial Setup ---
+        const loadJsonData = (jsonString) => { try { const state = JSON.parse(jsonString); renderState(state); alert('Template loaded successfully!'); } catch (err) { console.error("JSON Parse Error:", err); alert('Error: Invalid JSON data.'); } };
+        const renderState = (state) => { document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = ''); SECTIONS.forEach((sectionId, secIndex) => { const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`); const elements = state[sectionId] || []; if (zone && Array.isArray(elements)) { elements.forEach((item, itemIndex) => { item.originalId = `${secIndex}-${itemIndex}`; zone.appendChild(createElement(item.type, item)); }); } }); lastLoadedState = JSON.parse(JSON.stringify(state)); updateLiveOutput(); };	    
+        const defaultJsonText = document.getElementById('default-json-data').textContent;
+        if (defaultJsonText.trim().length > 2) { try { const defaultState = JSON.parse(defaultJsonText); renderState(defaultState); } catch { console.error("Could not parse embedded default JSON. Starting blank."); renderState({}); } } else { renderState({}); }
 
-const loadJsonData = (jsonString, isStartup = false) => {
-    try {
-        const state = JSON.parse(jsonString);
-        renderState(state);
-        if (!isStartup) {
-            alert('Template loaded successfully!');
-        }
-    } catch (err) {
-        console.error("JSON Parse Error:", err);
-        if (!isStartup) {
-            alert('Error: Invalid JSON data.');
-        }
-        // If an external/embedded config fails on startup, we'll continue to the next fallback.
-        return false;
-    }
-    return true;
-};
-
-const renderState = (state) => {
-    document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
-    document.querySelectorAll('.element-changed').forEach(el => el.classList.remove('element-changed'));
-    lastLoadedState = new Map();
-    SECTIONS.forEach((sectionId, secIndex) => {
-        const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
-        const elements = state[sectionId] || [];
-        if (zone && Array.isArray(elements)) {
-            elements.forEach((item, itemIndex) => {
-                item.uniqueId = item.uniqueId || `element-default-${secIndex}-${itemIndex}`;
-                lastLoadedState.set(item.uniqueId, JSON.parse(JSON.stringify(item)));
-                zone.appendChild(createElement(item.type, item));
-            });
-        }
-    });
-    updateLiveOutput();
-    const lockToggle = document.getElementById('lock-layout-toggle');
-    if (lockToggle.checked) {
-        lockToggle.dispatchEvent(new Event('change'));
-    }
-};
-
-// START THE CONFIGURATION CASCADE
-
-// Priority 2: Try to load from the embedded JSON data first.
-const defaultJsonText = document.getElementById('default-json-data').textContent;
-if (defaultJsonText && defaultJsonText.trim().length > 2) {
-    console.log("Loading from embedded JSON data.");
-    // We pass 'true' to suppress the success alert on startup.
-    const success = loadJsonData(defaultJsonText, true);
-    if (!success) {
-        // If the embedded JSON is invalid, fall back to a blank slate.
-        // This prevents a broken default from bricking the app.
-        console.error("Embedded JSON is invalid. Starting with a blank slate.");
-        renderState({});
-    }
-} else {
-    // Priority 3: If no embedded JSON, fallback to trying an external config.json file.
-    fetch('config.json')
-        .then(response => {
-            if (response.ok) {
-                return response.text();
-            }
-            throw new Error('config.json not found');
-        })
-        .then(data => {
-            console.log("Loading from external config.json");
-            if (!loadJsonData(data, true)) {
-                 throw new Error('Failed to parse external config.json');
-            }
-        })
-        .catch(error => {
-            // Priority 4: If everything else fails, start with a blank slate.
-            console.log(error.message + ". Starting with a blank slate.");
-            renderState({});
-        });
-}
-
-// **** END OF CODE for Initial Setup ****
-
-
-		
     // **** START OF NEW, CORRECTED CODE for lock and drag****
     // This runs only ONCE after the initial layout is built and will not interfere with subsequent drag events.
     const lockToggle = document.getElementById('lock-layout-toggle');
@@ -1909,7 +1833,8 @@ if (defaultJsonText && defaultJsonText.trim().length > 2) {
 
 
 
--electronic NAVMED 6600/13 JSON default-
+-NAVMED 6600/13 JSON default-
+<h7>Questions/Support? mark.g.horning.civ@health.mil</h7>
 <script>
 // ===================================================================================
 //
