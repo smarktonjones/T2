@@ -460,33 +460,27 @@
         saveCurrentStateToLocalStorage();
         };
 
-        const resetValues = () => {
-            if (!lastLoadedState) { alert("No default template loaded to reset to."); return; }
-			
-			// **** START OF NEW CODE for highlight reset****
-    // First, remove all highlights from any element on the page.
+const resetValues = () => {
+    if (!lastLoadedState) {
+        alert("No default template loaded to reset to.");
+        return;
+    }
     document.querySelectorAll('.element-highlighted').forEach(el => el.classList.remove('element-highlighted'));
-    // **** END OF NEW CODE ****
-			
-            let resetCount = 0;
-            document.querySelectorAll('.draggable-element').forEach(currentElement => {
-                if (currentElement.dataset.doNotReset === 'true') {
-                    return; // Skip this element
-                }
-                const originalId = currentElement.dataset.originalId;
-                if (!originalId) return;
-                const [sectionIndex, itemIndex] = originalId.split('-');
-                const sectionKey = SECTIONS[sectionIndex];
-                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
-                if (defaultData) {
-                    resetCount++;
-                    const newElement = createElement(defaultData.type, defaultData);
-                    currentElement.replaceWith(newElement);
-                }
-            });
-            updateLiveOutput();
-            alert(`Reset ${resetCount} element(s) to their default values.`);
-        };
+    let resetCount = 0;
+    
+    // Use the Map's forEach to iterate safely
+    lastLoadedState.forEach((defaultData, uniqueId) => {
+        const currentElement = document.querySelector(`[data-unique-id='${uniqueId}']`);
+        if (currentElement && currentElement.dataset.doNotReset !== 'true') {
+            resetCount++;
+            const newElement = createElement(defaultData.type, defaultData);
+            currentElement.replaceWith(newElement);
+        }
+    });
+    
+    updateLiveOutput(); // This will auto-save the newly reset state
+    alert(`Reset ${resetCount} element(s) to their default values.`);
+};
         
         // --- UI & Event Handlers ---
 
@@ -917,30 +911,33 @@ const loadJsonData = (jsonString, isStartup = false) => {
 
 const renderState = (state) => {
     document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
-    document.querySelectorAll('.element-highlighted').forEach(el => el.classList.remove('element-highlighted'));
-    lastLoadedState = {}; // Use a simple object for the template defaults
+    document.querySelectorAll('.element-changed').forEach(el => el.classList.remove('element-changed'));
+    
+    // Consistently use a Map for lastLoadedState
+    lastLoadedState = new Map(); 
     
     SECTIONS.forEach((sectionId, secIndex) => {
         const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
         const elements = state[sectionId] || [];
-        if(!lastLoadedState[sectionId]) lastLoadedState[sectionId] = [];
-
         if (zone && Array.isArray(elements)) {
             elements.forEach((item, itemIndex) => {
-                item.originalId = `${secIndex}-${itemIndex}`;
-                // Store the pristine default data for the "Reset Values" button
-                lastLoadedState[sectionId][itemIndex] = JSON.parse(JSON.stringify(item));
+                // Ensure every item has a uniqueId for tracking
+                item.uniqueId = item.uniqueId || `element-default-${secIndex}-${itemIndex}`;
+                
+                // Store the pristine default data in our Map
+                lastLoadedState.set(item.uniqueId, JSON.parse(JSON.stringify(item)));
+                
                 zone.appendChild(createElement(item.type, item));
             });
         }
     });
+    
     updateLiveOutput();
     const lockToggle = document.getElementById('lock-layout-toggle');
     if (lockToggle.checked) {
         lockToggle.dispatchEvent(new Event('change'));
     }
 };
-
 // --- STARTUP CONFIGURATION CASCADE ---
 
 function loadDefaults() {
