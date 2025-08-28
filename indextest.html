@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 25AUG2025 mgh -->
+<!-- version as of 28AUG2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -135,7 +135,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.7c</h5>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.8</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -1145,6 +1145,68 @@
         
         // --- Helper Functions ---
 
+		
+// **** START OF CODE: Session Persistence Logic ****
+
+        // This function gathers the current state of ALL elements on the page and saves it to localStorage.
+        const saveCurrentStateToLocalStorage = () => {
+            console.log("Auto-saving current session state...");
+            // Create a state object, identical to how the "Export JSON" function works.
+            const stateToSave = {};
+            SECTIONS.forEach(id => {
+                stateToSave[id] = [];
+                document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => {
+                    stateToSave[id].push(getElementState(el));
+                });
+            });
+            // Convert the object to a JSON string and store it.
+            localStorage.setItem('dentalNoteMakerSession', JSON.stringify(stateToSave));
+        };
+
+		        // This is the "Reset Values" function.
+        const resetValues = () => {
+            console.log("Resetting values to template defaults...");
+            if (!lastLoadedState) {
+                alert("No default template has been loaded to reset to.");
+                return;
+            }
+            let resetCount = 0;
+            document.querySelectorAll('.draggable-element').forEach(currentElement => {
+                // Check the "do not reset" flag directly on the HTML element.
+                if (currentElement.dataset.doNotReset === 'true') {
+                    console.log(`Skipping reset for element: ${currentElement.dataset.originalId}`);
+                    return; // Skip this element and move to the next one.
+                }
+
+                const originalId = currentElement.dataset.originalId;
+                if (!originalId) return;
+
+                // Find the original, pristine data from the template we loaded.
+                const [sectionIndex, itemIndex] = originalId.split('-');
+                const sectionKey = SECTIONS[sectionIndex];
+                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
+                
+                if (defaultData) {
+                    resetCount++;
+                    // Create a fresh element from the default data and replace the current one.
+                    const newElement = createElement(defaultData.type, defaultData);
+                    currentElement.replaceWith(newElement);
+                }
+            });
+            
+            // This is crucial: after resetting, we must immediately update the live output,
+            // which in turn triggers an auto-save of the newly reset state to localStorage.
+            updateLiveOutput(); 
+            
+            alert(`Reset ${resetCount} element(s) to their template default values.`);
+        };
+
+// **** END OF Session Persistence Logic ****
+
+
+
+
+		
 	    const updateTxPlanSummary = (element) => { 
     const state = getElementState(element);
     const summarySpan = element.querySelector('.tx-plan-summary');
@@ -1376,35 +1438,12 @@
                 if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
             });
             liveOutput.value = outputParts.join('');
+			
+			// Auto-save the entire state to the browser's local storage on every change.
+            saveCurrentStateToLocalStorage();
         };
 
-        const resetValues = () => {
-            if (!lastLoadedState) { alert("No default template loaded to reset to."); return; }
-			
-			// **** START OF NEW CODE for highlight reset****
-    // First, remove all highlights from any element on the page.
-    document.querySelectorAll('.element-highlighted').forEach(el => el.classList.remove('element-highlighted'));
-    // **** END OF NEW CODE ****
-			
-            let resetCount = 0;
-            document.querySelectorAll('.draggable-element').forEach(currentElement => {
-                if (currentElement.dataset.doNotReset === 'true') {
-                    return; // Skip this element
-                }
-                const originalId = currentElement.dataset.originalId;
-                if (!originalId) return;
-                const [sectionIndex, itemIndex] = originalId.split('-');
-                const sectionKey = SECTIONS[sectionIndex];
-                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
-                if (defaultData) {
-                    resetCount++;
-                    const newElement = createElement(defaultData.type, defaultData);
-                    currentElement.replaceWith(newElement);
-                }
-            });
-            updateLiveOutput();
-            alert(`Reset ${resetCount} element(s) to their default values.`);
-        };
+
         
         // --- UI & Event Handlers ---
 
@@ -1820,18 +1859,100 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 		
 		
         // --- Initial Setup ---
-        const loadJsonData = (jsonString) => { try { const state = JSON.parse(jsonString); renderState(state); alert('Template loaded successfully!'); } catch (err) { console.error("JSON Parse Error:", err); alert('Error: Invalid JSON data.'); } };
-        const renderState = (state) => { document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = ''); SECTIONS.forEach((sectionId, secIndex) => { const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`); const elements = state[sectionId] || []; if (zone && Array.isArray(elements)) { elements.forEach((item, itemIndex) => { item.originalId = `${secIndex}-${itemIndex}`; zone.appendChild(createElement(item.type, item)); }); } }); lastLoadedState = JSON.parse(JSON.stringify(state)); updateLiveOutput(); };	    
-        const defaultJsonText = document.getElementById('default-json-data').textContent;
-        if (defaultJsonText.trim().length > 2) { try { const defaultState = JSON.parse(defaultJsonText); renderState(defaultState); } catch { console.error("Could not parse embedded default JSON. Starting blank."); renderState({}); } } else { renderState({}); }
+        const loadJsonData = (jsonString, isStartup = false, isFromFileImport = false) => {
+            try {
+                const state = JSON.parse(jsonString);
+                
+                // If this is a new file import, it becomes the new template AND we must clear the old session.
+                if (isFromFileImport) {
+                    console.log("New file imported. Clearing old localStorage session.");
+                    localStorage.removeItem('dentalNoteMakerSession');
+                    lastLoadedState = JSON.parse(JSON.stringify(state)); // This becomes the new "source of truth" for reset.
+                }
+                
+                renderState(state, isFromFileImport);
 
-    // **** START OF NEW, CORRECTED CODE for lock and drag****
-    // This runs only ONCE after the initial layout is built and will not interfere with subsequent drag events.
-    const lockToggle = document.getElementById('lock-layout-toggle');
-    if (lockToggle.checked) {
-        lockToggle.dispatchEvent(new Event('change'));
-    }
-    // **** END OF NEW, CORRECTED CODE ****
+                if (!isStartup) {
+                    alert('Template loaded successfully!');
+                }
+                return true;
+            } catch (err) {
+                console.error("JSON Parse Error:", err);
+                if (!isStartup) { alert('Error: Invalid JSON data.'); }
+                return false;
+            }
+        };
+
+        const renderState = (state, isNewTemplate = false) => {
+            document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
+            
+            // If we are loading a NEW template, we must build the lastLoadedState memory.
+            // If we are just restoring a session, lastLoadedState is already in memory from the initial load.
+            if (isNewTemplate) {
+                lastLoadedState = {}; 
+                SECTIONS.forEach((sectionId) => {
+                    const elements = state[sectionId] || [];
+                    if (!lastLoadedState[sectionId]) lastLoadedState[sectionId] = [];
+                    elements.forEach((item, itemIndex) => {
+                        lastLoadedState[sectionId][itemIndex] = JSON.parse(JSON.stringify(item));
+                    });
+                });
+            }
+
+            SECTIONS.forEach((sectionId, secIndex) => {
+                const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+                const elements = state[sectionId] || [];
+                if (zone && Array.isArray(elements)) {
+                    elements.forEach((item, itemIndex) => {
+                        item.originalId = `${secIndex}-${itemIndex}`;
+                        zone.appendChild(createElement(item.type, item));
+                    });
+                }
+            });
+            
+            updateLiveOutput();
+            const lockToggle = document.getElementById('lock-layout-toggle');
+            if (lockToggle.checked) {
+                lockToggle.dispatchEvent(new Event('change'));
+            }
+        };
+
+        // --- STARTUP CONFIGURATION CASCADE ---
+        const savedSession = localStorage.getItem('dentalNoteMakerSession');
+        
+        // This function defines the default loading sequence.
+        function loadDefaults() {
+            // Priority 2: Try to load from the embedded JSON data.
+            const defaultJsonText = document.getElementById('default-json-data').textContent;
+            if (defaultJsonText && defaultJsonText.trim().length > 2) {
+                console.log("No session found. Loading from embedded JSON data.");
+                loadJsonData(defaultJsonText, true, true); // Treat as a new template
+            } else {
+                // Priority 3: If no embedded JSON, start blank.
+                console.log("No session or embedded JSON. Starting with a blank slate.");
+                renderState({});
+            }
+        }
+
+        // Run the cascade
+        if (savedSession) {
+            // Priority 1: A previous session exists. We need to load both the session AND its underlying template.
+            console.log("Loading from saved browser session.");
+            const sessionState = JSON.parse(savedSession);
+            // First, load the template that this session was based on.
+            const defaultJsonText = document.getElementById('default-json-data').textContent;
+            if (defaultJsonText && defaultJsonText.trim().length > 2) {
+                loadJsonData(defaultJsonText, true, true); // Load template but don't show UI yet
+            } else {
+                renderState({}, true); // Prepare a blank template
+            }
+            // Now, render the user's actual saved work over the top of it.
+            renderState(sessionState, false); // Render session state, but don't overwrite the template memory.
+        } else {
+            // No session found, proceed to the normal default loading sequence.
+            loadDefaults();
+        }
+ 
 	    
     });
     </script>
