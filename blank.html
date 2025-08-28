@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 25AUG2025 mgh -->
+<!-- version as of 27AUG2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -135,7 +135,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.7</h5>
+    <h1>ORAL EXAM</h1><h6>Dental Note - MAKER v1.8a</h6>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -460,6 +460,8 @@
                 if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
             });
             liveOutput.value = outputParts.join('');
+                    // Auto-save the entire state to the browser's local storage on every change.
+        saveCurrentStateToLocalStorage();
         };
 
         const resetValues = () => {
@@ -907,28 +909,31 @@ const loadJsonData = (jsonString, isStartup = false) => {
         if (!isStartup) {
             alert('Template loaded successfully!');
         }
+        return true; // Return true on success
     } catch (err) {
         console.error("JSON Parse Error:", err);
         if (!isStartup) {
             alert('Error: Invalid JSON data.');
         }
-        // If an external/embedded config fails on startup, we'll continue to the next fallback.
-        return false;
+        return false; // Return false on failure
     }
-    return true;
 };
 
 const renderState = (state) => {
     document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
-    document.querySelectorAll('.element-changed').forEach(el => el.classList.remove('element-changed'));
-    lastLoadedState = new Map();
+    document.querySelectorAll('.element-highlighted').forEach(el => el.classList.remove('element-highlighted'));
+    lastLoadedState = {}; // Use a simple object for the template defaults
+    
     SECTIONS.forEach((sectionId, secIndex) => {
         const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
         const elements = state[sectionId] || [];
+        if(!lastLoadedState[sectionId]) lastLoadedState[sectionId] = [];
+
         if (zone && Array.isArray(elements)) {
             elements.forEach((item, itemIndex) => {
-                item.uniqueId = item.uniqueId || `element-default-${secIndex}-${itemIndex}`;
-                lastLoadedState.set(item.uniqueId, JSON.parse(JSON.stringify(item)));
+                item.originalId = `${secIndex}-${itemIndex}`;
+                // Store the pristine default data for the "Reset Values" button
+                lastLoadedState[sectionId][itemIndex] = JSON.parse(JSON.stringify(item));
                 zone.appendChild(createElement(item.type, item));
             });
         }
@@ -940,22 +945,20 @@ const renderState = (state) => {
     }
 };
 
-// START THE CONFIGURATION CASCADE
+// --- STARTUP CONFIGURATION CASCADE ---
 
-// Priority 2: Try to load from the embedded JSON data first.
-const defaultJsonText = document.getElementById('default-json-data').textContent;
-if (defaultJsonText && defaultJsonText.trim().length > 2) {
-    console.log("Loading from embedded JSON data.");
-    // We pass 'true' to suppress the success alert on startup.
-    const success = loadJsonData(defaultJsonText, true);
-    if (!success) {
-        // If the embedded JSON is invalid, fall back to a blank slate.
-        // This prevents a broken default from bricking the app.
-        console.error("Embedded JSON is invalid. Starting with a blank slate.");
-        renderState({});
+function loadDefaults() {
+    // Priority 2: Try to load from the embedded JSON data.
+    const defaultJsonText = document.getElementById('default-json-data').textContent;
+    if (defaultJsonText && defaultJsonText.trim().length > 2) {
+        console.log("Attempting to load from embedded JSON data.");
+        if (loadJsonData(defaultJsonText, true)) {
+            return; // Success, stop here.
+        }
     }
-} else {
-    // Priority 3: If no embedded JSON, fallback to trying an external config.json file.
+
+    // Priority 3: If no embedded JSON (or it failed), fallback to trying an external config.json file.
+    console.log("No valid embedded JSON. Attempting to fetch config.json.");
     fetch('config.json')
         .then(response => {
             if (response.ok) {
@@ -975,6 +978,18 @@ if (defaultJsonText && defaultJsonText.trim().length > 2) {
             renderState({});
         });
 }
+
+// Start the cascade
+const savedSession = localStorage.getItem('dentalNoteMakerSession');
+if (savedSession) {
+    // Priority 1: Load from a saved browser session
+    console.log("Loading from saved browser session.");
+    loadJsonData(savedSession, true);
+} else {
+    // No session found, proceed to the default loading sequence
+    loadDefaults();
+}
+
 
 // **** END OF CODE for Initial Setup ****
 
