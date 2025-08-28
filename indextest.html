@@ -40,7 +40,7 @@
         #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
         .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .copy-btn-prominent:hover { background-color: var(--success-hover); }
-        #reset-btn { background-color: var(--danger-color); }
+        #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
         /* All other element-specific styles are here */
         .endo-testing-element, .anesthetic-element, .enhanced-textbox, .alert-element { cursor: pointer; justify-content: center; }
@@ -145,6 +145,7 @@
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 		<label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values</button>
+		<button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
     <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
@@ -1201,6 +1202,24 @@
             alert(`Reset ${resetCount} element(s) to their template default values.`);
         };
 
+// **** START OF FULL RESET CODE ****
+        const fullReset = () => {
+            // Ask for confirmation because this is a destructive action.
+            if (confirm("Are you sure you want to perform a full reset? This will clear any saved work and restore the original template.")) {
+                console.log("Performing a full reset. Clearing localStorage...");
+                
+                // 1. Clear the saved session from localStorage.
+                localStorage.removeItem('dentalNoteMakerSession');
+                
+                // 2. Immediately reload the page.
+                // This is the cleanest way to trigger the startup cascade, which will now
+                // fail to find a localStorage session and will load the embedded JSON instead.
+                window.location.reload();
+            }
+        };
+        // **** END OF FULL RESET CODE ****
+
+		
 // **** END OF Session Persistence Logic ****
 
 
@@ -1840,6 +1859,7 @@ document.querySelectorAll('.modal').forEach(modal => {
         fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (re) => { loadJsonData(re.target.result); }; reader.readAsText(file); e.target.value = ''; });
         document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dental-note-template.json'; a.click(); URL.revokeObjectURL(a.href); };
         document.getElementById('reset-btn').addEventListener('click', resetValues);
+		document.getElementById('full-reset-btn').addEventListener('click', fullReset);
         document.getElementById('view-hidden-toggle').addEventListener('change', (e) => { if (e.target.checked) { document.body.classList.add('show-hidden-elements'); } else { document.body.classList.remove('show-hidden-elements'); }});
         
 		// **** START OF NEW CODE for lock toggle****
