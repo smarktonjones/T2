@@ -229,6 +229,46 @@
         
         // --- Helper Functions ---
 
+
+        // **** START OF Persistence Logic CODE ****
+
+        const saveCurrentStateToLocalStorage = () => {
+            const state = {};
+            SECTIONS.forEach(id => {
+                state[id] = [];
+                document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => {
+                    state[id].push(getElementState(el));
+                });
+            });
+            localStorage.setItem('dentalNoteMakerSession', JSON.stringify(state));
+        };
+
+        const resetValues = () => {
+            if (!lastLoadedState) { alert("No default template loaded to reset to."); return; }
+            let resetCount = 0;
+            document.querySelectorAll('.draggable-element').forEach(currentElement => {
+                // Check the "do not reset" flag on the element itself
+                if (currentElement.dataset.doNotReset === 'true') {
+                    return; // Skip this element
+                }
+
+                const uniqueId = currentElement.dataset.uniqueId;
+                if (!uniqueId) return;
+
+                const defaultData = lastLoadedState.get(uniqueId);
+                if (defaultData) {
+                    resetCount++;
+                    const newElement = createElement(defaultData.type, defaultData);
+                    currentElement.replaceWith(newElement);
+                }
+            });
+            updateLiveOutput(); // This will auto-save the newly reset state
+            alert(`Reset ${resetCount} element(s) to their default values.`);
+        };
+        // **** END OF PERSISTENT STATE CODE ****
+
+
+
 	    const updateTxPlanSummary = (element) => { 
     const state = getElementState(element);
     const summarySpan = element.querySelector('.tx-plan-summary');
@@ -319,6 +359,8 @@
             if (type === 'enhanced-textbox') { draggable.classList.add('enhanced-textbox'); const internalLabelHtml = data.internalLabel ? `<div class="internal-label">${data.internalLabel}</div>` : ''; draggable.innerHTML = `${internalLabelHtml}<div class="enhanced-textbox-preview">${data.content || data.defaultText || ''}</div>`; draggable.addEventListener('click', () => openTextboxEditor(draggable)); }
             else if (type === 'alert') { draggable.classList.add('alert-element'); draggable.innerHTML = `<span class="alert-display"></span>`; draggable.addEventListener('click', () => openAllergyModal(draggable)); updateAlertElementUI(draggable); }
             else if (type === 'anesthetic') { draggable.classList.add('anesthetic-element'); draggable.innerHTML = `<span class="anesthetic-summary"></span>`; updateAnestheticSummary(draggable); draggable.addEventListener('click', () => openAnestheticEditor(draggable)); }
+
+
 
 	     // **** START OF NEW CODE for tx plan ****
             else if (type === 'tx-plan') {
@@ -460,6 +502,10 @@
                 if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
             });
             liveOutput.value = outputParts.join('');
+            
+                        // Auto-save the entire state on every change
+            saveCurrentStateToLocalStorage();
+            
         };
 
         const resetValues = () => {
@@ -898,8 +944,9 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 		
 		
 		
-// **** START OF CODE for Initial Setup ****
+// **** Start of Code for Initial Setup ****
 
+// --- Initial Setup ---
 const loadJsonData = (jsonString, isStartup = false) => {
     try {
         const state = JSON.parse(jsonString);
@@ -907,15 +954,14 @@ const loadJsonData = (jsonString, isStartup = false) => {
         if (!isStartup) {
             alert('Template loaded successfully!');
         }
+        return true; // Return true on success
     } catch (err) {
         console.error("JSON Parse Error:", err);
         if (!isStartup) {
             alert('Error: Invalid JSON data.');
         }
-        // If an external/embedded config fails on startup, we'll continue to the next fallback.
-        return false;
+        return false; // Return false on failure
     }
-    return true;
 };
 
 const renderState = (state) => {
@@ -940,22 +986,20 @@ const renderState = (state) => {
     }
 };
 
-// START THE CONFIGURATION CASCADE
+// --- STARTUP CONFIGURATION CASCADE ---
 
-// Priority 2: Try to load from the embedded JSON data first.
-const defaultJsonText = document.getElementById('default-json-data').textContent;
-if (defaultJsonText && defaultJsonText.trim().length > 2) {
-    console.log("Loading from embedded JSON data.");
-    // We pass 'true' to suppress the success alert on startup.
-    const success = loadJsonData(defaultJsonText, true);
-    if (!success) {
-        // If the embedded JSON is invalid, fall back to a blank slate.
-        // This prevents a broken default from bricking the app.
-        console.error("Embedded JSON is invalid. Starting with a blank slate.");
-        renderState({});
+function loadDefaults() {
+    // Priority 2: Try to load from the embedded JSON data.
+    const defaultJsonText = document.getElementById('default-json-data').textContent;
+    if (defaultJsonText && defaultJsonText.trim().length > 2) {
+        console.log("Attempting to load from embedded JSON data.");
+        if (loadJsonData(defaultJsonText, true)) {
+            return; // Success, stop here.
+        }
     }
-} else {
-    // Priority 3: If no embedded JSON, fallback to trying an external config.json file.
+
+    // Priority 3: If no embedded JSON (or it failed), fallback to trying an external config.json file.
+    console.log("No valid embedded JSON. Attempting to fetch config.json.");
     fetch('config.json')
         .then(response => {
             if (response.ok) {
@@ -974,6 +1018,17 @@ if (defaultJsonText && defaultJsonText.trim().length > 2) {
             console.log(error.message + ". Starting with a blank slate.");
             renderState({});
         });
+}
+
+// Start the cascade
+const savedSession = localStorage.getItem('dentalNoteMakerSession');
+if (savedSession) {
+    // Priority 1: Load from a saved browser session
+    console.log("Loading from saved browser session.");
+    loadJsonData(savedSession, true);
+} else {
+    // No session found, proceed to the default loading sequence
+    loadDefaults();
 }
 
 // **** END OF CODE for Initial Setup ****
