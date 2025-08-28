@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 25AUG2025 mgh -->
+<!-- version as of 28AUG2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -40,7 +40,7 @@
         #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
         .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .copy-btn-prominent:hover { background-color: var(--success-hover); }
-        #reset-btn { background-color: var(--danger-color); }
+        #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
         /* All other element-specific styles are here */
         .endo-testing-element, .anesthetic-element, .enhanced-textbox, .alert-element { cursor: pointer; justify-content: center; }
@@ -135,7 +135,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.7c</h5>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.8</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -145,6 +145,7 @@
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 		<label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values</button>
+		<button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
     <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
@@ -1145,6 +1146,86 @@
         
         // --- Helper Functions ---
 
+		
+// **** START OF CODE: Session Persistence Logic ****
+
+        // This function gathers the current state of ALL elements on the page and saves it to localStorage.
+        const saveCurrentStateToLocalStorage = () => {
+            console.log("Auto-saving current session state...");
+            // Create a state object, identical to how the "Export JSON" function works.
+            const stateToSave = {};
+            SECTIONS.forEach(id => {
+                stateToSave[id] = [];
+                document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => {
+                    stateToSave[id].push(getElementState(el));
+                });
+            });
+            // Convert the object to a JSON string and store it.
+            localStorage.setItem('dentalNoteMakerSession', JSON.stringify(stateToSave));
+        };
+
+		        // This is the "Reset Values" function.
+        const resetValues = () => {
+            console.log("Resetting values to template defaults...");
+            if (!lastLoadedState) {
+                alert("No default template has been loaded to reset to.");
+                return;
+            }
+            let resetCount = 0;
+            document.querySelectorAll('.draggable-element').forEach(currentElement => {
+                // Check the "do not reset" flag directly on the HTML element.
+                if (currentElement.dataset.doNotReset === 'true') {
+                    console.log(`Skipping reset for element: ${currentElement.dataset.originalId}`);
+                    return; // Skip this element and move to the next one.
+                }
+
+                const originalId = currentElement.dataset.originalId;
+                if (!originalId) return;
+
+                // Find the original, pristine data from the template we loaded.
+                const [sectionIndex, itemIndex] = originalId.split('-');
+                const sectionKey = SECTIONS[sectionIndex];
+                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
+                
+                if (defaultData) {
+                    resetCount++;
+                    // Create a fresh element from the default data and replace the current one.
+                    const newElement = createElement(defaultData.type, defaultData);
+                    currentElement.replaceWith(newElement);
+                }
+            });
+            
+            // This is crucial: after resetting, we must immediately update the live output,
+            // which in turn triggers an auto-save of the newly reset state to localStorage.
+            updateLiveOutput(); 
+            
+            alert(`Reset ${resetCount} element(s) to their template default values.`);
+        };
+
+// **** START OF FULL RESET CODE ****
+        const fullReset = () => {
+            // Ask for confirmation because this is a destructive action.
+            if (confirm("Are you sure you want to perform a full reset? This will clear any saved work and restore the original template.")) {
+                console.log("Performing a full reset. Clearing localStorage...");
+                
+                // 1. Clear the saved session from localStorage.
+                localStorage.removeItem('dentalNoteMakerSession');
+                
+                // 2. Immediately reload the page.
+                // This is the cleanest way to trigger the startup cascade, which will now
+                // fail to find a localStorage session and will load the embedded JSON instead.
+                window.location.reload();
+            }
+        };
+        // **** END OF FULL RESET CODE ****
+
+		
+// **** END OF Session Persistence Logic ****
+
+
+
+
+		
 	    const updateTxPlanSummary = (element) => { 
     const state = getElementState(element);
     const summarySpan = element.querySelector('.tx-plan-summary');
@@ -1376,35 +1457,12 @@
                 if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
             });
             liveOutput.value = outputParts.join('');
+			
+			// Auto-save the entire state to the browser's local storage on every change.
+            saveCurrentStateToLocalStorage();
         };
 
-        const resetValues = () => {
-            if (!lastLoadedState) { alert("No default template loaded to reset to."); return; }
-			
-			// **** START OF NEW CODE for highlight reset****
-    // First, remove all highlights from any element on the page.
-    document.querySelectorAll('.element-highlighted').forEach(el => el.classList.remove('element-highlighted'));
-    // **** END OF NEW CODE ****
-			
-            let resetCount = 0;
-            document.querySelectorAll('.draggable-element').forEach(currentElement => {
-                if (currentElement.dataset.doNotReset === 'true') {
-                    return; // Skip this element
-                }
-                const originalId = currentElement.dataset.originalId;
-                if (!originalId) return;
-                const [sectionIndex, itemIndex] = originalId.split('-');
-                const sectionKey = SECTIONS[sectionIndex];
-                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
-                if (defaultData) {
-                    resetCount++;
-                    const newElement = createElement(defaultData.type, defaultData);
-                    currentElement.replaceWith(newElement);
-                }
-            });
-            updateLiveOutput();
-            alert(`Reset ${resetCount} element(s) to their default values.`);
-        };
+
         
         // --- UI & Event Handlers ---
 
@@ -1710,51 +1768,56 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
 
 // A single, global shortcut handler for Shift+Enter that routes actions based on context.
 document.addEventListener('keydown', (event) => {
-    // Only proceed if the specific key combination is pressed.
-    if (!event.shiftKey || event.key !== 'Enter') {
-        return;
-    }
+   // Only proceed if the specific key combination is pressed.
+   if (!event.shiftKey || event.key !== 'Enter') {
+       return;
+   }
 
-    // --- CONTEXT-SENSITIVE ROUTING ---
+   // --- CONTEXT-SENSITIVE ROUTING ---
+   const anesModal = document.getElementById('anesthetic-editor-modal');
+   const textModal = document.getElementById('textbox-editor-modal');
+   const endoModal = document.getElementById('endo-testing-modal');
+   const allergyModal = document.getElementById('allergy-modal');
+   const txPlanModal = document.getElementById('tx-plan-modal');
+   const propsModal = document.getElementById('properties-modal');
 
-    // Find which modal is currently visible
-    const anesModal = document.getElementById('anesthetic-editor-modal');
-    const textModal = document.getElementById('textbox-editor-modal');
-    const endoModal = document.getElementById('endo-testing-modal');
-    const allergyModal = document.getElementById('allergy-modal');
-    const txPlanModal = document.getElementById('tx-plan-modal');
-    const propsModal = document.getElementById('properties-modal');
-    
-    // Prevent the default browser action (e.g., adding a newline in a textarea)
-    event.preventDefault();
+   // Check which modal is open
+   const isAnesOpen = getComputedStyle(anesModal).display !== 'none';
+   const isTextOpen = getComputedStyle(textModal).display !== 'none';
+   const isEndoOpen = getComputedStyle(endoModal).display !== 'none';
+   const isAllergyOpen = getComputedStyle(allergyModal).display !== 'none';
+   const isTxPlanOpen = getComputedStyle(txPlanModal).display !== 'none';
+   const isPropsOpen = getComputedStyle(propsModal).display !== 'none';
 
-    // ** NEW, MORE SPECIFIC CHECK **
-    // Check if the focus is inside the textbox editor's dropdown. This is a special case.
-    if (getComputedStyle(textModal).display !== 'none' && document.activeElement.id === 'textbox-editor-select') {
-         // Stop the event from bubbling up further, preventing the global copy.
-        event.stopPropagation();
-        document.getElementById('textbox-editor-save-btn').click();
-        return; // Exit the function immediately
-    }
+   const isModalOpen = isAnesOpen || isTextOpen || isEndoOpen || isAllergyOpen || isTxPlanOpen || isPropsOpen;
 
-    // ROUTE 1: A modal is open, so click its save button.
-    if (getComputedStyle(textModal).display !== 'none') {
-        document.getElementById('textbox-editor-save-btn').click();
-    } else if (getComputedStyle(anesModal).display !== 'none') {
-        document.getElementById('anesthetic-editor-save-btn').click();
-    } else if (getComputedStyle(endoModal).display !== 'none') {
-        document.getElementById('endo-testing-save-btn').click();
-    } else if (getComputedStyle(allergyModal).display !== 'none') {
-        document.getElementById('allergy-save-btn').click();
-    } else if (getComputedStyle(txPlanModal).display !== 'none') {
-        document.getElementById('tx-plan-save-btn').click();
-    } else if (getComputedStyle(propsModal).display !== 'none') {
-        document.getElementById('properties-save-btn').click();
-    } 
-    // ROUTE 2: No modals are open, so perform the global copy action.
-    else {
-        document.getElementById('copy-btn-top').click();
-    }
+   // If any modal is open, we need to handle it.
+   if (isModalOpen) {
+       // Prevent the default browser action (like adding a newline or submitting a form)
+       event.preventDefault();
+       // Stop the event from propagating further, just in case.
+       event.stopPropagation();
+
+       // Now, click the correct save button.
+       if (isTextOpen) {
+           document.getElementById('textbox-editor-save-btn').click();
+       } else if (isAnesOpen) {
+           document.getElementById('anesthetic-editor-save-btn').click();
+       } else if (isEndoOpen) {
+           document.getElementById('endo-testing-save-btn').click();
+       } else if (isAllergyOpen) {
+           document.getElementById('allergy-save-btn').click();
+       } else if (isTxPlanOpen) {
+           document.getElementById('tx-plan-save-btn').click();
+       } else if (isPropsOpen) {
+           document.getElementById('properties-save-btn').click();
+       }
+   }
+   // If NO modal is open, perform the global copy action.
+   else {
+       event.preventDefault();
+       document.getElementById('copy-btn-top').click();
+   }
 });
 
 	    
@@ -1796,6 +1859,7 @@ document.querySelectorAll('.modal').forEach(modal => {
         fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (re) => { loadJsonData(re.target.result); }; reader.readAsText(file); e.target.value = ''; });
         document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dental-note-template.json'; a.click(); URL.revokeObjectURL(a.href); };
         document.getElementById('reset-btn').addEventListener('click', resetValues);
+		document.getElementById('full-reset-btn').addEventListener('click', fullReset);
         document.getElementById('view-hidden-toggle').addEventListener('change', (e) => { if (e.target.checked) { document.body.classList.add('show-hidden-elements'); } else { document.body.classList.remove('show-hidden-elements'); }});
         
 		// **** START OF NEW CODE for lock toggle****
@@ -1815,18 +1879,100 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 		
 		
         // --- Initial Setup ---
-        const loadJsonData = (jsonString) => { try { const state = JSON.parse(jsonString); renderState(state); alert('Template loaded successfully!'); } catch (err) { console.error("JSON Parse Error:", err); alert('Error: Invalid JSON data.'); } };
-        const renderState = (state) => { document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = ''); SECTIONS.forEach((sectionId, secIndex) => { const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`); const elements = state[sectionId] || []; if (zone && Array.isArray(elements)) { elements.forEach((item, itemIndex) => { item.originalId = `${secIndex}-${itemIndex}`; zone.appendChild(createElement(item.type, item)); }); } }); lastLoadedState = JSON.parse(JSON.stringify(state)); updateLiveOutput(); };	    
-        const defaultJsonText = document.getElementById('default-json-data').textContent;
-        if (defaultJsonText.trim().length > 2) { try { const defaultState = JSON.parse(defaultJsonText); renderState(defaultState); } catch { console.error("Could not parse embedded default JSON. Starting blank."); renderState({}); } } else { renderState({}); }
+        const loadJsonData = (jsonString, isStartup = false, isFromFileImport = false) => {
+            try {
+                const state = JSON.parse(jsonString);
+                
+                // If this is a new file import, it becomes the new template AND we must clear the old session.
+                if (isFromFileImport) {
+                    console.log("New file imported. Clearing old localStorage session.");
+                    localStorage.removeItem('dentalNoteMakerSession');
+                    lastLoadedState = JSON.parse(JSON.stringify(state)); // This becomes the new "source of truth" for reset.
+                }
+                
+                renderState(state, isFromFileImport);
 
-    // **** START OF NEW, CORRECTED CODE for lock and drag****
-    // This runs only ONCE after the initial layout is built and will not interfere with subsequent drag events.
-    const lockToggle = document.getElementById('lock-layout-toggle');
-    if (lockToggle.checked) {
-        lockToggle.dispatchEvent(new Event('change'));
-    }
-    // **** END OF NEW, CORRECTED CODE ****
+                if (!isStartup) {
+                    alert('Template loaded successfully!');
+                }
+                return true;
+            } catch (err) {
+                console.error("JSON Parse Error:", err);
+                if (!isStartup) { alert('Error: Invalid JSON data.'); }
+                return false;
+            }
+        };
+
+        const renderState = (state, isNewTemplate = false) => {
+            document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
+            
+            // If we are loading a NEW template, we must build the lastLoadedState memory.
+            // If we are just restoring a session, lastLoadedState is already in memory from the initial load.
+            if (isNewTemplate) {
+                lastLoadedState = {}; 
+                SECTIONS.forEach((sectionId) => {
+                    const elements = state[sectionId] || [];
+                    if (!lastLoadedState[sectionId]) lastLoadedState[sectionId] = [];
+                    elements.forEach((item, itemIndex) => {
+                        lastLoadedState[sectionId][itemIndex] = JSON.parse(JSON.stringify(item));
+                    });
+                });
+            }
+
+            SECTIONS.forEach((sectionId, secIndex) => {
+                const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+                const elements = state[sectionId] || [];
+                if (zone && Array.isArray(elements)) {
+                    elements.forEach((item, itemIndex) => {
+                        item.originalId = `${secIndex}-${itemIndex}`;
+                        zone.appendChild(createElement(item.type, item));
+                    });
+                }
+            });
+            
+            updateLiveOutput();
+            const lockToggle = document.getElementById('lock-layout-toggle');
+            if (lockToggle.checked) {
+                lockToggle.dispatchEvent(new Event('change'));
+            }
+        };
+
+        // --- STARTUP CONFIGURATION CASCADE ---
+        const savedSession = localStorage.getItem('dentalNoteMakerSession');
+        
+        // This function defines the default loading sequence.
+        function loadDefaults() {
+            // Priority 2: Try to load from the embedded JSON data.
+            const defaultJsonText = document.getElementById('default-json-data').textContent;
+            if (defaultJsonText && defaultJsonText.trim().length > 2) {
+                console.log("No session found. Loading from embedded JSON data.");
+                loadJsonData(defaultJsonText, true, true); // Treat as a new template
+            } else {
+                // Priority 3: If no embedded JSON, start blank.
+                console.log("No session or embedded JSON. Starting with a blank slate.");
+                renderState({});
+            }
+        }
+
+        // Run the cascade
+        if (savedSession) {
+            // Priority 1: A previous session exists. We need to load both the session AND its underlying template.
+            console.log("Loading from saved browser session.");
+            const sessionState = JSON.parse(savedSession);
+            // First, load the template that this session was based on.
+            const defaultJsonText = document.getElementById('default-json-data').textContent;
+            if (defaultJsonText && defaultJsonText.trim().length > 2) {
+                loadJsonData(defaultJsonText, true, true); // Load template but don't show UI yet
+            } else {
+                renderState({}, true); // Prepare a blank template
+            }
+            // Now, render the user's actual saved work over the top of it.
+            renderState(sessionState, false); // Render session state, but don't overwrite the template memory.
+        } else {
+            // No session found, proceed to the normal default loading sequence.
+            loadDefaults();
+        }
+ 
 	    
     });
     </script>
