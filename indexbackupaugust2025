@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<!-- version as of 25AUG2025 mgh -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Note - MAKER</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5; --main-bg: #ffffff; --section-bg: #f9f9f9;
+            --section-border: #d9d9d9; --element-bg: #e6f7ff; --element-border: #91d5ff;
+            --element-shadow: 0 2px 4px rgba(0,0,0,0.1); --button-bg: #1890ff;
+            --button-text: #ffffff; --button-hover-bg: #40a9ff; --text-color: #333;
+            --modal-bg: rgba(0,0,0,0.5); --danger-color: #d93025;
+            --warning-color: #fd7e14; --success-color: #28a745; --success-hover: #218838;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+        h1 { text-align: center; margin-top: 0; }
+		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold;}
+		h5 { text-align: center; margin-top: 0; font-weight: light;}	    
+        .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
+        .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); }
+        .add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
+        
+        .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
+        .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  }
+        body.layout-locked .draggable-element {cursor: default;}
+		
+        /* Styles for Hidden Elements and highlighted */
+		.element-highlighted {border-color: var(--success-color) !important; }
+        .element-hidden { display: none; }
+        body.show-hidden-elements .element-hidden { display: flex; border-style: dotted; border-color: var(--danger-color); }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: var(--modal-bg); overflow: auto; }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 900px; border-radius: 8px; display: flex; flex-direction: column; max-height: 85vh; }
+        .modal-body { flex-grow: 1; overflow: auto; position: relative; } .modal-footer { margin-top: 20px; flex-shrink: 0; display:flex; justify-content:flex-end; gap: 10px;}
+        
+        #context-menu { display: none; position: absolute; z-index: 2000; background-color: var(--main-bg); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 5px 0; min-width: 150px; }
+        #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
+        .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
+        .copy-btn-prominent:hover { background-color: var(--success-hover); }
+        #reset-btn { background-color: var(--danger-color); }
+        .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
+        /* All other element-specific styles are here */
+        .endo-testing-element, .anesthetic-element, .enhanced-textbox, .alert-element { cursor: pointer; justify-content: center; }
+        .internal-label { font-size: 0.8em; font-weight: bold; color: #0050b3; margin-bottom: 4px; }
+        .enhanced-textbox-preview { font-style: italic; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .alert-element { padding: 10px; text-align: center; font-weight: bold; color: var(--button-text); resize: none; min-height: initial; }
+        .alert-blank { background-color: var(--warning-color); border-color: var(--warning-color)!important; }
+        .alert-none { background-color: var(--success-color); border-color: var(--success-color)!important; }
+        .alert-active { background-color: var(--danger-color); border-color: var(--danger-color)!important; }
+        .bp-element input[type="number"] { width: 45px; text-align: center; }
+        .bp-prior-tx-container { display: none; } .bp-prior-tx-container.visible { display: block; }
+        
+/* **** START OF MODIFIED CSS to take precedence over other colors **** */
+.bp-normal { border-color: var(--bp-normal) !important; } 
+.bp-elevated { border-color: #ffc107 !important; } 
+.bp-stage1 { border-color: var(--warning-color) !important; } 
+.bp-stage2 { border-color: var(--danger-color) !important; } 
+.bp-crisis { border-color: #8b0000 !important; animation: pulse 1.5s infinite; }
+/* **** END OF MODIFIED CSS **** */
+	    
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--bp-crisis); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+        .psr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-family: monospace; }
+        .psr-sextant { text-align: center; } .psr-sextant label { font-size: 0.8em; color: #555; display: block; }
+        .psr-grid input[type="text"] { width: 100%; box-sizing: border-box; text-align: center; }
+        .psr-asterisk-note { display: none; width: 100%; } .psr-asterisk-note.visible { display: block; margin-top: 5px; }
+        .pain-scale-container { display: flex; align-items: center; gap: 10px; }
+        .pain-scale-container input[type=range] { flex-grow: 1; }
+        #textbox-editor-area { display: flex; flex-direction: column; gap: 10px; align-items: stretch; height: 100%; }
+        #textbox-editor-textarea { flex-grow: 1; min-height: 200px; resize: vertical; position: relative;}
+        #textbox-editor-snippets { display: flex; align-items: center; gap: 10px; }
+        #textbox-editor-select { flex-grow: 1; }
+        #textbox-editor-buttons { display: flex; flex-direction: column; gap: 5px; }
+        #anesthetic-editor-list .anesthetic-row, #prop-anesthetic-types .prop-anesthetic-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; }
+        #prop-anesthetic-types .prop-anesthetic-row { grid-template-columns: 2fr 1fr 1fr auto; }
+        #prop-anesthetic-types .prop-anesthetic-row input { width: 100%; box-sizing: border-box; }
+        .remove-btn { color: var(--danger-color); cursor: pointer; font-weight: bold; }
+        #endo-table { border-collapse: collapse; width: 100%; }
+        #endo-table th, #endo-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        #endo-table input { width: 100%; box-sizing: border-box; border: none; background: transparent; }
+        #endo-editor-controls { display: flex; gap: 10px; padding: 10px 0; align-items: center; }
+
+
+        /* **** START OF NEW CSS **** */
+
+        /* Style for the "Priority Level" text */
+        #tx-plan-table .priority-label {
+            font-size: 0.8em;
+            color: #555;
+            display: block;
+        }
+
+        /* Style the row-header cells (Oral Hygiene, etc.) */
+        #tx-plan-table .tx-row-header {
+            background-color: #f2f2f2; /* Light gray background */
+            color: #0050b3;          /* Bold blue text */
+            font-weight: bold;
+        }
+
+        /* Style the textarea for a different default color */
+        #tx-plan-table textarea {
+            background-color: #f8f9fa; /* A very light gray */
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 5px;
+            transition: background-color 0.2s, border-color 0.2s; /* Smooth transition */
+        }
+        
+        /* Style the textarea when it has content */
+        #tx-plan-table textarea.has-content {
+            background-color: #fff;
+            border-color: var(--success-color); /* Green border */
+            outline: 2px solid transparent; /* Prevents default focus outline from clashing */
+        }
+
+        /* **** END OF NEW CSS **** */
+
+	            /* **** START OF NEW CODE for tx plan copy/paste **** */
+        #text-selection-menu .selection-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        #text-selection-menu .selection-menu-item:hover {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+        }
+        #action-feedback.success { background-color: var(--success-color); }
+        #action-feedback.error { background-color: var(--danger-color); }
+        /* **** END OF NEW CODE **** */
+
+
+	    
+    </style>
+</head>
+<body>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.7c</h5>
+    <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
+    <!-- Layout and Modals -->
+    <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
+    <div class="controls">
+        <button id="import-btn" class="control-btn">Import JSON File...</button>
+        <button id="export-btn" class="control-btn">Export JSON</button>
+        <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
+		<label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
+        <button id="reset-btn" class="control-btn">Reset Values</button>
+    </div>
+    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
+    <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
+
+	            <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
+	    
+	    <div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
+    <div id="properties-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="properties-title">Edit Properties</h2><span class="close-btn" data-modal-id="properties-modal">&times;</span></div><div class="modal-body" id="properties-body"></div><div class="modal-footer"><button id="properties-save-btn" class="control-btn">Save Changes</button></div></div></div>
+    <div id="context-menu"><div id="ctx-properties">Properties...</div><div id="ctx-delete">Delete Element</div></div>
+
+  
+
+    <!-- Feedback message toast -->
+    <div id="action-feedback" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 12000; transition: opacity 0.5s;"></div>
+    <!-- **** END OF NEW CODE **** -->
+	
+    <div id="endo-testing-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Endo Testing Results</h2><span class="close-btn" data-modal-id="endo-testing-modal">&times;</span></div><div class="modal-body"><div id="endo-editor-controls"><input type="text" id="endo-range-input" placeholder="e.g., 3-6, 14, 18-19"><button id="endo-range-add-btn" class="control-btn">Add Teeth</button></div><div style="overflow-x:auto;"><table id="endo-table"><thead></thead><tbody></tbody></table></div></div><div class="modal-footer"><button id="endo-testing-save-btn" class="control-btn">Save & Close</button></div></div></div>
+    <div id="anesthetic-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Set Anesthetic Amounts</h2><span class="close-btn" data-modal-id="anesthetic-editor-modal">&times;</span></div><div class="modal-body"><div style="padding-bottom:15px; border-bottom:1px solid #eee; margin-bottom:15px;"><label><input type="checkbox" id="anesthetic-topical-check"> Include Topical Anesthetic</label></div><div id="anesthetic-editor-list"></div></div><div class="modal-footer"><button id="anesthetic-editor-save-btn" class="control-btn">Save & Close</button></div></div></div>
+    <div id="allergy-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Select Alerts</h2><span class="close-btn" data-modal-id="allergy-modal">&times;</span></div><div class="modal-body"><fieldset><legend>Common Alerts</legend><div id="allergy-list"></div></fieldset><hr><fieldset><legend>Custom Alert</legend><input type="text" id="custom-allergy-input" placeholder="e.g., Cats" style="width: 100%; box-sizing: border-box;"></fieldset></div><div class="modal-footer"><button id="allergy-save-btn" class="control-btn">Save Alerts</button></div></div></div>
+    <div id="textbox-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Edit Text</h2><span class="close-btn" data-modal-id="textbox-editor-modal">&times;</span></div><div class="modal-body">
+	    
+<!-- **** START OF MODIFIED HTML for class to tx plan **** -->
+<div id="textbox-editor-area">
+    <textarea id="textbox-editor-textarea"></textarea>
+
+    <!-- NEW container for action buttons that appear on text selection -->
+    <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
+        <b>Send Selected Text To:</b><br>
+        <button class="control-btn selection-action-btn" data-target-class="CLASS 3">Op Class 3</button>
+        <button class="control-btn selection-action-btn" data-target-class="CLASS 2">Op Class 2</button>
+        <button class="control-btn selection-action-btn" data-target-class="CLASS 1">Op Class 1</button>
+    </div>
+
+    <div id="textbox-editor-snippets">
+        <select id="textbox-editor-select" size="10"></select>
+        <div id="textbox-editor-buttons"> <!-- Added a wrapper div -->
+            <button id="textbox-editor-add-btn" class="control-btn">Add</button>
+            <button id="textbox-editor-replace-btn" class="control-btn">Replace</button>
+        </div>
+    </div>
+</div>
+<!-- **** END OF MODIFIED HTML **** -->
+    
+    </div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (Shift+Enter)</button></div></div></div>
+
+        <!-- **** START OF NEW CODE for tx plan**** -->
+    <div id="tx-plan-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Treatment Plan</h2><span class="close-btn" data-modal-id="tx-plan-modal">×</span></div>
+            <div class="modal-body">
+                <table id="tx-plan-table" style="width:100%; border-collapse: collapse;">
+                    <!-- Table content will be generated by JavaScript -->
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button id="tx-plan-save-btn" class="control-btn">Save & Close</button>
+            </div>
+        </div>
+    </div>
+    <!-- **** END OF NEW CODE **** -->
+
+<script type="application/json" id="default-json-data">
+
+	
+{
+  "header": [
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "0-0",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "**PERIODIC ORAL EXAM (T-2)**",
+        "**INITIAL ORAL EXAM (T-1)**",
+	"**RETIREMENT EXAM (T-2)**",
+        "**SEPARATION EXAM (T-2)**  "
+      ],
+      "selected": "**PERIODIC ORAL EXAM (T-2)**"
+    },
+    {
+      "type": "alert",
+      "required": true,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "0-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "alerts": [
+        "None"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-2",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": " Reviewed. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "0-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "LEARNING NEEDS:  Language: English. ",
+        "LEARNING NEEDS:  Language: ESOL. ",
+        "LEARNING NEEDS:  Language: Other. "
+      ],
+      "selected": "LEARNING NEEDS:  Language: English. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "Learning Type: Written/Verbal. ",
+        "Learning Type: Written. ",
+        "Learning Type: Verbal. "
+      ],
+      "selected": "Learning Type: Written/Verbal. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "Impairments: None. ",
+        "Impairments: Hearing Aid. ",
+        "Impairments: Other. "
+      ],
+      "selected": "Impairments: None. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "0-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "Cultural: None.",
+        "Cultural: Other."
+      ],
+      "selected": "Cultural: None."
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "FLIGHT STATUS: N/A",
+        "FLIGHT STATUS: AVIATOR",
+        "FLIGHT STATUS: AC",
+        "FLIGHT STATUS: AW"
+      ],
+      "selected": "FLIGHT STATUS: N/A"
+    },
+    {
+      "type": "bloodpressure",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-8",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "systolic": "120",
+      "diastolic": "80",
+      "isPriorTxChecked": false,
+      "discussSystolic": "135",
+      "discussDiastolic": "90",
+      "checkboxSystolic": "150",
+      "checkboxDiastolic": "95"
+    }
+  ],
+  "subjective": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "1-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "S:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None",
+      "internalLabel": "CC:",
+      "prefixLabel": "PRESENTING COMPLAINT: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "painscale",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "value": "0"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None",
+      "internalLabel": "Tobacco / Vaping",
+      "prefixLabel": "TOBACCO/VAPING: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "Vaping",
+        "Cigarettes",
+        "Smokeless Tobacco",
+        "Nicotene pouches",
+	"0.5 Pack Per Day",
+	"0.5 Can Per Day"
+      ]
+    }
+  ],
+  "objective": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "2-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "O:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "2-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "BWX: TODAY",
+        "BWX: REVIEWED",
+        "BWX: N/A",
+        " "
+      ],
+      "selected": "BWX: TODAY"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "2-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "PANO: REVIEWED",
+        "PANO: TODAY",
+        "PANO: N/A",
+        " "
+      ],
+      "selected": "PANO: REVIEWED"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "2-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": " ",
+      "internalLabel": "Radiographs Other",
+      "prefixLabel": "",
+      "defaultText": " ",
+      "dropdownOptions": [
+        "PA #: "
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "No Pathology Noted.",
+      "internalLabel": "Radiographic Findings",
+      "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
+      "defaultText": "No Pathology Noted.",
+      "dropdownOptions": [
+        "Antral Pseudocyst Maxillary Sinus",
+        "Periradicular Radiolucency #",
+        "Condensing Osteitis #",
+        "Retained Root Tip #",
+        "Periapical Cemento-Osseous Dysplasia",
+        "Idiopathic Osteosclerosis"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "100%",
+      "content": "None.",
+      "internalLabel": "Caries / Defective",
+      "prefixLabel": "CARIES/DEFECTIVE RESTORATIONS: ",
+      "defaultText": "None",
+      "dropdownOptions": [
+        "#"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "100%",
+      "content": "None. ",
+      "internalLabel": "Incipient",
+      "prefixLabel": "INCIPIENT CARIES: ",
+      "defaultText": "None",
+      "dropdownOptions": [
+        "#",
+        "Generalized Facial White Spot Lesions",
+        "Overhang #"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL.",
+      "internalLabel": "Soft Tissue / OCS",
+      "prefixLabel": "SOFT TISSUE / OCS: ",
+      "defaultText": "None. ",
+      "dropdownOptions": [
+        "Mandibular Tori",
+        "Apthous Ulcer",
+        "Palatal Torus",
+        "Fibroma",
+        "Tonsillectomy",
+        "Geographic Tongue",
+        "Fissured Tongue"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-8",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "Periodontal",
+      "prefixLabel": "PERIO: ",
+      "defaultText": "None. ",
+      "dropdownOptions": [
+        "Radiographic Calculus",
+        "Heavy Calculus",
+        "OH--",
+        "Recession",
+        "Toothbrush Abrasion"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-9",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "Endodontic",
+      "prefixLabel": "ENDO: ",
+      "defaultText": "None.",
+      "dropdownOptions": []
+    },
+    {
+      "type": "endo-testing",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-10",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "endoTests": [
+        "Percussion",
+        "Palpation",
+        "Endo Ice",
+        "Tooth Slooth",
+        "Periodontal",
+        "Mobility",
+        "Transillumination"
+      ],
+      "endoData": {
+        "teeth": [
+          "",
+          ""
+        ],
+        "results": {
+          "Percussion": [
+            "",
+            ""
+          ],
+          "Palpation": [
+            "",
+            ""
+          ],
+          "Endo Ice": [
+            "",
+            ""
+          ],
+          "Tooth Slooth": [
+            "",
+            ""
+          ],
+          "Periodontal": [
+            "",
+            ""
+          ],
+          "Mobility": [
+            "",
+            ""
+          ],
+          "Transillumination": [
+            "",
+            ""
+          ]
+        }
+      }
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-11",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "TMJ",
+      "prefixLabel": "TMJ: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Bilateral Click",
+        "Nocturnal Bruxism",
+        "Daytime Clenching",
+        "Masseter Tenderness",
+        "Temporal Headaches"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-12",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "WNL. ",
+      "internalLabel": "Occlusion",
+      "prefixLabel": "OCCLUSION: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Bonded Retainer 22-27",
+        "Bonded Retainer 6-11",
+        "Crossbite ",
+        "Anterior Open Bite",
+	"Crowding"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-13",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "40%",
+      "content": "WNL. ",
+      "internalLabel": "Oral Surgery",
+      "prefixLabel": "ORAL SURGERY: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Missing: 1,16,17,32",
+        "1,16,17,32 Present",
+        "Unerupted - ",
+        "Communicating - "
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-14",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "40%",
+      "content": "WNL. ",
+      "internalLabel": "Other Findings",
+      "prefixLabel": "OTHER FINDINGS: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Toothbrush Abrasion",
+        "Heavy Occlusal Wear"
+      ]
+    },
+    {
+      "type": "psr",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-15",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "scores": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "asterisks": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "asteriskNote": ""
+    }
+  ],
+  "assessment": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "A:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None.",
+      "internalLabel": "Diagnosis of CC",
+      "prefixLabel": "DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT: ",
+      "defaultText": "None",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "Gingivitis Localized",
+      "internalLabel": "Perio Diagnosis",
+      "prefixLabel": "PERIO DIAGNOSIS: ",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": [
+        "Gingivitis Localized",
+        "Gingivitis Generalized",
+        "Healthy",
+        "Periodontitis Stage I",
+        "Periodontitis Stage II",
+        "Periodontitis Stage III",
+        "Periodontitis Stage IV",
+        "Grade A",
+        "Grade B",
+        "Grade C"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None.",
+      "internalLabel": "Endo Diagnosis",
+      "prefixLabel": "ENDO DIAGNOSIS",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "None",
+        "Normal Apical Tissues",
+        "Symptomatic Apical Periodontitis",
+        "Asymptomatic Apical Periodontitis",
+        "Chronic Apical Abscess",
+        "Acute Apical Abscess",
+        "Condensing Osteitis",
+        "Reversible Pulpitis",
+        "Symptomatic Irreversible Pulpitis",
+        "Asymptomatic Irreversible Pulpitis",
+        "Pulpal Necrosis",
+        "Previously Treated"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "None.",
+      "internalLabel": "Oral Surgery Diagnosis",
+      "prefixLabel": "ORAL SURGERY DIAGNOSIS: ",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "Non-functional",
+        "Non-restorable",
+        "Insufficient Arch Length"
+      ]
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "CARIES RISK: Low",
+        "CARIES RISK: Moderate",
+        "CARIES RISK: High"
+      ],
+      "selected": "CARIES RISK: Low"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "PERIO RISK: Low",
+        "PERIO RISK: Moderate",
+        "PERIO RISK: High"
+      ],
+      "selected": "PERIO RISK: Low"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "options": [
+        "CANCER RISK: Low",
+        "CANCER RISK: Moderate",
+        "CANCER RISK: High"
+      ],
+      "selected": "CANCER RISK: Low"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-8",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "Findings reviewed / Patient informed and consents to Treatment Plan.",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    }
+  ],
+  "plan": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "4-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "content": "P:   CHARTING OF TREATMENT PLAN IN DENTRIX",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "Click to edit...",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "4-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "content": "",
+      "internalLabel": "Caries Risk Management",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": [
+        "Caries Risk Management: OHI",
+        "Caries Risk Management: Fluoride Treatments x 4",
+        "Caries Risk Management: Prevident 5000: 2 Tubes. 2 Refills. Use as directed.",
+        "Caries Risk Management: Peridex Rinse: 1 bottle. Swish with 15ml BID for 2 weeks."
+      ]
+    },
+    {
+      "type": "tx-plan",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "4-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "txRows": [
+        "Oral Hygiene",
+        "Operative",
+        "Perio",
+        "Oral Surgery",
+        "Endo",
+        "Pros",
+        "Other"
+      ],
+      "txSnippets": [
+        "RDH",
+        "SRP",
+        "RECALL"
+      ],
+      "txData": {
+        "Oral Hygiene-CLASS 2": {
+          "text": "RDH",
+          "priority": 1
+        }
+      }
+    }
+  ],
+  "footer": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "5-0",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "content": "Default",
+      "internalLabel": "Dental Technician Name",
+      "prefixLabel": "DENTAL TECHNICIAN: ",
+      "defaultText": "",
+      "dropdownOptions": [
+        "SANDERSON",
+        "LEONARDSON",
+        "DUPREY",
+        "PHILLIPS",
+        "BYRD",
+        "MITCHELL",
+        "STEWART",
+        "MORRIS",
+        "BABCOCK",
+        "TURNER"
+      ]
+    },
+    {
+      "type": "formatter",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "5-1",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "formatType": "newline",
+      "customChars": ""
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "5-2",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "content": "",
+      "internalLabel": "Dentist Block",
+      "prefixLabel": "DENTAL OFFICER: ",
+      "defaultText": "",
+      "dropdownOptions": [
+        "MG HORNING DDS  1912969445",
+        "JA HOGAN",
+        "RJ ALOVA",
+        "BW HANES",
+        "CL ROBERTS",
+        "RA NARDELLA"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "5-3",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "content": "",
+      "internalLabel": "Signature Block",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": ["  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "]
+    }
+  ]
+}
+
+
+
+
+
+	
+</script>
+
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- State and Constants ---
+        let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null;
+        const SECTIONS = ['header', 'subjective', 'objective', 'assessment', 'plan', 'footer'];
+        const ALLERGY_LIST = ["None", "PREGNANCY", "Penicillin", "Amoxicillin", "Codeine", "Aspirin", "NSAIDs", "Sulfa Drugs", "Local Anesthetics", "Latex", "Iodine", "Erythromycin", "Tetracycline", "Metals (Nickel, etc.)", "IV Contrast Dye", "Eugenol", "Shellfish", "Cinnamon", "Peanuts", "Tree Nuts", "Soy"];
+        const PSR_AUTOFOCUS_MAP = new Map([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
+        const liveOutput = document.getElementById('live-output');
+        
+        // --- Helper Functions ---
+
+	    const updateTxPlanSummary = (element) => { 
+    const state = getElementState(element);
+    const summarySpan = element.querySelector('.tx-plan-summary');
+    const entryCount = Object.values(state.txData).filter(d => d.text && d.text.trim() !== '').length;
+    summarySpan.textContent = entryCount > 0 ? `Treatment Plan: ${entryCount} Entries` : 'Click to set Treatment Plan'; 
+};
+	    
+	    
+	    const getBPStatus = (s, d) => { if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 80) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal'; };
+        const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
+        const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
+        const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
+        const padBox = (score) => `[${(score || '').padEnd(2)}]`;
+        const updateAlertElementUI = (element) => { const state = getElementState(element); const display = element.querySelector('.alert-display'); element.classList.remove('alert-blank', 'alert-none', 'alert-active'); if (state.alerts.length === 0) { display.textContent = "ALERT (Click to set)"; element.classList.add('alert-blank'); } else if (state.alerts.length === 1 && state.alerts[0] === 'None') { display.textContent = "No Known Allergies"; element.classList.add('alert-none'); } else { display.textContent = `ALERT: ${state.alerts.length} active`; element.classList.add('alert-active'); } };
+        const updateAnestheticSummary = (element) => { const state = getElementState(element); const summarySpan = element.querySelector('.anesthetic-summary'); const usedCount = Object.values(state.anestheticValues).filter(v => v > 0).length; summarySpan.textContent = usedCount > 0 ? `Anesthetic: ${usedCount} Type(s) Used` : 'Click to set anesthetic'; };
+        const updateEndoTestingSummary = (element) => { const state = getElementState(element); const summarySpan = element.querySelector('.endo-summary'); const teethCount = state.endoData.teeth.filter(t => t && t.trim() !== '').length; summarySpan.textContent = teethCount > 0 ? `Endo Testing: ${teethCount} Teeth` : 'Click to set Endo Tests'; };
+
+        // **** START OF NEW CODE for tx plan copy/paste ****
+        const showFeedback = (message, isSuccess = true) => {
+            const feedbackEl = document.getElementById('action-feedback');
+            feedbackEl.textContent = message;
+            feedbackEl.className = isSuccess ? 'success' : 'error';
+            feedbackEl.style.display = 'block';
+            feedbackEl.style.opacity = 1;
+            setTimeout(() => {
+                feedbackEl.style.opacity = 0;
+                setTimeout(() => feedbackEl.style.display = 'none', 500);
+            }, 2000);
+        };
+        // **** END OF NEW CODE ****
+
+	    
+        const parseToothRange = (rangeStr) => { const teeth = new Set(); const parts = rangeStr.split(','); for (const part of parts) { if (part.includes('-')) { const [start, end] = part.split('-').map(Number); if (!isNaN(start) && !isNaN(end)) { for (let i = start; i <= end; i++) { teeth.add(String(i)); } } } else { const num = Number(part.trim()); if (!isNaN(num) && num > 0 && num < 33) { teeth.add(String(num)); } } } return Array.from(teeth).sort((a,b)=>a-b); };
+
+        // --- Core: Element Creation & State ---
+        const createDraggableContainer = (type, data) => {
+            const draggable = document.createElement('div'); draggable.className = 'draggable-element';
+            if (data.isHidden) draggable.classList.add('element-hidden');
+            draggable.dataset.type = type;
+            if (data.doNotReset) draggable.dataset.doNotReset = 'true';
+            if (data.originalId) draggable.dataset.originalId = data.originalId;
+            if (data.required) draggable.dataset.required = 'true'; 
+
+		            // **** START OF NEW CODE for width****
+            // Check for and apply the custom width
+            if (data.width) {
+                draggable.style.width = data.width;
+                draggable.dataset.width = data.width;
+            }
+            // **** END OF NEW CODE ****
+		
+		if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
+            if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || "Click to edit..."; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
+            else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
+            else if (type === 'bloodpressure') { draggable.dataset.discussSystolic = data.discussSystolic || '130'; draggable.dataset.discussDiastolic = data.discussDiastolic || '80'; draggable.dataset.checkboxSystolic = data.checkboxSystolic || '140'; draggable.dataset.checkboxDiastolic = data.checkboxDiastolic || '90'; }   
+	    else if (type === 'anesthetic') { draggable.dataset.anestheticTypes = JSON.stringify(data.anestheticTypes || [ { name: '2% Lidocaine', mg: 34, epi: 17 }, { name: '4% Septocaine', mg: 68, epi: 17 }, { name: '0.5% Marcaine', mg: 9, epi: 9 } ]); draggable.dataset.anestheticValues = JSON.stringify(data.anestheticValues || {}); draggable.dataset.includeTopical = data.includeTopical === false ? 'false' : 'true';}
+ 
+            else if (type === 'tx-plan') {
+                draggable.dataset.txRows = JSON.stringify(data.txRows || ["Oral Hygiene", "Operative", "Perio", "Oral Surgery", "Endo", "Pros", "Other"]);
+		draggable.dataset.txSnippets = JSON.stringify(data.txSnippets || []);
+                draggable.dataset.txData = JSON.stringify(data.txData || {});
+            }	    
+	    
+	    else if (type === 'endo-testing') { draggable.dataset.endoTests = JSON.stringify(data.endoTests || ["Percussion", "Palpation", "Endo Ice", "Tooth Slooth", "Periodontal", "Mobility", "Transillumination"]); draggable.dataset.endoData = JSON.stringify(data.endoData || { teeth: [''], results: {} }); }
+            draggable.draggable = true; draggable.id = `element-${Date.now()}-${Math.random()}`;
+            draggable.addEventListener('dragstart', e => e.target.classList.add('dragging'));
+            draggable.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+            draggable.addEventListener('contextmenu', e => { e.preventDefault(); activeElementForEditor = e.target.closest('.draggable-element'); const contextMenu = document.getElementById('context-menu'); 
+			
+
+			
+			
+			contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.left = `${e.clientX}px`; contextMenu.style.display = 'block'; });
+			
+			// **** START OF NEW CODE ****
+    // Add a simple click listener to add the highlight class
+    draggable.addEventListener('click', (e) => { draggable.classList.add('element-highlighted');});
+    // **** END OF NEW CODE ****
+			
+            return draggable;
+        };
+
+        const createElement = (type, data = {}) => {
+            const draggable = createDraggableContainer(type, data);
+            if (!['enhanced-textbox', 'alert', 'anesthetic', 'endo-testing', 'label-red', 'label-black', 'formatter'].includes(type)) {
+                 draggable.addEventListener('input', updateLiveOutput);
+            }
+            if (type === 'enhanced-textbox') { draggable.classList.add('enhanced-textbox'); const internalLabelHtml = data.internalLabel ? `<div class="internal-label">${data.internalLabel}</div>` : ''; draggable.innerHTML = `${internalLabelHtml}<div class="enhanced-textbox-preview">${data.content || data.defaultText || ''}</div>`; draggable.addEventListener('click', () => openTextboxEditor(draggable)); }
+            else if (type === 'alert') { draggable.classList.add('alert-element'); draggable.innerHTML = `<span class="alert-display"></span>`; draggable.addEventListener('click', () => openAllergyModal(draggable)); updateAlertElementUI(draggable); }
+            else if (type === 'anesthetic') { draggable.classList.add('anesthetic-element'); draggable.innerHTML = `<span class="anesthetic-summary"></span>`; updateAnestheticSummary(draggable); draggable.addEventListener('click', () => openAnestheticEditor(draggable)); }
+
+	     // **** START OF NEW CODE for tx plan ****
+            else if (type === 'tx-plan') {
+                draggable.classList.add('tx-plan-element');
+                draggable.innerHTML = `<span class="tx-plan-summary"></span>`;
+                updateTxPlanSummary(draggable);
+                draggable.addEventListener('click', () => openTxPlanEditor(draggable));
+            }
+            // **** END OF NEW CODE ****
+	    
+	    
+	    else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
+            else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
+            else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-inputs"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
+            else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; draggable.querySelectorAll('.psr-input').forEach(input => { input.addEventListener('input', () => { const index = parseInt(input.dataset.index, 10); const checkbox = draggable.querySelector(`.psr-asterisk[data-index="${index}"]`); if (input.value.includes('*')) { if (!checkbox.checked) checkbox.checked = true; } else { if (checkbox.checked) checkbox.checked = false; } const scorePart = input.value.replace(/\*/g, ''); if (scorePart.length > 1) input.value = scorePart.charAt(0) + (checkbox.checked ? '*' : ''); if (!scorePart.match(/^[0-4]?$/)) input.value = '' + (checkbox.checked ? '*' : ''); if (scorePart.length === 1 && scorePart.match(/[0-4]/)) { const nextIndex = PSR_AUTOFOCUS_MAP.get(index); if (nextIndex !== undefined) { const nextInput = draggable.querySelector(`.psr-input[data-index="${nextIndex}"]`); if (nextInput) { nextInput.focus(); nextInput.select(); } } } updatePSRElementUI(draggable); }); input.addEventListener('keydown', handlePSRTabbing); }); draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
+            else if (type === 'dropdown') { const select = document.createElement('select'); (data.options || ['Select...', 'Opt 1', 'Opt 2']).forEach(opt => select.add(new Option(opt, opt, false, opt === data.selected))); draggable.appendChild(select); draggable.addEventListener('change', updateLiveOutput); }
+            else if (type === 'checkbox') { draggable.innerHTML = `<label><input type="checkbox" ${data.checked ? 'checked' : ''}> <span contenteditable="true">${data.content || 'Checkbox text'}</span></label>`; }
+            else if (type.startsWith('label-')) { draggable.classList.add(type === 'label-red' ? 'element-label-red' : 'element-label-black'); draggable.innerHTML = `<div contenteditable="true">${data.content || 'Descriptive Label'}</div>`; }
+            else if (type === 'formatter') { draggable.classList.add('formatter-element'); const formatType = data.formatType || 'newline'; let display = (formatType === 'newline') ? '↵ Newline' : (formatType === 'tab') ? '→ Tab' : (data.customChars || '...'); draggable.innerHTML = `<span>${display}</span>`; }
+            return draggable;
+        };
+
+        const getElementState = (element) => {
+            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || ''};
+            if (type === 'enhanced-textbox') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions); }
+
+            // **** START OF NEW CODE for tx plan****
+            else if (type === 'tx-plan') {
+                state.txRows = JSON.parse(element.dataset.txRows);
+		state.txSnippets = JSON.parse(element.dataset.txSnippets);
+                state.txData = JSON.parse(element.dataset.txData);
+            }
+            // **** END OF NEW CODE ****
+		    
+            else if (type === 'alert') { state.alerts = JSON.parse(element.dataset.alerts || '[]'); }
+            else if (type === 'painscale') { state.value = element.querySelector('.pain-slider').value; }
+            else if (type === 'anesthetic') { state.anestheticTypes = JSON.parse(element.dataset.anestheticTypes); state.anestheticValues = JSON.parse(element.dataset.anestheticValues); state.includeTopical = element.dataset.includeTopical === 'true'; }
+            else if (type === 'endo-testing') { state.endoTests = JSON.parse(element.dataset.endoTests); state.endoData = JSON.parse(element.dataset.endoData); }
+            else if (type === 'bloodpressure') { state.systolic = element.querySelector('.bp-systolic').value; state.diastolic = element.querySelector('.bp-diastolic').value; state.isPriorTxChecked = element.querySelector('.bp-prior-tx-check').checked; state.discussSystolic = element.dataset.discussSystolic; state.discussDiastolic = element.dataset.discussDiastolic; state.checkboxSystolic = element.dataset.checkboxSystolic; state.checkboxDiastolic = element.dataset.checkboxDiastolic; }
+            else if (type === 'psr') { state.scores = Array(6).fill(''); state.asterisks = Array(6).fill(false); element.querySelectorAll('.psr-input').forEach(i => { state.scores[i.dataset.index] = i.value; }); element.querySelectorAll('.psr-asterisk').forEach(cb => { state.asterisks[cb.dataset.index] = cb.checked; }); state.asteriskNote = element.querySelector('.psr-asterisk-note').value; }
+            else if (type === 'dropdown') { const select = element.querySelector('select'); state.options = Array.from(select.options).map(o => o.value); state.selected = select.value; }
+            else if (type === 'checkbox') { state.checked = element.querySelector('input').checked; state.content = element.querySelector('span').innerText; }
+            else if (type.startsWith('label-')) { state.content = element.querySelector('[contenteditable]').innerText; }
+            else if (type === 'formatter') { state.formatType = element.dataset.formatType || 'newline'; state.customChars = element.dataset.customChars || ''; }
+            return state;
+        };
+        
+        const updateLiveOutput = () => {
+            let outputParts = [];
+            document.querySelectorAll('.draggable-element').forEach(el => {
+                const state = getElementState(el); let content = '';
+                if (state.type === 'enhanced-textbox') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
+
+                // **** START OF NEW CODE for tx plan****
+                else if (state.type === 'tx-plan') {
+                    const classOrder = ["CLASS 3", "CLASS 2", "CLASS 1"];
+                    let planParts = [];
+                    classOrder.forEach(className => {
+                        let classContent = [];
+                        for (let priority = 1; priority <= 5; priority++) {
+                            let priorityItems = [];
+                            state.txRows.forEach(rowName => {
+		    const key = `${rowName}-${className}`;
+                        if (state.txData[key] && state.txData[key].priority === priority && state.txData[key].text.trim() !== '') {
+                            // **** START OF MODIFIED LINE ****
+                            // Add the row name as a prefix to the treatment text
+                            priorityItems.push(`${rowName}: ${state.txData[key].text}`);
+                            // **** END OF MODIFIED LINE ****
+                        }
+                    });
+                            if (priorityItems.length > 0) {
+                                classContent.push(`${priority}) ${priorityItems.join(', ')}`);
+                            }
+                        }
+                        if (classContent.length > 0) {
+                            planParts.push(`${className}:\n     ${classContent.join('\n     ')}`);
+                        }
+                    });
+                    content = planParts.join('\n');
+                }
+                // **** END OF NEW CODE ****
+			
+                else if (state.type === 'anesthetic') { let an_parts = []; if (state.includeTopical) { an_parts.push('Topical Anesthetic.'); } for (const [name, carpules] of Object.entries(state.anestheticValues)) { if (carpules > 0) { const typeInfo = state.anestheticTypes.find(t => t.name === name); if (typeInfo) { const totalMg = parseFloat((typeInfo.mg * carpules).toPrecision(3)); const totalEpi = parseFloat((typeInfo.epi * carpules).toPrecision(3)); an_parts.push(`[${totalMg} MILLIGRAMS ${name} ${totalEpi} MICROGRAMS EPI.]`); } } } content = an_parts.join(' '); }
+
+			
+        // **** START OF REPLACEMENT CODE BLOCK for tab delimited endo testing ****
+
+        else if (state.type === 'endo-testing') {
+            const data = state.endoData; 
+            const tests = state.endoTests;
+            const activeTeethIndices = data.teeth
+                .map((tooth, i) => (tooth && tooth.trim() !== '' && Object.values(data.results).some(testRow => testRow[i] && testRow[i].trim() !== '')) ? i : -1)
+                .filter(i => i !== -1);
+            
+            if (activeTeethIndices.length > 0) {
+                const activeTeeth = activeTeethIndices.map(i => data.teeth[i]);
+                const activeTests = tests.filter(testName => data.results[testName] && activeTeethIndices.some(i => data.results[testName][i] && data.results[testName][i].trim() !== ''));
+                
+                if (activeTests.length > 0) {
+                    // Define the non-breaking space character for padding
+                    const nbsp = '\u2002'; 
+
+                    // 1. Calculate the maximum width needed for each column
+                    const colWidths = activeTeeth.map((tooth, i) => {
+                        let maxWidth = tooth.length;
+                        activeTests.forEach(testName => {
+                            const result = data.results[testName]?.[activeTeethIndices[i]] || '';
+                            if (result.length > maxWidth) maxWidth = result.length;
+                        });
+                        return maxWidth;
+                    });
+
+                    // 2. Build the output using padEnd and the non-breaking space
+                    const header = 'Endo Tests'.padEnd(20, nbsp) + ' | ' + activeTeeth.map((tooth, i) => tooth.padEnd(colWidths[i], nbsp)).join(' | ');
+                    
+                    const separator = '-'.repeat(20) + '-+-' + colWidths.map(w => '-'.repeat(w)).join('-+-');
+                    
+                    const rows = activeTests.map(testName => {
+                        const rowData = data.results[testName] || [];
+                        const rowResults = activeTeethIndices.map((toothIndex, i) => (rowData[toothIndex] || '').padEnd(colWidths[i], nbsp));
+                        return testName.padEnd(20, nbsp) + ' | ' + rowResults.join(' | ');
+                    });
+                    
+                    content = [header, separator, ...rows].join('\n');
+                }
+            }
+        }
+
+        // **** END OF REPLACEMENT CODE BLOCK ****
+
+			
+                else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
+                else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
+                else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
+                else if (state.type === 'psr') { const scores = state.scores; const topRow = `     ${padBox(scores[0])} ${padBox(scores[1])} ${padBox(scores[2])}`; const botRow = `     ${padBox(scores[5])} ${padBox(scores[4])} ${padBox(scores[3])}`; content = `PSR:\n${topRow}\n${botRow}`; if (state.asterisks.some(a => a) && state.asteriskNote.trim()) { content += `\n     (*: ${state.asteriskNote.trim()})`; } }
+                else if (state.type === 'dropdown') { if (el.querySelector('select').selectedIndex > 0 || !state.required) content = el.querySelector('select').value; }
+                else if (state.type === 'checkbox') { if(el.querySelector('input').checked) content = el.querySelector('span').innerText; }
+                else if (state.type === 'formatter') { if (state.formatType === 'newline') content = '\n'; else if (state.formatType === 'tab') content = '     '; else content = state.customChars; }
+                if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
+            });
+            liveOutput.value = outputParts.join('');
+        };
+
+        const resetValues = () => {
+            if (!lastLoadedState) { alert("No default template loaded to reset to."); return; }
+			
+			// **** START OF NEW CODE for highlight reset****
+    // First, remove all highlights from any element on the page.
+    document.querySelectorAll('.element-highlighted').forEach(el => el.classList.remove('element-highlighted'));
+    // **** END OF NEW CODE ****
+			
+            let resetCount = 0;
+            document.querySelectorAll('.draggable-element').forEach(currentElement => {
+                if (currentElement.dataset.doNotReset === 'true') {
+                    return; // Skip this element
+                }
+                const originalId = currentElement.dataset.originalId;
+                if (!originalId) return;
+                const [sectionIndex, itemIndex] = originalId.split('-');
+                const sectionKey = SECTIONS[sectionIndex];
+                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
+                if (defaultData) {
+                    resetCount++;
+                    const newElement = createElement(defaultData.type, defaultData);
+                    currentElement.replaceWith(newElement);
+                }
+            });
+            updateLiveOutput();
+            alert(`Reset ${resetCount} element(s) to their default values.`);
+        };
+        
+        // --- UI & Event Handlers ---
+
+        // **** START OF REPLACEMENT JAVASCRIPT ****
+
+        // --- Textbox Selection-to-Treatment-Plan Logic ---
+        const textboxEditorTextarea = document.getElementById('textbox-editor-textarea');
+        const selectionActionsDiv = document.getElementById('selection-actions');
+
+        // This function runs when a user clicks one of the "Send To" buttons
+        const copySelectedTextToTxPlan = (targetClass) => {
+            const selectedText = textboxEditorTextarea.value.substring(textboxEditorTextarea.selectionStart, textboxEditorTextarea.selectionEnd).trim();
+            if (!selectedText) return;
+
+            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            if (!txPlanElement) {
+                showFeedback("No Treatment Plan element available", false);
+                return;
+            }
+
+            const state = getElementState(txPlanElement);
+            const key = `Operative-${targetClass}`; // Hardcoded to "Operative" row
+
+            const existingEntry = state.txData[key] || { text: '', priority: 0 };
+            const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
+            const newPriority = existingEntry.priority > 0 ? existingEntry.priority : 1; // Default to priority 1
+
+            state.txData[key] = { text: newText, priority: newPriority };
+
+            txPlanElement.dataset.txData = JSON.stringify(state.txData);
+            updateTxPlanSummary(txPlanElement);
+            updateLiveOutput();
+            showFeedback("Copied to Treatment Plan!");
+        };
+        
+        // Listen for clicks on any of our new action buttons
+        selectionActionsDiv.addEventListener('click', (e) => {
+            if (e.target.classList.contains('selection-action-btn')) {
+                copySelectedTextToTxPlan(e.target.dataset.targetClass);
+            }
+        });
+
+        // Listen for any change in text selection within the document
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            const isTextareaFocused = document.activeElement === textboxEditorTextarea;
+            
+            // Show the action bar only if the textarea is focused and has selected text
+            if (isTextareaFocused && selection.toString().trim().length > 0) {
+                selectionActionsDiv.style.display = 'block';
+            } else {
+                selectionActionsDiv.style.display = 'none';
+            }
+        });
+        
+        // **** END OF REPLACEMENT JAVASCRIPT ****
+	    
+	    
+	    
+	    const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
+		
+
+
+document.getElementById('textbox-editor-replace-btn').onclick = () => {
+    if (!activeElementForEditor) return;
+    const textarea = document.getElementById('textbox-editor-textarea');
+    const select = document.getElementById('textbox-editor-select');
+
+    // Get the selected value and replace the user-typed '\\n' with a real newline character.
+    const selectedValue = select.value.replace(/\\n/g, '\n');
+
+    // This is a standard textarea, so we can just assign the processed value directly.
+    textarea.value = selectedValue;
+};
+
+		
+		// **** START OF NEW CODE for double click**** 
+		// Add double-click functionality to the dropdown list 
+		document.getElementById('textbox-editor-select').addEventListener('dblclick', (e) => { 
+		// Trigger the same logic as the 'Add' --> replace button 
+		document.getElementById('textbox-editor-replace-btn').click(); }); 
+		// **** END OF NEW CODE ****
+	    
+
+// **** START OF NEW CODE for tx plan ****
+        // --- Treatment Plan Modal Logic ---
+        const txPlanModal = document.getElementById('tx-plan-modal');
+
+        // **** START OF REPLACEMENT CODE with upgraded visibility ****
+
+        const openTxPlanEditor = (element) => {
+            activeElementForEditor = element;
+            const state = getElementState(element);
+            const table = txPlanModal.querySelector('#tx-plan-table');
+            table.innerHTML = ''; // Clear old content
+
+            // Header
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            headerRow.innerHTML = '<th>Department</th><th>CLASS 3</th><th>CLASS 2</th><th>CLASS 1</th>';
+
+            // Snippet Options HTML
+            const snippetOptionsHtml = state.txSnippets.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+            // Body
+            const tbody = table.createTBody();
+            state.txRows.forEach(rowName => {
+                const row = tbody.insertRow();
+                // Change 1: Add a class to the row header cell
+                row.insertCell().outerHTML = `<td class="tx-row-header">${rowName}</td>`;
+
+                ["CLASS 3", "CLASS 2", "CLASS 1"].forEach(className => {
+                    const cell = row.insertCell();
+                    const key = `${rowName}-${className}`;
+                    const data = state.txData[key] || { text: '', priority: 1 };
+                    
+                    let priorityOptions = '<option value="0">--</option>';
+                    for(let i = 1; i <= 5; i++) {
+                        priorityOptions += `<option value="${i}" ${data.priority === i ? 'selected' : ''}>${i}</option>`;
+                    }
+
+                    // Change 2: Add the "Priority Level" label and the `has-content` class if needed
+                    const hasContentClass = data.text ? 'has-content' : '';
+                    cell.innerHTML = `
+                        <div class="cell-content">
+                            <div>
+                                <label class="priority-label">Priority Level</label>
+                                <select class="priority-select" data-key="${key}">${priorityOptions}</select>
+                            </div>
+                            <textarea class="${hasContentClass}" data-key="${key}">${data.text}</textarea>
+                            <select class="snippet-select"><option value="">-- Add Snippet --</option>${snippetOptionsHtml}</select>
+                        </div>
+                    `;
+                });
+            });
+
+            // Snippet adding and has-content logic
+            tbody.addEventListener('change', e => {
+                if (e.target.classList.contains('snippet-select')) {
+                    const select = e.target;
+                    if (select.value) {
+                        const textarea = select.closest('.cell-content').querySelector('textarea');
+                        textarea.value += (textarea.value.trim() ? ', ' : '') + select.value;
+                        textarea.classList.add('has-content'); // Add class when snippet is added
+                        select.selectedIndex = 0;
+                    }
+                }
+            });
+
+            // Change 3: Add input event listener to toggle the green border
+            tbody.addEventListener('input', e => {
+                if (e.target.tagName === 'TEXTAREA') {
+                    if (e.target.value.trim() !== '') {
+                        e.target.classList.add('has-content');
+                    } else {
+                        e.target.classList.remove('has-content');
+                    }
+                }
+            });
+
+            txPlanModal.style.display = 'block';
+        };
+
+        // **** END OF REPLACEMENT CODE ****
+
+        document.getElementById('tx-plan-save-btn').onclick = () => {
+            if (!activeElementForEditor) return;
+            const newData = {};
+            txPlanModal.querySelectorAll('tbody .cell-content').forEach(cellContent => {
+                const textarea = cellContent.querySelector('textarea');
+                const prioritySelect = cellContent.querySelector('.priority-select');
+                const key = textarea.dataset.key;
+                const priority = parseInt(prioritySelect.value, 10);
+                const text = textarea.value.trim();
+                
+                if (text && priority > 0) {
+                    newData[key] = { text, priority };
+                }
+            });
+            activeElementForEditor.dataset.txData = JSON.stringify(newData);
+            updateTxPlanSummary(activeElementForEditor);
+            updateLiveOutput();
+            txPlanModal.style.display = 'none';
+        };
+
+        // --- Treatment Plan Properties ---
+        const openTxPlanProperties = (state, body) => {
+            return `
+                <fieldset>
+                    <legend>Treatment Plan Rows</legend>
+                    <label>(one per line)</label>
+                    <textarea id="prop-tx-rows" rows="8">${state.txRows.join('\n')}</textarea>
+                </fieldset>
+                <fieldset>
+                    <legend>Quick-Add Snippets</legend>
+                    <label>(one per line)</label>
+                    <textarea id="prop-tx-snippets" rows="6">${state.txSnippets.join('\n')}</textarea>
+                </fieldset>
+            `;
+        };
+        
+        const saveTxPlanProperties = (newState, element) => {
+            newState.txRows = document.getElementById('prop-tx-rows').value.split('\n').filter(line => line.trim() !== '');
+            newState.txSnippets = document.getElementById('prop-tx-snippets').value.split('\n').filter(line => line.trim() !== '');
+            newState.txData = {}; // Reset data when properties change
+        };
+        // **** END OF NEW CODE ****
+
+
+	    
+		
+		document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; };
+		
+
+		
+		
+		
+		
+        const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); activeElementForEditor.dataset.anestheticValues = JSON.stringify(newValues); activeElementForEditor.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(activeElementForEditor); updateLiveOutput(); anestheticEditorModal.style.display = 'none'; }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
+        const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(); endoModal.style.display = 'none'; };
+        const openPropertiesModal = (element) => {
+            const state = getElementState(element); const body = document.getElementById('properties-body'); let mainPropsHtml = '', formattingHtml = '', generalPropsHtml = '';
+            if (state.type === 'enhanced-textbox') { mainPropsHtml = `<fieldset><legend>Labels & Text</legend><label for="prop-internal-label">Internal Label (for maker only)</label><input type="text" id="prop-internal-label" value="${state.internalLabel}"><label for="prop-prefix-label">Prefix Label (for note output)</label><input type="text" id="prop-prefix-label" value="${state.prefixLabel}"><label for="prop-default-text">Default Text</label><input type="text" id="prop-default-text" value="${state.defaultText}"></fieldset><fieldset><legend>Dropdown Phrases</legend><label for="prop-dropdown-options">(one per line)</label><textarea id="prop-dropdown-options" rows="6">${state.dropdownOptions.join('\n')}</textarea></fieldset>`; }
+            else if (state.type === 'anesthetic') { mainPropsHtml = `<fieldset><legend>Anesthetic Types</legend><div id="prop-anesthetic-types"></div><button id="prop-add-anesthetic-type" class="control-btn" style="margin-top:10px;">+ Add Type</button></fieldset>`; }
+
+            // **** START OF NEW CODE for tx plan****
+            else if (state.type === 'tx-plan') { mainPropsHtml = openTxPlanProperties(state, body); }
+            // **** END OF NEW CODE ****
+
+
+
+		    
+            else if (state.type === 'endo-testing') { mainPropsHtml = `<fieldset><legend>Test Rows</legend><label>(one per line)</label><textarea id="prop-endo-tests" rows="8">${state.endoTests.join('\n')}</textarea></fieldset>`; }
+            else if (state.type === 'bloodpressure') { mainPropsHtml = `<fieldset><legend>Discussion Threshold</legend><label>Systolic &ge;:</label><input type="number" id="prop-discuss-s" value="${state.discussSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-discuss-d" value="${state.discussDiastolic}"></fieldset><fieldset><legend>"Prior to Tx" Checkbox Trigger</legend><label>Systolic &ge;:</label><input type="number" id="prop-checkbox-s" value="${state.checkboxSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-checkbox-d" value="${state.checkboxDiastolic}"></fieldset>`; }
+            else if (state.type === 'dropdown') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label><hr><fieldset><legend>Dropdown Options</legend><label for="prop-options">(one per line)</label><textarea id="prop-options" rows="6">${state.options.join('\n')}</textarea></fieldset>`; }
+            else if (state.type === 'alert' || state.type === 'painscale' || state.type === 'checkbox') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label>`; }
+
+    // --- Formatting Properties  ---
+
+    if (state.type !== 'formatter' && !state.type.startsWith('label-')) { 
+        formattingHtml = `<fieldset><legend>Formatting</legend>
+            <label><input type="checkbox" id="prop-prefix-newline" ${state.prefixNewline ? 'checked' : ''}> Add Newline Before</label>
+            <label><input type="checkbox" id="prop-prefix-tab" ${state.prefixTab ? 'checked' : ''}> Add Tab Before</label>
+            <label><input type="checkbox" id="prop-suffix-newline" ${state.suffixNewline ? 'checked' : ''}> Add Newline After</label>
+        </fieldset>`; 
+    }
+
+
+		
+            generalPropsHtml = `<fieldset><legend>General Options</legend><label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label><label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element</label></fieldset>`;
+
+
+
+		
+            // **** START OF REPLACEMENT for width****
+            if (state.type !== 'formatter') { // Formatters don't need sizing
+                generalPropsHtml = `<fieldset><legend>Sizing & Display</legend>
+                    <label>Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
+                    <hr style="margin:10px 0;">
+                    <label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label>
+                    <label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element's value</label>
+                </fieldset>`;
+            } else {
+                generalPropsHtml = ''; // No options for formatter
+            }
+            // **** END OF REPLACEMENT ****
+
+
+		
+            body.innerHTML = mainPropsHtml + formattingHtml + generalPropsHtml; if (state.type === 'anesthetic') { const container = document.getElementById('prop-anesthetic-types'); state.anestheticTypes.forEach(type => container.appendChild(createAnestheticTypeRow(type))); document.getElementById('prop-add-anesthetic-type').onclick = () => container.appendChild(createAnestheticTypeRow()); } document.getElementById('properties-modal').style.display = 'block'; document.getElementById('properties-save-btn').onclick = () => saveProperties(element);
+        };
+        const saveProperties = (element) => {
+            const oldState = getElementState(element); const newState = { ...oldState };
+            if (newState.type === 'enhanced-textbox') { newState.internalLabel = document.getElementById('prop-internal-label').value; newState.prefixLabel = document.getElementById('prop-prefix-label').value; newState.defaultText = document.getElementById('prop-default-text').value; newState.dropdownOptions = document.getElementById('prop-dropdown-options').value.split('\n').filter(Boolean); if (oldState.content === oldState.defaultText) { newState.content = newState.defaultText; } }
+            else if (newState.type === 'anesthetic') { const newTypes = []; document.querySelectorAll('#prop-anesthetic-types .prop-anesthetic-row').forEach(row => { const name = row.querySelector('.prop-anesthetic-name').value.trim(); const mg = parseFloat(row.querySelector('.prop-anesthetic-mg').value); const epi = parseFloat(row.querySelector('.prop-anesthetic-epi').value); if (name && !isNaN(mg) && !isNaN(epi)) { newTypes.push({ name, mg, epi }); } }); newState.anestheticTypes = newTypes; newState.anestheticValues = {}; }
+
+            // **** START OF NEW CODE for tx plan****
+            else if (newState.type === 'tx-plan') { saveTxPlanProperties(newState, element); }
+            // **** END OF NEW CODE ****
+		    
+            else if (newState.type === 'endo-testing') { newState.endoTests = document.getElementById('prop-endo-tests').value.split('\n').filter(line => line.trim() !== ''); const currentData = JSON.parse(element.dataset.endoData); newState.endoData = { teeth: currentData.teeth, results: {} }; }
+            else if (newState.type === 'bloodpressure') { newState.discussSystolic = document.getElementById('prop-discuss-s').value; newState.discussDiastolic = document.getElementById('prop-discuss-d').value; newState.checkboxSystolic = document.getElementById('prop-checkbox-s').value; newState.checkboxDiastolic = document.getElementById('prop-checkbox-d').value; }
+            else if (newState.type === 'dropdown') { newState.required = document.getElementById('prop-required').checked; newState.options = document.getElementById('prop-options').value.split('\n').filter(Boolean); newState.selected = newState.options[0] || ''; }
+            else if(newState.type === 'painscale' || newState.type === 'alert' || newState.type === 'checkbox') { newState.required = document.getElementById('prop-required').checked; }
+            newState.isHidden = document.getElementById('prop-hidden').checked; newState.doNotReset = document.getElementById('prop-no-reset').checked;
+
+            // **** START OF NEW CODE for width****
+            const widthInput = document.getElementById('prop-width');
+            if (widthInput) {
+                newState.width = widthInput.value.trim();
+            }
+            // **** END OF NEW CODE ****
+
+		
+            if (newState.type !== 'formatter' && !newState.type.startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
+            const newElement = createElement(newState.type, newState); element.replaceWith(newElement); updateLiveOutput(); document.getElementById('properties-modal').style.display = 'none';
+        };
+        const allergyModal = document.getElementById('allergy-modal'); const allergyListDiv = document.getElementById('allergy-list'); ALLERGY_LIST.forEach(allergy => { allergyListDiv.innerHTML += `<label><input type="checkbox" class="allergy-checkbox" value="${allergy}"> ${allergy}</label>`; }); allergyListDiv.addEventListener('change', e => { if (!e.target.classList.contains('allergy-checkbox')) return; const checkboxes = Array.from(allergyListDiv.querySelectorAll('.allergy-checkbox')); const noneCheckbox = checkboxes.find(cb => cb.value === "None"); if (e.target.value === "None" && e.target.checked) { checkboxes.forEach(cb => { if (cb.value !== "None") cb.checked = false; }); } else if (e.target.value !== "None" && e.target.checked) { if (noneCheckbox.checked) noneCheckbox.checked = false; } }); const openAllergyModal = (element) => { activeElementForEditor = element; const state = getElementState(element); const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox'); checkboxes.forEach(cb => cb.checked = false); const customInput = document.getElementById('custom-allergy-input'); customInput.value = ''; state.alerts.forEach(alert => { const cb = Array.from(checkboxes).find(c => c.value === alert); if (cb) { cb.checked = true; } else if (alert.startsWith('Custom: ')) { customInput.value = alert.substring(8); } }); allergyModal.style.display = 'block'; }; document.getElementById('allergy-save-btn').onclick = () => { if (!activeElementForEditor) return; const selected = []; const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox:checked'); checkboxes.forEach(cb => selected.push(cb.value)); const customValue = document.getElementById('custom-allergy-input').value.trim(); if (customValue) { selected.push(`Custom: ${customValue}`); } if (selected.includes("None")) { activeElementForEditor.dataset.alerts = JSON.stringify(["None"]); } else { activeElementForEditor.dataset.alerts = JSON.stringify(selected.filter(a => a !== "None")); } updateAlertElementUI(activeElementForEditor); updateLiveOutput(); allergyModal.style.display = 'none'; };
+        
+        // --- Event Listeners (FIXED ORDER) ---
+        
+
+
+// A single, global shortcut handler for Shift+Enter that routes actions based on context.
+document.addEventListener('keydown', (event) => {
+    // Only proceed if the specific key combination is pressed.
+    if (!event.shiftKey || event.key !== 'Enter') {
+        return;
+    }
+
+    // --- CONTEXT-SENSITIVE ROUTING ---
+
+    // Find which modal is currently visible
+    const anesModal = document.getElementById('anesthetic-editor-modal');
+    const textModal = document.getElementById('textbox-editor-modal');
+    const endoModal = document.getElementById('endo-testing-modal');
+    const allergyModal = document.getElementById('allergy-modal');
+    const txPlanModal = document.getElementById('tx-plan-modal');
+    const propsModal = document.getElementById('properties-modal');
+    
+    // Prevent the default browser action (e.g., adding a newline in a textarea)
+    event.preventDefault();
+
+    // ** NEW, MORE SPECIFIC CHECK **
+    // Check if the focus is inside the textbox editor's dropdown. This is a special case.
+    if (getComputedStyle(textModal).display !== 'none' && document.activeElement.id === 'textbox-editor-select') {
+         // Stop the event from bubbling up further, preventing the global copy.
+        event.stopPropagation();
+        document.getElementById('textbox-editor-save-btn').click();
+        return; // Exit the function immediately
+    }
+
+    // ROUTE 1: A modal is open, so click its save button.
+    if (getComputedStyle(textModal).display !== 'none') {
+        document.getElementById('textbox-editor-save-btn').click();
+    } else if (getComputedStyle(anesModal).display !== 'none') {
+        document.getElementById('anesthetic-editor-save-btn').click();
+    } else if (getComputedStyle(endoModal).display !== 'none') {
+        document.getElementById('endo-testing-save-btn').click();
+    } else if (getComputedStyle(allergyModal).display !== 'none') {
+        document.getElementById('allergy-save-btn').click();
+    } else if (getComputedStyle(txPlanModal).display !== 'none') {
+        document.getElementById('tx-plan-save-btn').click();
+    } else if (getComputedStyle(propsModal).display !== 'none') {
+        document.getElementById('properties-save-btn').click();
+    } 
+    // ROUTE 2: No modals are open, so perform the global copy action.
+    else {
+        document.getElementById('copy-btn-top').click();
+    }
+});
+
+	    
+		// New, smarter logic for closing modals by clicking the backdrop
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('mousedown', (e) => {
+        // Close the modal ONLY if the mousedown event is on the backdrop itself
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+
+// Separate listener for closing the context menu
+        // **** START OF MODIFIED CODE to include tx plan copy/paste****
+        window.addEventListener('mousedown', (e) => {
+            const contextMenu = document.getElementById('context-menu');
+            const selectionMenu = document.getElementById('text-selection-menu');
+            
+            if (!e.target.closest('#context-menu') && !e.target.closest('.draggable-element')) {
+                contextMenu.style.display = 'none';
+            }
+            if (!e.target.closest('#text-selection-menu')) {
+                selectionMenu.style.display = 'none';
+            }
+        });
+        // **** END OF MODIFIED CODE ****
+		
+		
+        document.getElementById('ctx-delete').onclick = () => { if (activeElementForEditor) { activeElementForEditor.remove(); updateLiveOutput(); } };
+        document.getElementById('ctx-properties').onclick = () => { if (activeElementForEditor) openPropertiesModal(activeElementForEditor); };
+        document.querySelectorAll('.add-element-btn').forEach(btn => btn.onclick = e => { currentSectionToAdd = e.target.dataset.section; document.getElementById('add-element-modal').style.display = 'block'; });
+        document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = e => document.getElementById(e.target.dataset.modalId).style.display = 'none');
+        document.querySelectorAll('.element-type').forEach(el => el.onclick = e => { const type = e.currentTarget.dataset.type; const dropzone = document.querySelector(`#${currentSectionToAdd} .dropzone`); if(dropzone) { dropzone.appendChild(createElement(type)); } updateLiveOutput(); document.getElementById('add-element-modal').style.display = 'none'; });
+        document.querySelectorAll('.dropzone').forEach(zone => zone.addEventListener('dragover', e => { e.preventDefault(); const draggingEl = document.querySelector('.draggable-element.dragging'); if (!draggingEl) return; const afterElement = [...zone.querySelectorAll('.draggable-element:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = e.clientY - box.top - box.height / 2; return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element; if (afterElement == null) zone.appendChild(draggingEl); else zone.insertBefore(draggingEl, afterElement); }));
+        const copyAction = () => { liveOutput.select(); navigator.clipboard.writeText(liveOutput.value).then(() => alert('Note copied!')); }; document.getElementById('copy-btn-top').addEventListener('click', copyAction); document.getElementById('copy-btn-bottom').addEventListener('click', copyAction);
+        const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.json'; fileInput.style.display = 'none'; document.body.appendChild(fileInput);
+        document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (re) => { loadJsonData(re.target.result); }; reader.readAsText(file); e.target.value = ''; });
+        document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dental-note-template.json'; a.click(); URL.revokeObjectURL(a.href); };
+        document.getElementById('reset-btn').addEventListener('click', resetValues);
+        document.getElementById('view-hidden-toggle').addEventListener('change', (e) => { if (e.target.checked) { document.body.classList.add('show-hidden-elements'); } else { document.body.classList.remove('show-hidden-elements'); }});
+        
+		// **** START OF NEW CODE for lock toggle****
+document.getElementById('lock-layout-toggle').addEventListener('change', (e) => {
+    if (e.target.checked) {
+        document.body.classList.add('layout-locked');
+        // Make all elements non-draggable
+        document.querySelectorAll('.draggable-element').forEach(el => el.setAttribute('draggable', 'false'));
+    } else {
+        document.body.classList.remove('layout-locked');
+        // Make all elements draggable again
+        document.querySelectorAll('.draggable-element').forEach(el => el.setAttribute('draggable', 'true'));
+    }
+});
+// **** END OF NEW CODE ****
+		
+		
+		
+        // --- Initial Setup ---
+        const loadJsonData = (jsonString) => { try { const state = JSON.parse(jsonString); renderState(state); alert('Template loaded successfully!'); } catch (err) { console.error("JSON Parse Error:", err); alert('Error: Invalid JSON data.'); } };
+        const renderState = (state) => { document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = ''); SECTIONS.forEach((sectionId, secIndex) => { const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`); const elements = state[sectionId] || []; if (zone && Array.isArray(elements)) { elements.forEach((item, itemIndex) => { item.originalId = `${secIndex}-${itemIndex}`; zone.appendChild(createElement(item.type, item)); }); } }); lastLoadedState = JSON.parse(JSON.stringify(state)); updateLiveOutput(); };	    
+        const defaultJsonText = document.getElementById('default-json-data').textContent;
+        if (defaultJsonText.trim().length > 2) { try { const defaultState = JSON.parse(defaultJsonText); renderState(defaultState); } catch { console.error("Could not parse embedded default JSON. Starting blank."); renderState({}); } } else { renderState({}); }
+
+    // **** START OF NEW, CORRECTED CODE for lock and drag****
+    // This runs only ONCE after the initial layout is built and will not interfere with subsequent drag events.
+    const lockToggle = document.getElementById('lock-layout-toggle');
+    if (lockToggle.checked) {
+        lockToggle.dispatchEvent(new Event('change'));
+    }
+    // **** END OF NEW, CORRECTED CODE ****
+	    
+    });
+    </script>
+
+
+
+-NAVMED 6600/13 JSON default-<br>
+<h6>Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a></h6>
+<script>
+// ===================================================================================
+//
+//   --- DENTAL SUGGESTER SCRIPT (PORTABLE VERSION) ---
+//
+//   Instructions:
+//   1. Ensure the <textarea> or <input> you want to target in your HTML has a unique `id`.
+//   2. Copy this entire <script> block and paste it just before the closing </body> tag
+//      in your existing HTML file.
+//   3. Change the `targetTextboxId` value below to match the `id` of your textbox.
+//
+// ===================================================================================
+
+(function() {
+    // ============================= CONFIGURATION ===================================
+    //  !!! IMPORTANT !!! 
+    //  Change 'myNotesTextbox' to the actual ID of your textbox element.
+    const targetTextboxId = 'textbox-editor-textarea'; 
+    // ===============================================================================
+
+
+    // ===================================================================================
+    //   --- LIBRARY OF TERMS --- (Dictionary is collapsed for brevity) (add or subtract terms as necessary - MG Horning initial list vJULY 2025
+    // ===================================================================================
+const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Periodontal)", "Abutment", "Acanthosis", "Access Cavity", "Acid Etch", "Acrylic Resin", "Actinic Cheilitis", "Acute Apical Abscess", "Acute Pulpitis", "Adenoid Cystic Carcinoma", "Adenomatoid Odontogenic Tumor", "Adenopathy", "Airway Obstruction", "Albright Syndrome", "Alginate", "Allergic Reaction", "Allograft", "Alloplast", "Alveolar Bone", "Alveolar Crest", "Alveolar Osteitis (Dry Socket)", "Alveolar Ridge", "Alveoloplasty", "Amalgam", "Amalgam Carrier", "Amalgam Well", "Ameloblastic Carcinoma", "Ameloblastic Fibro-odontoma", "Ameloblastic Fibroma", "Ameloblastoma", "Amelogenesis Imperfecta", "Anaphylaxis", "Aneurysmal Bone Cyst", "Angular Cheilitis", "Angular Defect", "Ankyloglossia", "Ankylosis", "Anodontia", "Apex Locator", "Apexification", "Apexogenesis", "Aphthous Ulcer", "Aphthous Ulcer (Canker Sore)", "Apical Foramen", "Apical Periodontitis", "Apical Scar", "Apicoectomy", "Articaine", "Articulating Paper", "Aspirator Tip", "Asymptomatic", "Attrition", "Atypical Odontalgia", "Autograft", "BOP (Bleeding on Probing)", "Barbed Broach", "Barrier Membrane", "Basal Cell Carcinoma", "Base", "Benign", "Benign Migratory Glossitis", "Bifid Condyle", "Bifid Tongue", "Bilateral", "Biopsy", "Biopsy (Excisional)", "Biopsy (Incisional)", "Bite Registration", "Black Hairy Tongue", "Blade Elevator", "Bleaching (Internal)", "Bleb", "Block Graft", "Bone Density", "Bone File", "Bone Graft", "Bone Loss", "Bone Marrow Space", "Bone Scraper", "Bone Screw", "Bonding Agent", "Bruxism", "Buccal Exostosis", "Buccinator Muscle", "Bulla", "Burnisher", "C/P (Complete/Partial Denture)", "CAL (Clinical Attachment Loss)", "CBCT (Cone Beam Computed Tomography)", "CEJ (Cementoenamel Junction)", "Calcifying Epithelial Odontogenic Tumor", "Calcifying Odontogenic Cyst", "Calcium Hydroxide", "Calculus", "Calculus Bridge", "Candidiasis", "Candidiasis (Thrush)", "Canine Impaction", "Canine Substitution", "Canthotomy", "Caries", "Caries (Incipient)", "Caries (Occlusal)", "Caries (Proximal)", "Caries (Rampant)", "Caries (Root)", "Carver", "Cast Post", "Cavernous Hemangioma", "Cellulitis", "Cement", "Cemental Dysplasia", "Cemental Tear", "Cementoblastoma", "Cemento-ossifying Fibroma", "Central Giant Cell Granuloma", "Ceramic Fracture", "Cervical Burnout", "Chelating Agent", "Cherubism", "Chronic Apical Abscess", "Chronic Hyperplastic Pulpitis", "Chronic Periodontitis", "Chronic Pulpitis", "Circumferential Bone Loss", "Circumscribed", "Cleft Lip", "Cleft Lip Repair", "Cleft Palate", "Cleft Palate Repair", "Cleidocranial Dysplasia", "Closed Reduction", "Cold Test", "Complex Odontoma", "Composite Resin", "Compound Odontoma", "Concrescence", "Condenser", "Condensing Osteitis", "Condylar Aplasia", "Condylar Hyperplasia", "Condylar Hypoplasia", "Congenital", "Connective Tissue Graft", "Contact Point", "Coping", "Core Buildup", "Coronectomy", "Coronoid Hyperplasia", "Corrugated", "Corticated Border", "Cotton Wool Appearance", "Cowhorn Forceps (#23)", "Cracked Tooth Syndrome", "Cratered", "Crepitus", "Crestal Lamina Dura", "Crossbite", "Crown Fracture", "Crown-down Technique", "Crown-to-Root Ratio", "Cryer Elevator", "Curettage", "Curing Light", "Cyst", "Cystic", "Debridement", "Decortication", "Dehiscence", "Dense Bone Island", "Dens Evaginatus", "Dens Invaginatus (Dens in Dente)", "Dental Dam", "Dental Fluorosis", "Dental Lamina", "Dental Stone", "Dentin Dysplasia", "Dentinogenesis Imperfecta", "Dentigerous Cyst", "Denture Adhesive", "Denture Base", "Denture Stomatitis", "Denture Teeth", "Denture-induced Fibrous Hyperplasia", "Depressor Anguli Oris Muscle", "Depressor Labii Inferioris Muscle", "Desensitizer", "Desquamative Gingivitis", "Developmental Anomaly", "Deviation", "Deviation (Mandibular)", "Diastema", "Deviation (Nasal Septum)", "Diastema", "Die Stone", "Diffuse", "Diffuse Border", "Diffuse Sclerosing Osteomyelitis", "Digastric Muscle (Anterior Belly)", "Digastric Muscle (Posterior Belly)", "Dilaceration", "Disc Displacement", "Dislocation", "Distoangular Impaction", "Drain Placement", "Drifting", "Drill", "Dycal", "Dysphagia (Difficulty Swallowing)", "Dysphonia (Hoarseness)", "Dysplasia", "E-max (Lithium Disilicate)", "E/O (Extraoral)", "EPT (Electric Pulp Test)", "Eagle Syndrome", "Ectodermal Dysplasia", "Ectopic Eruption", "Edematous", "Edentulous", "Elastomeric Impression Material", "Elevation", "Elevator", "Enamel Hypoplasia", "Enamel Pearl", "Endodontic Explorer", "Endodontic File", "Endodontic Sealer", "Endophytic", "Enostosis", "Enucleation", "Epinephrine", "Epulis Fissuratum", "Erosion", "Eruption Cyst", "Erythema Multiforme", "Erythematous", "Erythroplakia", "Etchant", "Excisional Biopsy", "Excision", "Exophytic", "Exostosis", "External Resorption", "Extraction", "Extrusion", "FGC (Full Gold Crown)", "FGG (Free Gingival Graft)", "FMX (Full Mouth X-rays)", "Fenestration", "Fiber Post", "Fibroma", "Fibrous", "Fibrous Dysplasia", "Fine Needle Aspiration (FNA)", "Finishing Strip", "Fissured", "Fissured Tongue", "Fistula", "Fistula / Sinus Tract", "Flap Advancement", "Flap Design", "Flap Reflection", "Flap Retraction", "Florid Cemento-osseous Dysplasia", "Flowable Composite", "Fluctuant", "Fluoride", "Fluorosis", "Focal Cemento-osseous Dysplasia", "Focal Sclerosing Osteomyelitis", "Follicular Cyst", "Forceps", "Forceps (#150)", "Forceps (#151)", "Fordyce Granules", "Foreign Body Reaction", "Fremitus", "Frenectomy", "Frenectomy (Lingual/Labial)", "Friable", "Frictional Keratosis", "Full Bony Impaction", "Full Thickness Flap", "Furcation Arrow", "Furcation Involvement", "Furcation Involvement (Class I)", "Furcation Involvement (Class II)", "Furcation Involvement (Class III)", "Furcation Involvement (Class IV)", "Fusion", "GBR (Guided Bone Regeneration)", "GTR (Guided Tissue Regeneration)", "Gardner Syndrome", "Garre's Osteomyelitis", "Gates-Glidden Drill", "Gemination", "Genioglossus Muscle", "Geniohyoid Muscle", "Geographic Tongue", "Geographic Tongue (Benign Migratory Glossitis)", "Ghost Teeth", "Giant Cell Fibroma", "Gingival Abscess", "Gingival Cleft", "Gingival Enlargement", "Gingival Hyperplasia", "Gingival Recession", "Gingivectomy", "Gingivitis", "Gingivoplasty", "Glandular Odontogenic Cyst", "Glass Ionomer Cement", "Glossectomy", "Goiter", "Gold Alloy", "Gorlin Cyst", "Gorlin-Goltz Syndrome", "Gow-Gates Block", "Graft", "Granular Cell Tumor", "Granulation Tissue", "Ground-glass Appearance", "Guided Bone Regeneration", "Guided Tissue Regeneration", "Gutta-percha", "Hairy Leukoplakia", "Hairy Tongue", "Hamular Notch", "Hand-Schuller-Christian Disease", "Hard Tissue", "Healing Abutment", "Heat Test", "Hemangioma", "Hemisection", "Hemodent", "Hemostasis", "Hemostat", "Hereditary", "Herpangina", "Herpes Simplex Virus", "Herpetic Gingivostomatitis", "High-speed Handpiece", "Histoplasmosis", "Homogeneous", "Horizontal Bone Loss", "Horizontal Impaction", "Hyoglossus Muscle", "Hypercementosis", "Hyperdontia", "Hyperdontia (Supernumerary Teeth)", "Hyperkeratosis", "Hyperkeratotic", "Hyperplasia", "Hypodontia", "I/O (Intraoral)", "IANB (Inferior Alveolar Nerve Block)", "IRM (Intermediate Restorative Material)", "Idiopathic Osteosclerosis", "Impacted Tooth", "Implant Fixture", "Implant Placement", "Impression Compound", "Impression Tray", "Incipient Caries", "Incisional Biopsy", "Incision", "Incision and Drainage", "Incisive Canal Cyst", "Indurated", "Indirect Pulp Cap", "Infiltration Anesthesia", "Inflammation", "Inlay", "Instrumentation", "Internal Resorption", "Intermaxillary Fixation", "Interproximal Caries", "Intrabony Defect", "Intracanal Medicament", "Intrusion", "Irrigation", "Irreversible Pulpitis", "Irritation Fibroma", "Kaposi's Sarcoma", "Keratinized Gingiva", "Keratocystic Odontogenic Tumor (KCOT)", "Keratosis", "Langerhans Cell Histiocytosis", "Laryngectomy", "Laryngoscopy", "Lateral Cephalogram", "Lateral Periodontal Cyst", "Lateral Pterygoid Muscle", "Le Fort I Fracture", "Le Fort I/II/III Osteotomy", "Le Fort II Fracture", "Le Fort III Fracture", "Leukoplakia", "Leukoplakic", "Levator Anguli Oris Muscle", "Lichen Planus", "Lichen Planus (Oral)", "Lichenoid Mucositis", "Lidocaine", "Liner", "Lingual Nerve", "Lingual Thyroid", "Lingual Varicosities", "Lipoma", "Local Anesthesia", "Localized", "Loss of Lamina Dura", "Low-speed Handpiece", "Ludwig's Angina", "Lupus Erythematosus", "Luxation", "Lymphadenopathy", "Lymphangioma", "Lymphoepithelial Cyst", "MOD (Mesio-Occluso-Distal)", "MTA (Mineral Trioxide Aggregate)", "Macrodontia", "Macule", "Malignant", "Mallet", "Malocclusion", "Mandibular Canal", "Mandibular Fracture", "Mandibular Tori", "Marsupialization", "Masseter Muscle", "Matrix Band", "Maxillary Sinus Lift", "Maxillectomy", "Medial Pterygoid Muscle", "Median Palatal Cyst", "Median Rhomboid Glossitis", "Melanoma", "Melanotic Neuroectodermal Tumor of Infancy", "Membrane", "Mental Foramen", "Mentalis Muscle", "Mepivacaine", "Mesioangular Impaction", "Metal-ceramic Crown", "Metastatic Disease", "Micro-hybrid Composite", "Microdontia", "Mobility (Class I)", "Mobility (Class II)", "Mobility (Class III)", "Morsicatio buccarum", "Moth-eaten Appearance", "Mottled", "Mucocele", "Mucoepidermoid Carcinoma", "Mucogingival Defect", "Multifocal", "Multilocular", "Multilocular Radiolucency", "Multiple Myeloma", "Mylohyoid Muscle", "Mylohyoid Ridge", "Myxoma", "NICO (Neuralgia-Inducing Cavitational Osteonecrosis)", "NUG (Necrotizing Ulcerative Gingivitis)", "NUP (Necrotizing Ulcerative Periodontitis)", "Nanofill Composite", "Nasolabial Cyst", "Nasopalatine Duct Cyst", "Neck Dissection (Radical/Modified)", "Necrosis", "Necrotizing Sialometaplasia", "Needle Holder", "Neoplasm", "Nerve Block", "Nerve Repositioning", "Neuralgia", "Neurilemmoma", "Neurofibroma", "Nevoid Basal Cell Carcinoma Syndrome", "Nicotine Keratosis", "Nodule", "Non-vital Tooth", "OCS (Oral Cancer Screening)", "Obturation", "Occlusal Caries", "Occlusal Splint", "Occlusal Trauma", "Odontogenic Keratocyst", "Odontogenic Myxoma", "Odontoma", "Odontotomy", "Odynophagia (Painful Swallowing)", "Oligodontia", "Onlay", "Onion-skin Appearance", "Open Apex", "Open Bite", "Open Contact", "Open Reduction", "Operculum", "Oral Hairy Leukoplakia", "Oral Submucous Fibrosis", "Orbicularis Oris Muscle", "Orthokeratinized Odontogenic Cyst", "Osseointegration", "Osseous Recontouring", "Osseous Surgery", "Ossifying Fibroma", "Osteitis Deformans", "Osteoblastoma", "Osteochondroma", "Osteogenesis Imperfecta", "Osteoma", "Osteomyelitis", "Osteonecrosis of the Jaw (ONJ)", "Osteopetrosis", "Osteoporosis", "Osteoradionecrosis", "Osteosarcoma", "Osteotomy", "Overbite", "Overhanging Restoration", "Overjet", "PA (Periapical Radiograph)", "PD (Probing Depth)", "PDL (Periodontal Ligament)", "PFM (Porcelain Fused to Metal)", "PVS (Polyvinyl Siloxane)", "Packable Composite", "Paget's Disease", "Palatal Expansion", "Palatal Torus", "Palatoglossus Muscle", "Palpation Test", "Panoramic Radiograph", "Paper Point", "Papillary", "Papilloma", "Papule", "Parotidectomy", "Parulis", "Partially Erupted", "Partial Bony Impaction", "Patch", "Pathologic Fracture", "Pedunculated", "Pell & Gregory Classification", "Pemphigoid", "Pemphigus Vulgaris", "Percussion Test", "Perforation Repair", "Peri-implantitis", "Periapical Cemental Dysplasia", "Periapical Cyst", "Periapical Granuloma", "Periapical Rarefying Osteitis", "Periapical Sclerosing Osteitis", "Pericoronitis", "Periodontal Abscess", "Periodontal Pocket", "Periodontitis", "Periodontitis (Aggressive)", "Periodontitis (Chronic)", "Periosteal Elevator", "Periosteum", "Peripheral Giant Cell Granuloma", "Peripheral Ossifying Fibroma", "Periotome", "Pesso Reamer", "Pharyngitis", "Phoenix Abscess", "Pindborg Tumor", "Plaque", "Plate and Screw Fixation", "Platysma Muscle", "Pleomorphic Adenoma", "Plunger Cusp", "Pneumatization", "Polycarbonate Crown", "Polyether", "Polypoid", "Polysulfide", "Polyvinyl Siloxane (PVS)", "Porcelain", "Porcelain-fused-to-metal (PFM)", "Post-and-Core", "Posterior Crossbite", "Potts Elevator", "Pre-prosthetic Surgery", "Prefabricated Post", "Pregnancy Granuloma", "Premalignant", "Primary Closure", "Primordial Cyst", "Proliferative Periostitis", "Provisional Restoration", "Pseudocyst", "Pulp Attrition", "Pulp Calcification", "Pulp Cap", "Pulp Chamber", "Pulp Exposure", "Pulp Necrosis", "Pulp Polyp", "Pulp Polyp (Chronic Hyperplastic Pulpitis)", "Pulp Stone", "Pulp Test", "Pulpitis", "Punched-out Radiolucencies", "Pustule", "Pyogenic Granuloma", "RCT (Root Canal Therapy)", "RMGI (Resin-Modified Glass Ionomer)", "Radiation Caries", "Radicular Cyst", "Radio-dense", "Radiograph", "Radiographic Calculus", "Radiolucent", "Radiopaque", "Ranula", "Recurrent Aphthous Stomatitis", "Recurrent Caries", "Regional Odontodysplasia", "Reline", "Resin Cement", "Residual Cyst", "Residual Ridge", "Resorption", "Retraction Cord", "Retreatment", "Reversible Pulpitis", "Rhabdomyosarcoma", "Rhinoplasty", "Ridge Augmentation", "Ridge Preservation", "Ridge Split", "Risorius Muscle", "Rongeur", "Root Amputation", "Root Canal", "Root Caries", "Root Concavity", "Root Fracture", "Root Planing", "Root Proximity", "Root Resection", "Root Submergence", "Root Trunk", "Rubber Dam", "Runner's Caries", "SRP (Scaling and Root Planing)", "Saddle", "Schwannoma", "Scleroderma", "Sclerotic Bone", "Secondary Caries", "Self-etch Primer", "Sequestrum", "Sessile", "Sialadenitis", "Sialendoscopy", "Sialolith", "Sialolithiasis", "Sialolithiasis (Salivary Stone)", "Silver Diamine Fluoride", "Sinus Tract", "Sjogren Syndrome", "Sleep Apnea (Obstructive)", "Slow-speed Handpiece", "Socket Sclerosis", "Soft Tissue", "Soft Tissue Impaction", "Spatula", "Speckled", "Spongy", "Squamous Cell Carcinoma", "Stafne Bone Defect", "Stainless Steel Crown", "Step-back Technique", "Sternocleidomastoid Muscle", "Stevens-Johnson Syndrome", "Stomatitis", "Styloglossus Muscle", "Stylohyoid Muscle", "Subluxation", "Subpontic Osseous Hyperplasia", "Sunburst Appearance", "Supernumerary Root", "Supernumerary Tooth", "Suprabony Pocket", "Surveyor", "Symptomatic", "Syphilis", "TMJ (Temporomandibular Joint)", "Taurodontism", "Temporalis Muscle", "Temporary Cement", "Temporary Crown", "Tetracycline Staining", "Tetracycline Staining", "Thalassemia", "Thyroidectomy", "Tipping", "Tobacco Keratosis", "Tongue Thrust", "Tonsillectomy", "Tonsillitis", "Torus Mandibularis", "Torus Palatinus", "Total-etch", "Tracheostomy", "Transillumination", "Trapezius Muscle", "Traumatic Bone Cyst", "Traumatic Neuroma", "Trigeminal Neuralgia", "Trismus", "Trituration", "Tuberculosis", "Turner's Hypoplasia", "Ulcer", "Ulcerated", "Unicystic Ameloblastoma", "Unifocal", "Unilateral", "Unilocular Radiolucency", "Unerupted Tooth", "Uvulopalatopharyngoplasty (UPPP)", "Varnish", "Veneer", "Verrucous", "Verrucous Carcinoma", "Vertical Bone Loss", "Vertical Dimension", "Vertical Fracture", "Vertical Impaction", "Vertigo", "Vesicle", "WNL (Within Normal Limits)", "Wedge", "Weeping Canal", "White Sponge Nevus", "Widened PDL Space", "Xerostomia (Dry Mouth)", "ZOE (Zinc Oxide Eugenol)", "Zinc Oxide Eugenol (ZOE)", "Zinc Phosphate Cement", "Zirconia", "Zygomaticus Major Muscle", "Zygomaticus Minor Muscle"];
+
+    // ===================================================================================
+    //   --- APPLICATION LOGIC (v2.0) mgh ---
+    // ===================================================================================
+
+    let textInput = null;
+    let suggestionsContainer = null;
+    const suggestionsId = 'dental-suggester-list-999';
+
+    function init() {
+        textInput = document.getElementById(targetTextboxId);
+        if (!textInput) {
+            console.error(`Dental Suggester Error: Textbox with ID "${targetTextboxId}" not found.`);
+            return;
+        }
+        injectStyles();
+        createSuggestionsContainer();
+        attachEventListeners();
+        console.log(`Dental Suggester initialized successfully on #${targetTextboxId}.`);
+    }
+
+    function injectStyles() {
+        const style = document.createElement('style');
+        // --- KEY CHANGE ---
+        // We set position: fixed to position relative to the viewport.
+        // We remove the 'width' property because JS will now set it dynamically.
+        style.innerHTML = `
+            #${suggestionsId} {
+                list-style-type: none; padding: 0; margin: 0;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                max-height: 300px; overflow-y: auto;
+                position: fixed; /* Position relative to the window, not a parent */
+                background-color: white;
+                z-index: 10000;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                display: none;
+            }
+            #${suggestionsId} li {
+                padding: 10px 12px; cursor: pointer;
+                background-color: #fff; border-bottom: 1px solid #f0f0f0;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                font-size: 14px;
+            }
+            #${suggestionsId} li:last-child { border-bottom: none; }
+            #${suggestionsId} li:hover, #${suggestionsId} li.active { background-color: #e9e9e9; }
+            #${suggestionsId} li strong { font-weight: bold; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function createSuggestionsContainer() {
+        const container = document.createElement('ul');
+        container.id = suggestionsId;
+        // Append to the body to ensure it's not trapped inside a misbehaving container
+        document.body.appendChild(container);
+        suggestionsContainer = container;
+    }
+
+    function attachEventListeners() {
+        textInput.addEventListener('input', handleInput);
+        textInput.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('click', handleGlobalClick);
+        // --- NEW --- Reposition on scroll or resize
+        window.addEventListener('scroll', hideSuggestions, true); // Use capture phase
+        window.addEventListener('resize', hideSuggestions);
+    }
+
+    function displaySuggestions(suggestions, query) {
+        if (suggestions.length === 0) {
+            hideSuggestions();
+            return;
+        }
+        
+        // --- KEY CHANGE: JAVASCRIPT POSITIONING ---
+        // Get the exact position and size of the textbox
+        const rect = textInput.getBoundingClientRect();
+        
+        // Position the suggestions box right below the textbox
+        suggestionsContainer.style.left = `${rect.left}px`;
+        suggestionsContainer.style.top = `${rect.bottom}px`;
+        suggestionsContainer.style.width = `${rect.width}px`; // Match the width
+
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'block';
+
+        suggestions.slice(0, 50).forEach(term => {
+            const listItem = document.createElement('li');
+            listItem.setAttribute('data-term', term);
+            const boldPart = term.substring(0, query.length);
+            const restPart = term.substring(query.length);
+            listItem.innerHTML = `<strong>${boldPart}</strong>${restPart}`;
+            listItem.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                selectTerm(term);
+            });
+            suggestionsContainer.appendChild(listItem);
+        });
+    }
+
+    // Unchanged functions (handleInput, handleKeyDown, etc.) are below
+    const handleInput = () => { /* ... same as before ... */ const fullText = textInput.value; const cursorPos = textInput.selectionStart; const textBeforeCursor = fullText.substring(0, cursorPos); const lastSpaceIndex = textBeforeCursor.lastIndexOf(' '); const currentWord = textBeforeCursor.substring(lastSpaceIndex + 1).toLowerCase(); if (!currentWord) { hideSuggestions(); return; } const filteredTerms = dictionary.filter(term => term.toLowerCase().startsWith(currentWord)); displaySuggestions(filteredTerms, currentWord); };
+    const handleKeyDown = (e) => { /* ... same as before ... */ if (suggestionsContainer.style.display === 'none') return; const suggestions = suggestionsContainer.querySelectorAll('li'); if (suggestions.length === 0) return; let activeIndex = -1; suggestions.forEach((s, index) => { if (s.classList.contains('active')) activeIndex = index; }); if (e.key === 'ArrowDown') { e.preventDefault(); if (activeIndex < suggestions.length - 1) { if (activeIndex > -1) suggestions[activeIndex].classList.remove('active'); suggestions[activeIndex + 1].classList.add('active'); } } else if (e.key === 'ArrowUp') { e.preventDefault(); if (activeIndex > 0) { suggestions[activeIndex].classList.remove('active'); suggestions[activeIndex - 1].classList.add('active'); } } else if (e.key === 'Enter' && activeIndex > -1) { e.preventDefault(); selectTerm(suggestions[activeIndex].getAttribute('data-term')); } else if (e.key === 'Escape' || e.key === 'Tab') { hideSuggestions(); } };
+    const handleGlobalClick = (event) => { /* ... same as before ... */ if (!textInput.contains(event.target) && !suggestionsContainer.contains(event.target)) { hideSuggestions(); } };
+    function selectTerm(term) { /* ... same as before ... */ const fullText = textInput.value; const cursorPos = textInput.selectionStart; const textBeforeCursor = fullText.substring(0, cursorPos); const textAfterCursor = fullText.substring(cursorPos); const lastSpaceIndex = textBeforeCursor.lastIndexOf(' '); const baseText = textBeforeCursor.substring(0, lastSpaceIndex + 1); textInput.value = baseText + term + ' ' + textAfterCursor; hideSuggestions(); textInput.focus(); const newCursorPos = (baseText + term + ' ').length; textInput.setSelectionRange(newCursorPos, newCursorPos); }
+    function hideSuggestions() { if (suggestionsContainer) { suggestionsContainer.style.display = 'none'; } }
+    
+    document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
