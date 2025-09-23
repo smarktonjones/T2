@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- version as of 25AUG2025 mgh -->
+<!-- version as of 23SEP2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dental Note - MAKER Dam Neck</title>
+    <title>Dental Note - MAKER</title>
     <style>
         :root {
             --bg-color: #f0f2f5; --main-bg: #ffffff; --section-bg: #f9f9f9;
@@ -14,9 +14,11 @@
             --modal-bg: rgba(0,0,0,0.5); --danger-color: #d93025;
             --warning-color: #fd7e14; --success-color: #28a745; --success-hover: #218838;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
-        h1 { text-align: center; margin-top: 0; }
-		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold;}
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
+			  background-image: linear-gradient(to bottom, #f8f9fa, #e6f7ff); /* The gradient */
+			  color: var(--text-color); margin: 0; padding: 20px; }
+        h1 { text-align: center; margin-top: 0; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
 		h5 { text-align: center; margin-top: 0; font-weight: light;}	    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
         .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
@@ -40,7 +42,7 @@
         #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
         .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .copy-btn-prominent:hover { background-color: var(--success-hover); }
-        #reset-btn { background-color: var(--danger-color); }
+        #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
         /* All other element-specific styles are here */
         .endo-testing-element, .anesthetic-element, .enhanced-textbox, .alert-element { cursor: pointer; justify-content: center; }
@@ -135,7 +137,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.7</h5>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.8</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -145,6 +147,7 @@
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 		<label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values</button>
+		<button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
     <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
@@ -326,24 +329,7 @@
       ],
       "selected": "Cultural: None."
     },
-    {
-      "type": "dropdown",
-      "required": false,
-      "prefixTab": true,
-      "prefixNewline": false,
-      "suffixNewline": false,
-      "originalId": "0-7",
-      "isHidden": false,
-      "doNotReset": false,
-      "width": "",
-      "options": [
-        "FLIGHT STATUS: N/A",
-        "FLIGHT STATUS: AVIATOR",
-        "FLIGHT STATUS: AC",
-        "FLIGHT STATUS: AW"
-      ],
-      "selected": "FLIGHT STATUS: N/A"
-    },
+
     {
       "type": "bloodpressure",
       "required": false,
@@ -744,6 +730,7 @@
         "Missing: 1,16,17,32",
         "1,16,17,32 Present",
         "Unerupted - ",
+        "Partially erupted - ",
         "Communicating - "
       ]
     },
@@ -1125,7 +1112,6 @@
 
 
 
-
 	
 </script>
 
@@ -1142,6 +1128,86 @@
         
         // --- Helper Functions ---
 
+		
+// **** START OF CODE: Session Persistence Logic ****
+
+        // This function gathers the current state of ALL elements on the page and saves it to localStorage.
+        const saveCurrentStateToLocalStorage = () => {
+            console.log("Auto-saving current session state...");
+            // Create a state object, identical to how the "Export JSON" function works.
+            const stateToSave = {};
+            SECTIONS.forEach(id => {
+                stateToSave[id] = [];
+                document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => {
+                    stateToSave[id].push(getElementState(el));
+                });
+            });
+            // Convert the object to a JSON string and store it.
+            localStorage.setItem('dentalNoteMakerSession', JSON.stringify(stateToSave));
+        };
+
+		        // This is the "Reset Values" function.
+        const resetValues = () => {
+            console.log("Resetting values to template defaults...");
+            if (!lastLoadedState) {
+                alert("No default template has been loaded to reset to.");
+                return;
+            }
+            let resetCount = 0;
+            document.querySelectorAll('.draggable-element').forEach(currentElement => {
+                // Check the "do not reset" flag directly on the HTML element.
+                if (currentElement.dataset.doNotReset === 'true') {
+                    console.log(`Skipping reset for element: ${currentElement.dataset.originalId}`);
+                    return; // Skip this element and move to the next one.
+                }
+
+                const originalId = currentElement.dataset.originalId;
+                if (!originalId) return;
+
+                // Find the original, pristine data from the template we loaded.
+                const [sectionIndex, itemIndex] = originalId.split('-');
+                const sectionKey = SECTIONS[sectionIndex];
+                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
+                
+                if (defaultData) {
+                    resetCount++;
+                    // Create a fresh element from the default data and replace the current one.
+                    const newElement = createElement(defaultData.type, defaultData);
+                    currentElement.replaceWith(newElement);
+                }
+            });
+            
+            // This is crucial: after resetting, we must immediately update the live output,
+            // which in turn triggers an auto-save of the newly reset state to localStorage.
+            updateLiveOutput(); 
+            
+            alert(`Reset ${resetCount} element(s) to their template default values.`);
+        };
+
+// **** START OF FULL RESET CODE ****
+        const fullReset = () => {
+            // Ask for confirmation because this is a destructive action.
+            if (confirm("Are you sure you want to perform a full reset? This will clear any saved work and restore the original template.")) {
+                console.log("Performing a full reset. Clearing localStorage...");
+                
+                // 1. Clear the saved session from localStorage.
+                localStorage.removeItem('dentalNoteMakerSession');
+                
+                // 2. Immediately reload the page.
+                // This is the cleanest way to trigger the startup cascade, which will now
+                // fail to find a localStorage session and will load the embedded JSON instead.
+                window.location.reload();
+            }
+        };
+        // **** END OF FULL RESET CODE ****
+
+		
+// **** END OF Session Persistence Logic ****
+
+
+
+
+		
 	    const updateTxPlanSummary = (element) => { 
     const state = getElementState(element);
     const summarySpan = element.querySelector('.tx-plan-summary');
@@ -1373,35 +1439,12 @@
                 if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
             });
             liveOutput.value = outputParts.join('');
+			
+			// Auto-save the entire state to the browser's local storage on every change.
+            saveCurrentStateToLocalStorage();
         };
 
-        const resetValues = () => {
-            if (!lastLoadedState) { alert("No default template loaded to reset to."); return; }
-			
-			// **** START OF NEW CODE for highlight reset****
-    // First, remove all highlights from any element on the page.
-    document.querySelectorAll('.element-highlighted').forEach(el => el.classList.remove('element-highlighted'));
-    // **** END OF NEW CODE ****
-			
-            let resetCount = 0;
-            document.querySelectorAll('.draggable-element').forEach(currentElement => {
-                if (currentElement.dataset.doNotReset === 'true') {
-                    return; // Skip this element
-                }
-                const originalId = currentElement.dataset.originalId;
-                if (!originalId) return;
-                const [sectionIndex, itemIndex] = originalId.split('-');
-                const sectionKey = SECTIONS[sectionIndex];
-                const defaultData = lastLoadedState[sectionKey]?.[itemIndex];
-                if (defaultData) {
-                    resetCount++;
-                    const newElement = createElement(defaultData.type, defaultData);
-                    currentElement.replaceWith(newElement);
-                }
-            });
-            updateLiveOutput();
-            alert(`Reset ${resetCount} element(s) to their default values.`);
-        };
+
         
         // --- UI & Event Handlers ---
 
@@ -1707,51 +1750,56 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
 
 // A single, global shortcut handler for Shift+Enter that routes actions based on context.
 document.addEventListener('keydown', (event) => {
-    // Only proceed if the specific key combination is pressed.
-    if (!event.shiftKey || event.key !== 'Enter') {
-        return;
-    }
+   // Only proceed if the specific key combination is pressed.
+   if (!event.shiftKey || event.key !== 'Enter') {
+       return;
+   }
 
-    // --- CONTEXT-SENSITIVE ROUTING ---
+   // --- CONTEXT-SENSITIVE ROUTING ---
+   const anesModal = document.getElementById('anesthetic-editor-modal');
+   const textModal = document.getElementById('textbox-editor-modal');
+   const endoModal = document.getElementById('endo-testing-modal');
+   const allergyModal = document.getElementById('allergy-modal');
+   const txPlanModal = document.getElementById('tx-plan-modal');
+   const propsModal = document.getElementById('properties-modal');
 
-    // Find which modal is currently visible
-    const anesModal = document.getElementById('anesthetic-editor-modal');
-    const textModal = document.getElementById('textbox-editor-modal');
-    const endoModal = document.getElementById('endo-testing-modal');
-    const allergyModal = document.getElementById('allergy-modal');
-    const txPlanModal = document.getElementById('tx-plan-modal');
-    const propsModal = document.getElementById('properties-modal');
-    
-    // Prevent the default browser action (e.g., adding a newline in a textarea)
-    event.preventDefault();
+   // Check which modal is open
+   const isAnesOpen = getComputedStyle(anesModal).display !== 'none';
+   const isTextOpen = getComputedStyle(textModal).display !== 'none';
+   const isEndoOpen = getComputedStyle(endoModal).display !== 'none';
+   const isAllergyOpen = getComputedStyle(allergyModal).display !== 'none';
+   const isTxPlanOpen = getComputedStyle(txPlanModal).display !== 'none';
+   const isPropsOpen = getComputedStyle(propsModal).display !== 'none';
 
-    // ** NEW, MORE SPECIFIC CHECK **
-    // Check if the focus is inside the textbox editor's dropdown. This is a special case.
-    if (getComputedStyle(textModal).display !== 'none' && document.activeElement.id === 'textbox-editor-select') {
-         // Stop the event from bubbling up further, preventing the global copy.
-        event.stopPropagation();
-        document.getElementById('textbox-editor-save-btn').click();
-        return; // Exit the function immediately
-    }
+   const isModalOpen = isAnesOpen || isTextOpen || isEndoOpen || isAllergyOpen || isTxPlanOpen || isPropsOpen;
 
-    // ROUTE 1: A modal is open, so click its save button.
-    if (getComputedStyle(textModal).display !== 'none') {
-        document.getElementById('textbox-editor-save-btn').click();
-    } else if (getComputedStyle(anesModal).display !== 'none') {
-        document.getElementById('anesthetic-editor-save-btn').click();
-    } else if (getComputedStyle(endoModal).display !== 'none') {
-        document.getElementById('endo-testing-save-btn').click();
-    } else if (getComputedStyle(allergyModal).display !== 'none') {
-        document.getElementById('allergy-save-btn').click();
-    } else if (getComputedStyle(txPlanModal).display !== 'none') {
-        document.getElementById('tx-plan-save-btn').click();
-    } else if (getComputedStyle(propsModal).display !== 'none') {
-        document.getElementById('properties-save-btn').click();
-    } 
-    // ROUTE 2: No modals are open, so perform the global copy action.
-    else {
-        document.getElementById('copy-btn-top').click();
-    }
+   // If any modal is open, we need to handle it.
+   if (isModalOpen) {
+       // Prevent the default browser action (like adding a newline or submitting a form)
+       event.preventDefault();
+       // Stop the event from propagating further, just in case.
+       event.stopPropagation();
+
+       // Now, click the correct save button.
+       if (isTextOpen) {
+           document.getElementById('textbox-editor-save-btn').click();
+       } else if (isAnesOpen) {
+           document.getElementById('anesthetic-editor-save-btn').click();
+       } else if (isEndoOpen) {
+           document.getElementById('endo-testing-save-btn').click();
+       } else if (isAllergyOpen) {
+           document.getElementById('allergy-save-btn').click();
+       } else if (isTxPlanOpen) {
+           document.getElementById('tx-plan-save-btn').click();
+       } else if (isPropsOpen) {
+           document.getElementById('properties-save-btn').click();
+       }
+   }
+   // If NO modal is open, perform the global copy action.
+   else {
+       event.preventDefault();
+       document.getElementById('copy-btn-top').click();
+   }
 });
 
 	    
@@ -1793,6 +1841,7 @@ document.querySelectorAll('.modal').forEach(modal => {
         fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (re) => { loadJsonData(re.target.result); }; reader.readAsText(file); e.target.value = ''; });
         document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dental-note-template.json'; a.click(); URL.revokeObjectURL(a.href); };
         document.getElementById('reset-btn').addEventListener('click', resetValues);
+		document.getElementById('full-reset-btn').addEventListener('click', fullReset);
         document.getElementById('view-hidden-toggle').addEventListener('change', (e) => { if (e.target.checked) { document.body.classList.add('show-hidden-elements'); } else { document.body.classList.remove('show-hidden-elements'); }});
         
 		// **** START OF NEW CODE for lock toggle****
@@ -1812,25 +1861,108 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 		
 		
         // --- Initial Setup ---
-        const loadJsonData = (jsonString) => { try { const state = JSON.parse(jsonString); renderState(state); alert('Template loaded successfully!'); } catch (err) { console.error("JSON Parse Error:", err); alert('Error: Invalid JSON data.'); } };
-        const renderState = (state) => { document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = ''); SECTIONS.forEach((sectionId, secIndex) => { const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`); const elements = state[sectionId] || []; if (zone && Array.isArray(elements)) { elements.forEach((item, itemIndex) => { item.originalId = `${secIndex}-${itemIndex}`; zone.appendChild(createElement(item.type, item)); }); } }); lastLoadedState = JSON.parse(JSON.stringify(state)); updateLiveOutput(); };	    
-        const defaultJsonText = document.getElementById('default-json-data').textContent;
-        if (defaultJsonText.trim().length > 2) { try { const defaultState = JSON.parse(defaultJsonText); renderState(defaultState); } catch { console.error("Could not parse embedded default JSON. Starting blank."); renderState({}); } } else { renderState({}); }
+        const loadJsonData = (jsonString, isStartup = false, isFromFileImport = false) => {
+            try {
+                const state = JSON.parse(jsonString);
+                
+                // If this is a new file import, it becomes the new template AND we must clear the old session.
+                if (isFromFileImport) {
+                    console.log("New file imported. Clearing old localStorage session.");
+                    localStorage.removeItem('dentalNoteMakerSession');
+                    lastLoadedState = JSON.parse(JSON.stringify(state)); // This becomes the new "source of truth" for reset.
+                }
+                
+                renderState(state, isFromFileImport);
 
-    // **** START OF NEW, CORRECTED CODE for lock and drag****
-    // This runs only ONCE after the initial layout is built and will not interfere with subsequent drag events.
-    const lockToggle = document.getElementById('lock-layout-toggle');
-    if (lockToggle.checked) {
-        lockToggle.dispatchEvent(new Event('change'));
-    }
-    // **** END OF NEW, CORRECTED CODE ****
+                if (!isStartup) {
+                    alert('Template loaded successfully!');
+                }
+                return true;
+            } catch (err) {
+                console.error("JSON Parse Error:", err);
+                if (!isStartup) { alert('Error: Invalid JSON data.'); }
+                return false;
+            }
+        };
+
+        const renderState = (state, isNewTemplate = false) => {
+            document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
+            
+            // If we are loading a NEW template, we must build the lastLoadedState memory.
+            // If we are just restoring a session, lastLoadedState is already in memory from the initial load.
+            if (isNewTemplate) {
+                lastLoadedState = {}; 
+                SECTIONS.forEach((sectionId) => {
+                    const elements = state[sectionId] || [];
+                    if (!lastLoadedState[sectionId]) lastLoadedState[sectionId] = [];
+                    elements.forEach((item, itemIndex) => {
+                        lastLoadedState[sectionId][itemIndex] = JSON.parse(JSON.stringify(item));
+                    });
+                });
+            }
+
+            SECTIONS.forEach((sectionId, secIndex) => {
+                const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+                const elements = state[sectionId] || [];
+                if (zone && Array.isArray(elements)) {
+                    elements.forEach((item, itemIndex) => {
+                        item.originalId = `${secIndex}-${itemIndex}`;
+                        zone.appendChild(createElement(item.type, item));
+                    });
+                }
+            });
+            
+            updateLiveOutput();
+            const lockToggle = document.getElementById('lock-layout-toggle');
+            if (lockToggle.checked) {
+                lockToggle.dispatchEvent(new Event('change'));
+            }
+        };
+
+        // --- STARTUP CONFIGURATION CASCADE ---
+        const savedSession = localStorage.getItem('dentalNoteMakerSession');
+        
+        // This function defines the default loading sequence.
+        function loadDefaults() {
+            // Priority 2: Try to load from the embedded JSON data.
+            const defaultJsonText = document.getElementById('default-json-data').textContent;
+            if (defaultJsonText && defaultJsonText.trim().length > 2) {
+                console.log("No session found. Loading from embedded JSON data.");
+                loadJsonData(defaultJsonText, true, true); // Treat as a new template
+            } else {
+                // Priority 3: If no embedded JSON, start blank.
+                console.log("No session or embedded JSON. Starting with a blank slate.");
+                renderState({});
+            }
+        }
+
+        // Run the cascade
+        if (savedSession) {
+            // Priority 1: A previous session exists. We need to load both the session AND its underlying template.
+            console.log("Loading from saved browser session.");
+            const sessionState = JSON.parse(savedSession);
+            // First, load the template that this session was based on.
+            const defaultJsonText = document.getElementById('default-json-data').textContent;
+            if (defaultJsonText && defaultJsonText.trim().length > 2) {
+                loadJsonData(defaultJsonText, true, true); // Load template but don't show UI yet
+            } else {
+                renderState({}, true); // Prepare a blank template
+            }
+            // Now, render the user's actual saved work over the top of it.
+            renderState(sessionState, false); // Render session state, but don't overwrite the template memory.
+        } else {
+            // No session found, proceed to the normal default loading sequence.
+            loadDefaults();
+        }
+ 
 	    
     });
     </script>
 
 
 
--electronic NAVMED 6600/13 JSON default-
+-NAVMED 6600/13 JSON default-<br>
+<h6>Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a></h6>
 <script>
 // ===================================================================================
 //
@@ -1855,7 +1987,7 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
     // ===================================================================================
     //   --- LIBRARY OF TERMS --- (Dictionary is collapsed for brevity) (add or subtract terms as necessary - MG Horning initial list vJULY 2025
     // ===================================================================================
-const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Periodontal)", "Abutment", "Acanthosis", "Access Cavity", "Acid Etch", "Acrylic Resin", "Actinic Cheilitis", "Acute Apical Abscess", "Acute Pulpitis", "Adenoid Cystic Carcinoma", "Adenomatoid Odontogenic Tumor", "Adenopathy", "Airway Obstruction", "Albright Syndrome", "Alginate", "Allergic Reaction", "Allograft", "Alloplast", "Alveolar Bone", "Alveolar Crest", "Alveolar Osteitis (Dry Socket)", "Alveolar Ridge", "Alveoloplasty", "Amalgam", "Amalgam Carrier", "Amalgam Well", "Ameloblastic Carcinoma", "Ameloblastic Fibro-odontoma", "Ameloblastic Fibroma", "Ameloblastoma", "Amelogenesis Imperfecta", "Anaphylaxis", "Aneurysmal Bone Cyst", "Angular Cheilitis", "Angular Defect", "Ankyloglossia", "Ankylosis", "Anodontia", "Apex Locator", "Apexification", "Apexogenesis", "Aphthous Ulcer", "Aphthous Ulcer (Canker Sore)", "Apical Foramen", "Apical Periodontitis", "Apical Scar", "Apicoectomy", "Articaine", "Articulating Paper", "Aspirator Tip", "Asymptomatic", "Attrition", "Atypical Odontalgia", "Autograft", "BOP (Bleeding on Probing)", "Barbed Broach", "Barrier Membrane", "Basal Cell Carcinoma", "Base", "Benign", "Benign Migratory Glossitis", "Bifid Condyle", "Bifid Tongue", "Bilateral", "Biopsy", "Biopsy (Excisional)", "Biopsy (Incisional)", "Bite Registration", "Black Hairy Tongue", "Blade Elevator", "Bleaching (Internal)", "Bleb", "Block Graft", "Bone Density", "Bone File", "Bone Graft", "Bone Loss", "Bone Marrow Space", "Bone Scraper", "Bone Screw", "Bonding Agent", "Bruxism", "Buccal Exostosis", "Buccinator Muscle", "Bulla", "Burnisher", "C/P (Complete/Partial Denture)", "CAL (Clinical Attachment Loss)", "CBCT (Cone Beam Computed Tomography)", "CEJ (Cementoenamel Junction)", "Calcifying Epithelial Odontogenic Tumor", "Calcifying Odontogenic Cyst", "Calcium Hydroxide", "Calculus", "Calculus Bridge", "Candidiasis", "Candidiasis (Thrush)", "Canine Impaction", "Canine Substitution", "Canthotomy", "Caries", "Caries (Incipient)", "Caries (Occlusal)", "Caries (Proximal)", "Caries (Rampant)", "Caries (Root)", "Carver", "Cast Post", "Cavernous Hemangioma", "Cellulitis", "Cement", "Cemental Dysplasia", "Cemental Tear", "Cementoblastoma", "Cemento-ossifying Fibroma", "Central Giant Cell Granuloma", "Ceramic Fracture", "Cervical Burnout", "Chelating Agent", "Cherubism", "Chronic Apical Abscess", "Chronic Hyperplastic Pulpitis", "Chronic Periodontitis", "Chronic Pulpitis", "Circumferential Bone Loss", "Circumscribed", "Cleft Lip", "Cleft Lip Repair", "Cleft Palate", "Cleft Palate Repair", "Cleidocranial Dysplasia", "Closed Reduction", "Cold Test", "Complex Odontoma", "Composite Resin", "Compound Odontoma", "Concrescence", "Condenser", "Condensing Osteitis", "Condylar Aplasia", "Condylar Hyperplasia", "Condylar Hypoplasia", "Congenital", "Connective Tissue Graft", "Contact Point", "Coping", "Core Buildup", "Coronectomy", "Coronoid Hyperplasia", "Corrugated", "Corticated Border", "Cotton Wool Appearance", "Cowhorn Forceps (#23)", "Cracked Tooth Syndrome", "Cratered", "Crepitation", "Crestal Lamina Dura", "Crossbite", "Crown Fracture", "Crown-down Technique", "Crown-to-Root Ratio", "Cryer Elevator", "Curettage", "Curing Light", "Cyst", "Cystic", "Debridement", "Decortication", "Dehiscence", "Dense Bone Island", "Dens Evaginatus", "Dens Invaginatus (Dens in Dente)", "Dental Dam", "Dental Fluorosis", "Dental Lamina", "Dental Stone", "Dentin Dysplasia", "Dentinogenesis Imperfecta", "Dentigerous Cyst", "Denture Adhesive", "Denture Base", "Denture Stomatitis", "Denture Teeth", "Denture-induced Fibrous Hyperplasia", "Depressor Anguli Oris Muscle", "Depressor Labii Inferioris Muscle", "Desensitizer", "Desquamative Gingivitis", "Developmental Anomaly", "Deviation", "Deviation (Mandibular)", "Diastema", "Deviation (Nasal Septum)", "Diastema", "Die Stone", "Diffuse", "Diffuse Border", "Diffuse Sclerosing Osteomyelitis", "Digastric Muscle (Anterior Belly)", "Digastric Muscle (Posterior Belly)", "Dilaceration", "Disc Displacement", "Dislocation", "Distoangular Impaction", "Drain Placement", "Drifting", "Drill", "Dycal", "Dysphagia (Difficulty Swallowing)", "Dysphonia (Hoarseness)", "Dysplasia", "E-max (Lithium Disilicate)", "E/O (Extraoral)", "EPT (Electric Pulp Test)", "Eagle Syndrome", "Ectodermal Dysplasia", "Ectopic Eruption", "Edematous", "Edentulous", "Elastomeric Impression Material", "Elevation", "Elevator", "Enamel Hypoplasia", "Enamel Pearl", "Endodontic Explorer", "Endodontic File", "Endodontic Sealer", "Endophytic", "Enostosis", "Enucleation", "Epinephrine", "Epulis Fissuratum", "Erosion", "Eruption Cyst", "Erythema Multiforme", "Erythematous", "Erythroplakia", "Etchant", "Excisional Biopsy", "Excision", "Exophytic", "Exostosis", "External Resorption", "Extraction", "Extrusion", "FGC (Full Gold Crown)", "FGG (Free Gingival Graft)", "FMX (Full Mouth X-rays)", "Fenestration", "Fiber Post", "Fibroma", "Fibrous", "Fibrous Dysplasia", "Fine Needle Aspiration (FNA)", "Finishing Strip", "Fissured", "Fissured Tongue", "Fistula", "Fistula / Sinus Tract", "Flap Advancement", "Flap Design", "Flap Reflection", "Flap Retraction", "Florid Cemento-osseous Dysplasia", "Flowable Composite", "Fluctuant", "Fluoride", "Fluorosis", "Focal Cemento-osseous Dysplasia", "Focal Sclerosing Osteomyelitis", "Follicular Cyst", "Forceps", "Forceps (#150)", "Forceps (#151)", "Fordyce Granules", "Foreign Body Reaction", "Fremitus", "Frenectomy", "Frenectomy (Lingual/Labial)", "Friable", "Frictional Keratosis", "Full Bony Impaction", "Full Thickness Flap", "Furcation Arrow", "Furcation Involvement", "Furcation Involvement (Class I)", "Furcation Involvement (Class II)", "Furcation Involvement (Class III)", "Furcation Involvement (Class IV)", "Fusion", "GBR (Guided Bone Regeneration)", "GTR (Guided Tissue Regeneration)", "Gardner Syndrome", "Garre's Osteomyelitis", "Gates-Glidden Drill", "Gemination", "Genioglossus Muscle", "Geniohyoid Muscle", "Geographic Tongue", "Geographic Tongue (Benign Migratory Glossitis)", "Ghost Teeth", "Giant Cell Fibroma", "Gingival Abscess", "Gingival Cleft", "Gingival Enlargement", "Gingival Hyperplasia", "Gingival Recession", "Gingivectomy", "Gingivitis", "Gingivoplasty", "Glandular Odontogenic Cyst", "Glass Ionomer Cement", "Glossectomy", "Goiter", "Gold Alloy", "Gorlin Cyst", "Gorlin-Goltz Syndrome", "Gow-Gates Block", "Graft", "Granular Cell Tumor", "Granulation Tissue", "Ground-glass Appearance", "Guided Bone Regeneration", "Guided Tissue Regeneration", "Gutta-percha", "Hairy Leukoplakia", "Hairy Tongue", "Hamular Notch", "Hand-Schuller-Christian Disease", "Hard Tissue", "Healing Abutment", "Heat Test", "Hemangioma", "Hemisection", "Hemodent", "Hemostasis", "Hemostat", "Hereditary", "Herpangina", "Herpes Simplex Virus", "Herpetic Gingivostomatitis", "High-speed Handpiece", "Histoplasmosis", "Homogeneous", "Horizontal Bone Loss", "Horizontal Impaction", "Hyoglossus Muscle", "Hypercementosis", "Hyperdontia", "Hyperdontia (Supernumerary Teeth)", "Hyperkeratosis", "Hyperkeratotic", "Hyperplasia", "Hypodontia", "I/O (Intraoral)", "IANB (Inferior Alveolar Nerve Block)", "IRM (Intermediate Restorative Material)", "Idiopathic Osteosclerosis", "Impacted Tooth", "Implant Fixture", "Implant Placement", "Impression Compound", "Impression Tray", "Incipient Caries", "Incisional Biopsy", "Incision", "Incision and Drainage", "Incisive Canal Cyst", "Indurated", "Indirect Pulp Cap", "Infiltration Anesthesia", "Inflammation", "Inlay", "Instrumentation", "Internal Resorption", "Intermaxillary Fixation", "Interproximal Caries", "Intrabony Defect", "Intracanal Medicament", "Intrusion", "Irrigation", "Irreversible Pulpitis", "Irritation Fibroma", "Kaposi's Sarcoma", "Keratinized Gingiva", "Keratocystic Odontogenic Tumor (KCOT)", "Keratosis", "Langerhans Cell Histiocytosis", "Laryngectomy", "Laryngoscopy", "Lateral Cephalogram", "Lateral Periodontal Cyst", "Lateral Pterygoid Muscle", "Le Fort I Fracture", "Le Fort I/II/III Osteotomy", "Le Fort II Fracture", "Le Fort III Fracture", "Leukoplakia", "Leukoplakic", "Levator Anguli Oris Muscle", "Lichen Planus", "Lichen Planus (Oral)", "Lichenoid Mucositis", "Lidocaine", "Liner", "Lingual Nerve", "Lingual Thyroid", "Lingual Varicosities", "Lipoma", "Local Anesthesia", "Localized", "Loss of Lamina Dura", "Low-speed Handpiece", "Ludwig's Angina", "Lupus Erythematosus", "Luxation", "Lymphadenopathy", "Lymphangioma", "Lymphoepithelial Cyst", "MOD (Mesio-Occluso-Distal)", "MTA (Mineral Trioxide Aggregate)", "Macrodontia", "Macule", "Malignant", "Mallet", "Malocclusion", "Mandibular Canal", "Mandibular Fracture", "Mandibular Tori", "Marsupialization", "Masseter Muscle", "Matrix Band", "Maxillary Sinus Lift", "Maxillectomy", "Medial Pterygoid Muscle", "Median Palatal Cyst", "Median Rhomboid Glossitis", "Melanoma", "Melanotic Neuroectodermal Tumor of Infancy", "Membrane", "Mental Foramen", "Mentalis Muscle", "Mepivacaine", "Mesioangular Impaction", "Metal-ceramic Crown", "Metastatic Disease", "Micro-hybrid Composite", "Microdontia", "Mobility (Class I)", "Mobility (Class II)", "Mobility (Class III)", "Morsicatio buccarum", "Moth-eaten Appearance", "Mottled", "Mucocele", "Mucoepidermoid Carcinoma", "Mucogingival Defect", "Multifocal", "Multilocular", "Multilocular Radiolucency", "Multiple Myeloma", "Mylohyoid Muscle", "Mylohyoid Ridge", "Myxoma", "NICO (Neuralgia-Inducing Cavitational Osteonecrosis)", "NUG (Necrotizing Ulcerative Gingivitis)", "NUP (Necrotizing Ulcerative Periodontitis)", "Nanofill Composite", "Nasolabial Cyst", "Nasopalatine Duct Cyst", "Neck Dissection (Radical/Modified)", "Necrosis", "Necrotizing Sialometaplasia", "Needle Holder", "Neoplasm", "Nerve Block", "Nerve Repositioning", "Neuralgia", "Neurilemmoma", "Neurofibroma", "Nevoid Basal Cell Carcinoma Syndrome", "Nicotine Keratosis", "Nodule", "Non-vital Tooth", "OCS (Oral Cancer Screening)", "Obturation", "Occlusal Caries", "Occlusal Splint", "Occlusal Trauma", "Odontogenic Keratocyst", "Odontogenic Myxoma", "Odontoma", "Odontotomy", "Odynophagia (Painful Swallowing)", "Oligodontia", "Onlay", "Onion-skin Appearance", "Open Apex", "Open Bite", "Open Contact", "Open Reduction", "Operculum", "Oral Hairy Leukoplakia", "Oral Submucous Fibrosis", "Orbicularis Oris Muscle", "Orthokeratinized Odontogenic Cyst", "Osseointegration", "Osseous Recontouring", "Osseous Surgery", "Ossifying Fibroma", "Osteitis Deformans", "Osteoblastoma", "Osteochondroma", "Osteogenesis Imperfecta", "Osteoma", "Osteomyelitis", "Osteonecrosis of the Jaw (ONJ)", "Osteopetrosis", "Osteoporosis", "Osteoradionecrosis", "Osteosarcoma", "Osteotomy", "Overbite", "Overhanging Restoration", "Overjet", "PA (Periapical Radiograph)", "PD (Probing Depth)", "PDL (Periodontal Ligament)", "PFM (Porcelain Fused to Metal)", "PVS (Polyvinyl Siloxane)", "Packable Composite", "Paget's Disease", "Palatal Expansion", "Palatal Torus", "Palatoglossus Muscle", "Palpation Test", "Panoramic Radiograph", "Paper Point", "Papillary", "Papilloma", "Papule", "Parotidectomy", "Parulis", "Partially Erupted", "Partial Bony Impaction", "Patch", "Pathologic Fracture", "Pedunculated", "Pell & Gregory Classification", "Pemphigoid", "Pemphigus Vulgaris", "Percussion Test", "Perforation Repair", "Peri-implantitis", "Periapical Cemental Dysplasia", "Periapical Cyst", "Periapical Granuloma", "Periapical Rarefying Osteitis", "Periapical Sclerosing Osteitis", "Pericoronitis", "Periodontal Abscess", "Periodontal Pocket", "Periodontitis", "Periodontitis (Aggressive)", "Periodontitis (Chronic)", "Periosteal Elevator", "Periosteum", "Peripheral Giant Cell Granuloma", "Peripheral Ossifying Fibroma", "Periotome", "Pesso Reamer", "Pharyngitis", "Phoenix Abscess", "Pindborg Tumor", "Plaque", "Plate and Screw Fixation", "Platysma Muscle", "Pleomorphic Adenoma", "Plunger Cusp", "Pneumatization", "Polycarbonate Crown", "Polyether", "Polypoid", "Polysulfide", "Polyvinyl Siloxane (PVS)", "Porcelain", "Porcelain-fused-to-metal (PFM)", "Post-and-Core", "Posterior Crossbite", "Potts Elevator", "Pre-prosthetic Surgery", "Prefabricated Post", "Pregnancy Granuloma", "Premalignant", "Primary Closure", "Primordial Cyst", "Proliferative Periostitis", "Provisional Restoration", "Pseudocyst", "Pulp Attrition", "Pulp Calcification", "Pulp Cap", "Pulp Chamber", "Pulp Exposure", "Pulp Necrosis", "Pulp Polyp", "Pulp Polyp (Chronic Hyperplastic Pulpitis)", "Pulp Stone", "Pulp Test", "Pulpitis", "Punched-out Radiolucencies", "Pustule", "Pyogenic Granuloma", "RCT (Root Canal Therapy)", "RMGI (Resin-Modified Glass Ionomer)", "Radiation Caries", "Radicular Cyst", "Radio-dense", "Radiograph", "Radiographic Calculus", "Radiolucent", "Radiopaque", "Ranula", "Recurrent Aphthous Stomatitis", "Recurrent Caries", "Regional Odontodysplasia", "Reline", "Resin Cement", "Residual Cyst", "Residual Ridge", "Resorption", "Retraction Cord", "Retreatment", "Reversible Pulpitis", "Rhabdomyosarcoma", "Rhinoplasty", "Ridge Augmentation", "Ridge Preservation", "Ridge Split", "Risorius Muscle", "Rongeur", "Root Amputation", "Root Canal", "Root Caries", "Root Concavity", "Root Fracture", "Root Planing", "Root Proximity", "Root Resection", "Root Submergence", "Root Trunk", "Rubber Dam", "Runner's Caries", "SRP (Scaling and Root Planing)", "Saddle", "Schwannoma", "Scleroderma", "Sclerotic Bone", "Secondary Caries", "Self-etch Primer", "Sequestrum", "Sessile", "Sialadenitis", "Sialendoscopy", "Sialolith", "Sialolithiasis", "Sialolithiasis (Salivary Stone)", "Silver Diamine Fluoride", "Sinus Tract", "Sjogren Syndrome", "Sleep Apnea (Obstructive)", "Slow-speed Handpiece", "Socket Sclerosis", "Soft Tissue", "Soft Tissue Impaction", "Spatula", "Speckled", "Spongy", "Squamous Cell Carcinoma", "Stafne Bone Defect", "Stainless Steel Crown", "Step-back Technique", "Sternocleidomastoid Muscle", "Stevens-Johnson Syndrome", "Stomatitis", "Styloglossus Muscle", "Stylohyoid Muscle", "Subluxation", "Subpontic Osseous Hyperplasia", "Sunburst Appearance", "Supernumerary Root", "Supernumerary Tooth", "Suprabony Pocket", "Surveyor", "Symptomatic", "Syphilis", "TMJ (Temporomandibular Joint)", "Taurodontism", "Temporalis Muscle", "Temporary Cement", "Temporary Crown", "Tetracycline Staining", "Tetracycline Staining", "Thalassemia", "Thyroidectomy", "Tipping", "Tobacco Keratosis", "Tongue Thrust", "Tonsillectomy", "Tonsillitis", "Torus Mandibularis", "Torus Palatinus", "Total-etch", "Tracheostomy", "Transillumination", "Trapezius Muscle", "Traumatic Bone Cyst", "Traumatic Neuroma", "Trigeminal Neuralgia", "Trismus", "Trituration", "Tuberculosis", "Turner's Hypoplasia", "Ulcer", "Ulcerated", "Unicystic Ameloblastoma", "Unifocal", "Unilateral", "Unilocular Radiolucency", "Unerupted Tooth", "Uvulopalatopharyngoplasty (UPPP)", "Varnish", "Veneer", "Verrucous", "Verrucous Carcinoma", "Vertical Bone Loss", "Vertical Dimension", "Vertical Fracture", "Vertical Impaction", "Vertigo", "Vesicle", "WNL (Within Normal Limits)", "Wedge", "Weeping Canal", "White Sponge Nevus", "Widened PDL Space", "Xerostomia (Dry Mouth)", "ZOE (Zinc Oxide Eugenol)", "Zinc Oxide Eugenol (ZOE)", "Zinc Phosphate Cement", "Zirconia", "Zygomaticus Major Muscle", "Zygomaticus Minor Muscle"];
+const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Periodontal)", "Abutment", "Acanthosis", "Access Cavity", "Acid Etch", "Acrylic Resin", "Actinic Cheilitis", "Acute Apical Abscess", "Acute Pulpitis", "Adenoid Cystic Carcinoma", "Adenomatoid Odontogenic Tumor", "Adenopathy", "Airway Obstruction", "Albright Syndrome", "Alginate", "Allergic Reaction", "Allograft", "Alloplast", "Alveolar Bone", "Alveolar Crest", "Alveolar Osteitis (Dry Socket)", "Alveolar Ridge", "Alveoloplasty", "Amalgam", "Amalgam Carrier", "Amalgam Well", "Ameloblastic Carcinoma", "Ameloblastic Fibro-odontoma", "Ameloblastic Fibroma", "Ameloblastoma", "Amelogenesis Imperfecta", "Anaphylaxis", "Aneurysmal Bone Cyst", "Angular Cheilitis", "Angular Defect", "Ankyloglossia", "Ankylosis", "Anodontia", "Apex Locator", "Apexification", "Apexogenesis", "Aphthous Ulcer", "Aphthous Ulcer (Canker Sore)", "Apical Foramen", "Apical Periodontitis", "Apical Scar", "Apicoectomy", "Articaine", "Articulating Paper", "Aspirator Tip", "Asymptomatic", "Attrition", "Atypical Odontalgia", "Autograft", "BOP (Bleeding on Probing)", "Barbed Broach", "Barrier Membrane", "Basal Cell Carcinoma", "Base", "Benign", "Benign Migratory Glossitis", "Bifid Condyle", "Bifid Tongue", "Bilateral", "Biopsy", "Biopsy (Excisional)", "Biopsy (Incisional)", "Bite Registration", "Black Hairy Tongue", "Blade Elevator", "Bleaching (Internal)", "Bleb", "Block Graft", "Bone Density", "Bone File", "Bone Graft", "Bone Loss", "Bone Marrow Space", "Bone Scraper", "Bone Screw", "Bonding Agent", "Bruxism", "Buccal Exostosis", "Buccinator Muscle", "Bulla", "Burnisher", "C/P (Complete/Partial Denture)", "CAL (Clinical Attachment Loss)", "CBCT (Cone Beam Computed Tomography)", "CEJ (Cementoenamel Junction)", "Calcifying Epithelial Odontogenic Tumor", "Calcifying Odontogenic Cyst", "Calcium Hydroxide", "Calculus", "Calculus Bridge", "Candidiasis", "Candidiasis (Thrush)", "Canine Impaction", "Canine Substitution", "Canthotomy", "Caries", "Caries (Incipient)", "Caries (Occlusal)", "Caries (Proximal)", "Caries (Rampant)", "Caries (Root)", "Carver", "Cast Post", "Cavernous Hemangioma", "Cellulitis", "Cement", "Cemental Dysplasia", "Cemental Tear", "Cementoblastoma", "Cemento-ossifying Fibroma", "Central Giant Cell Granuloma", "Ceramic Fracture", "Cervical Burnout", "Chelating Agent", "Cherubism", "Chronic Apical Abscess", "Chronic Hyperplastic Pulpitis", "Chronic Periodontitis", "Chronic Pulpitis", "Circumferential Bone Loss", "Circumscribed", "Cleft Lip", "Cleft Lip Repair", "Cleft Palate", "Cleft Palate Repair", "Cleidocranial Dysplasia", "Closed Reduction", "Cold Test", "Complex Odontoma", "Composite Resin", "Compound Odontoma", "Concrescence", "Condenser", "Condensing Osteitis", "Condylar Aplasia", "Condylar Hyperplasia", "Condylar Hypoplasia", "Congenital", "Connective Tissue Graft", "Contact Point", "Coping", "Core Buildup", "Coronectomy", "Coronoid Hyperplasia", "Corrugated", "Corticated Border", "Cotton Wool Appearance", "Cowhorn Forceps (#23)", "Cracked Tooth Syndrome", "Cratered", "Crepitus", "Crestal Lamina Dura", "Crossbite", "Crown Fracture", "Crown-down Technique", "Crown-to-Root Ratio", "Cryer Elevator", "Curettage", "Curing Light", "Cyst", "Cystic", "Debridement", "Decortication", "Dehiscence", "Dense Bone Island", "Dens Evaginatus", "Dens Invaginatus (Dens in Dente)", "Dental Dam", "Dental Fluorosis", "Dental Lamina", "Dental Stone", "Dentin Dysplasia", "Dentinogenesis Imperfecta", "Dentigerous Cyst", "Denture Adhesive", "Denture Base", "Denture Stomatitis", "Denture Teeth", "Denture-induced Fibrous Hyperplasia", "Depressor Anguli Oris Muscle", "Depressor Labii Inferioris Muscle", "Desensitizer", "Desquamative Gingivitis", "Developmental Anomaly", "Deviation", "Deviation (Mandibular)", "Diastema", "Deviation (Nasal Septum)", "Diastema", "Die Stone", "Diffuse", "Diffuse Border", "Diffuse Sclerosing Osteomyelitis", "Digastric Muscle (Anterior Belly)", "Digastric Muscle (Posterior Belly)", "Dilaceration", "Disc Displacement", "Dislocation", "Distoangular Impaction", "Drain Placement", "Drifting", "Drill", "Dycal", "Dysphagia (Difficulty Swallowing)", "Dysphonia (Hoarseness)", "Dysplasia", "E-max (Lithium Disilicate)", "E/O (Extraoral)", "EPT (Electric Pulp Test)", "Eagle Syndrome", "Ectodermal Dysplasia", "Ectopic Eruption", "Edematous", "Edentulous", "Elastomeric Impression Material", "Elevation", "Elevator", "Enamel Hypoplasia", "Enamel Pearl", "Endodontic Explorer", "Endodontic File", "Endodontic Sealer", "Endophytic", "Enostosis", "Enucleation", "Epinephrine", "Epulis Fissuratum", "Erosion", "Eruption Cyst", "Erythema Multiforme", "Erythematous", "Erythroplakia", "Etchant", "Excisional Biopsy", "Excision", "Exophytic", "Exostosis", "External Resorption", "Extraction", "Extrusion", "FGC (Full Gold Crown)", "FGG (Free Gingival Graft)", "FMX (Full Mouth X-rays)", "Fenestration", "Fiber Post", "Fibroma", "Fibrous", "Fibrous Dysplasia", "Fine Needle Aspiration (FNA)", "Finishing Strip", "Fissured", "Fissured Tongue", "Fistula", "Fistula / Sinus Tract", "Flap Advancement", "Flap Design", "Flap Reflection", "Flap Retraction", "Florid Cemento-osseous Dysplasia", "Flowable Composite", "Fluctuant", "Fluoride", "Fluorosis", "Focal Cemento-osseous Dysplasia", "Focal Sclerosing Osteomyelitis", "Follicular Cyst", "Forceps", "Forceps (#150)", "Forceps (#151)", "Fordyce Granules", "Foreign Body Reaction", "Fremitus", "Frenectomy", "Frenectomy (Lingual/Labial)", "Friable", "Frictional Keratosis", "Full Bony Impaction", "Full Thickness Flap", "Furcation Arrow", "Furcation Involvement", "Furcation Involvement (Class I)", "Furcation Involvement (Class II)", "Furcation Involvement (Class III)", "Furcation Involvement (Class IV)", "Fusion", "GBR (Guided Bone Regeneration)", "GTR (Guided Tissue Regeneration)", "Gardner Syndrome", "Garre's Osteomyelitis", "Gates-Glidden Drill", "Gemination", "Genioglossus Muscle", "Geniohyoid Muscle", "Geographic Tongue", "Geographic Tongue (Benign Migratory Glossitis)", "Ghost Teeth", "Giant Cell Fibroma", "Gingival Abscess", "Gingival Cleft", "Gingival Enlargement", "Gingival Hyperplasia", "Gingival Recession", "Gingivectomy", "Gingivitis", "Gingivoplasty", "Glandular Odontogenic Cyst", "Glass Ionomer Cement", "Glossectomy", "Goiter", "Gold Alloy", "Gorlin Cyst", "Gorlin-Goltz Syndrome", "Gow-Gates Block", "Graft", "Granular Cell Tumor", "Granulation Tissue", "Ground-glass Appearance", "Guided Bone Regeneration", "Guided Tissue Regeneration", "Gutta-percha", "Hairy Leukoplakia", "Hairy Tongue", "Hamular Notch", "Hand-Schuller-Christian Disease", "Hard Tissue", "Healing Abutment", "Heat Test", "Hemangioma", "Hemisection", "Hemodent", "Hemostasis", "Hemostat", "Hereditary", "Herpangina", "Herpes Simplex Virus", "Herpetic Gingivostomatitis", "High-speed Handpiece", "Histoplasmosis", "Homogeneous", "Horizontal Bone Loss", "Horizontal Impaction", "Hyoglossus Muscle", "Hypercementosis", "Hyperdontia", "Hyperdontia (Supernumerary Teeth)", "Hyperkeratosis", "Hyperkeratotic", "Hyperplasia", "Hypodontia", "I/O (Intraoral)", "IANB (Inferior Alveolar Nerve Block)", "IRM (Intermediate Restorative Material)", "Idiopathic Osteosclerosis", "Impacted Tooth", "Implant Fixture", "Implant Placement", "Impression Compound", "Impression Tray", "Incipient Caries", "Incisional Biopsy", "Incision", "Incision and Drainage", "Incisive Canal Cyst", "Indurated", "Indirect Pulp Cap", "Infiltration Anesthesia", "Inflammation", "Inlay", "Instrumentation", "Internal Resorption", "Intermaxillary Fixation", "Interproximal Caries", "Intrabony Defect", "Intracanal Medicament", "Intrusion", "Irrigation", "Irreversible Pulpitis", "Irritation Fibroma", "Kaposi's Sarcoma", "Keratinized Gingiva", "Keratocystic Odontogenic Tumor (KCOT)", "Keratosis", "Langerhans Cell Histiocytosis", "Laryngectomy", "Laryngoscopy", "Lateral Cephalogram", "Lateral Periodontal Cyst", "Lateral Pterygoid Muscle", "Le Fort I Fracture", "Le Fort I/II/III Osteotomy", "Le Fort II Fracture", "Le Fort III Fracture", "Leukoplakia", "Leukoplakic", "Levator Anguli Oris Muscle", "Lichen Planus", "Lichen Planus (Oral)", "Lichenoid Mucositis", "Lidocaine", "Liner", "Lingual Nerve", "Lingual Thyroid", "Lingual Varicosities", "Lipoma", "Local Anesthesia", "Localized", "Loss of Lamina Dura", "Low-speed Handpiece", "Ludwig's Angina", "Lupus Erythematosus", "Luxation", "Lymphadenopathy", "Lymphangioma", "Lymphoepithelial Cyst", "MOD (Mesio-Occluso-Distal)", "MTA (Mineral Trioxide Aggregate)", "Macrodontia", "Macule", "Malignant", "Mallet", "Malocclusion", "Mandibular Canal", "Mandibular Fracture", "Mandibular Tori", "Marsupialization", "Masseter Muscle", "Matrix Band", "Maxillary Sinus Lift", "Maxillectomy", "Medial Pterygoid Muscle", "Median Palatal Cyst", "Median Rhomboid Glossitis", "Melanoma", "Melanotic Neuroectodermal Tumor of Infancy", "Membrane", "Mental Foramen", "Mentalis Muscle", "Mepivacaine", "Mesioangular Impaction", "Metal-ceramic Crown", "Metastatic Disease", "Micro-hybrid Composite", "Microdontia", "Mobility (Class I)", "Mobility (Class II)", "Mobility (Class III)", "Morsicatio buccarum", "Moth-eaten Appearance", "Mottled", "Mucocele", "Mucoepidermoid Carcinoma", "Mucogingival Defect", "Multifocal", "Multilocular", "Multilocular Radiolucency", "Multiple Myeloma", "Mylohyoid Muscle", "Mylohyoid Ridge", "Myxoma", "NICO (Neuralgia-Inducing Cavitational Osteonecrosis)", "NUG (Necrotizing Ulcerative Gingivitis)", "NUP (Necrotizing Ulcerative Periodontitis)", "Nanofill Composite", "Nasolabial Cyst", "Nasopalatine Duct Cyst", "Neck Dissection (Radical/Modified)", "Necrosis", "Necrotizing Sialometaplasia", "Needle Holder", "Neoplasm", "Nerve Block", "Nerve Repositioning", "Neuralgia", "Neurilemmoma", "Neurofibroma", "Nevoid Basal Cell Carcinoma Syndrome", "Nicotine Keratosis", "Nodule", "Non-vital Tooth", "OCS (Oral Cancer Screening)", "Obturation", "Occlusal Caries", "Occlusal Splint", "Occlusal Trauma", "Odontogenic Keratocyst", "Odontogenic Myxoma", "Odontoma", "Odontotomy", "Odynophagia (Painful Swallowing)", "Oligodontia", "Onlay", "Onion-skin Appearance", "Open Apex", "Open Bite", "Open Contact", "Open Reduction", "Operculum", "Oral Hairy Leukoplakia", "Oral Submucous Fibrosis", "Orbicularis Oris Muscle", "Orthokeratinized Odontogenic Cyst", "Osseointegration", "Osseous Recontouring", "Osseous Surgery", "Ossifying Fibroma", "Osteitis Deformans", "Osteoblastoma", "Osteochondroma", "Osteogenesis Imperfecta", "Osteoma", "Osteomyelitis", "Osteonecrosis of the Jaw (ONJ)", "Osteopetrosis", "Osteoporosis", "Osteoradionecrosis", "Osteosarcoma", "Osteotomy", "Overbite", "Overhanging Restoration", "Overjet", "PA (Periapical Radiograph)", "PD (Probing Depth)", "PDL (Periodontal Ligament)", "PFM (Porcelain Fused to Metal)", "PVS (Polyvinyl Siloxane)", "Packable Composite", "Paget's Disease", "Palatal Expansion", "Palatal Torus", "Palatoglossus Muscle", "Palpation Test", "Panoramic Radiograph", "Paper Point", "Papillary", "Papilloma", "Papule", "Parotidectomy", "Parulis", "Partially Erupted", "Partial Bony Impaction", "Patch", "Pathologic Fracture", "Pedunculated", "Pell & Gregory Classification", "Pemphigoid", "Pemphigus Vulgaris", "Percussion Test", "Perforation Repair", "Peri-implantitis", "Periapical Cemental Dysplasia", "Periapical Cyst", "Periapical Granuloma", "Periapical Rarefying Osteitis", "Periapical Sclerosing Osteitis", "Pericoronitis", "Periodontal Abscess", "Periodontal Pocket", "Periodontitis", "Periodontitis (Aggressive)", "Periodontitis (Chronic)", "Periosteal Elevator", "Periosteum", "Peripheral Giant Cell Granuloma", "Peripheral Ossifying Fibroma", "Periotome", "Pesso Reamer", "Pharyngitis", "Phoenix Abscess", "Pindborg Tumor", "Plaque", "Plate and Screw Fixation", "Platysma Muscle", "Pleomorphic Adenoma", "Plunger Cusp", "Pneumatization", "Polycarbonate Crown", "Polyether", "Polypoid", "Polysulfide", "Polyvinyl Siloxane (PVS)", "Porcelain", "Porcelain-fused-to-metal (PFM)", "Post-and-Core", "Posterior Crossbite", "Potts Elevator", "Pre-prosthetic Surgery", "Prefabricated Post", "Pregnancy Granuloma", "Premalignant", "Primary Closure", "Primordial Cyst", "Proliferative Periostitis", "Provisional Restoration", "Pseudocyst", "Pulp Attrition", "Pulp Calcification", "Pulp Cap", "Pulp Chamber", "Pulp Exposure", "Pulp Necrosis", "Pulp Polyp", "Pulp Polyp (Chronic Hyperplastic Pulpitis)", "Pulp Stone", "Pulp Test", "Pulpitis", "Punched-out Radiolucencies", "Pustule", "Pyogenic Granuloma", "RCT (Root Canal Therapy)", "RMGI (Resin-Modified Glass Ionomer)", "Radiation Caries", "Radicular Cyst", "Radio-dense", "Radiograph", "Radiographic Calculus", "Radiolucent", "Radiopaque", "Ranula", "Recurrent Aphthous Stomatitis", "Recurrent Caries", "Regional Odontodysplasia", "Reline", "Resin Cement", "Residual Cyst", "Residual Ridge", "Resorption", "Retraction Cord", "Retreatment", "Reversible Pulpitis", "Rhabdomyosarcoma", "Rhinoplasty", "Ridge Augmentation", "Ridge Preservation", "Ridge Split", "Risorius Muscle", "Rongeur", "Root Amputation", "Root Canal", "Root Caries", "Root Concavity", "Root Fracture", "Root Planing", "Root Proximity", "Root Resection", "Root Submergence", "Root Trunk", "Rubber Dam", "Runner's Caries", "SRP (Scaling and Root Planing)", "Saddle", "Schwannoma", "Scleroderma", "Sclerotic Bone", "Secondary Caries", "Self-etch Primer", "Sequestrum", "Sessile", "Sialadenitis", "Sialendoscopy", "Sialolith", "Sialolithiasis", "Sialolithiasis (Salivary Stone)", "Silver Diamine Fluoride", "Sinus Tract", "Sjogren Syndrome", "Sleep Apnea (Obstructive)", "Slow-speed Handpiece", "Socket Sclerosis", "Soft Tissue", "Soft Tissue Impaction", "Spatula", "Speckled", "Spongy", "Squamous Cell Carcinoma", "Stafne Bone Defect", "Stainless Steel Crown", "Step-back Technique", "Sternocleidomastoid Muscle", "Stevens-Johnson Syndrome", "Stomatitis", "Styloglossus Muscle", "Stylohyoid Muscle", "Subluxation", "Subpontic Osseous Hyperplasia", "Sunburst Appearance", "Supernumerary Root", "Supernumerary Tooth", "Suprabony Pocket", "Surveyor", "Symptomatic", "Syphilis", "TMJ (Temporomandibular Joint)", "Taurodontism", "Temporalis Muscle", "Temporary Cement", "Temporary Crown", "Tetracycline Staining", "Tetracycline Staining", "Thalassemia", "Thyroidectomy", "Tipping", "Tobacco Keratosis", "Tongue Thrust", "Tonsillectomy", "Tonsillitis", "Torus Mandibularis", "Torus Palatinus", "Total-etch", "Tracheostomy", "Transillumination", "Trapezius Muscle", "Traumatic Bone Cyst", "Traumatic Neuroma", "Trigeminal Neuralgia", "Trismus", "Trituration", "Tuberculosis", "Turner's Hypoplasia", "Ulcer", "Ulcerated", "Unicystic Ameloblastoma", "Unifocal", "Unilateral", "Unilocular Radiolucency", "Unerupted Tooth", "Uvulopalatopharyngoplasty (UPPP)", "Varnish", "Veneer", "Verrucous", "Verrucous Carcinoma", "Vertical Bone Loss", "Vertical Dimension", "Vertical Fracture", "Vertical Impaction", "Vertigo", "Vesicle", "WNL (Within Normal Limits)", "Wedge", "Weeping Canal", "White Sponge Nevus", "Widened PDL Space", "Xerostomia (Dry Mouth)", "ZOE (Zinc Oxide Eugenol)", "Zinc Oxide Eugenol (ZOE)", "Zinc Phosphate Cement", "Zirconia", "Zygomaticus Major Muscle", "Zygomaticus Minor Muscle"];
 
     // ===================================================================================
     //   --- APPLICATION LOGIC (v2.0) mgh ---
