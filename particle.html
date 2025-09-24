@@ -3,26 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Particle Simulation - Corrected Final</title>
+    <title>Particle Galaxy Simulator</title>
     <style>
-        /* CSS from previous version - remains unchanged */
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #000; color: #eee;}
         #controlsContainer { position: absolute; top: 10px; left: 10px; z-index: 10; transition: transform 0.3s ease-in-out; }
         #controlsContainer.hidden { transform: translateX(-110%); }
-        #controlsPanel { background-color: rgba(10,10,25,0.92); padding: 15px; border-radius: 8px; color: #fff; display: flex; flex-direction: column; gap: 10px; width: 460px;  max-height: 90vh; overflow-y: auto; border: 1px solid #335; }
-        .control-group { display: grid; grid-template-columns: 210px 1fr 40px;  align-items: center; gap: 8px; }
-        .control-group.checkbox-special label:first-child { grid-column: 1 / 3; }
-        .control-group.checkbox-special input[type="checkbox"] { grid-column: 3 / 4; justify-self: end; }
+        #controlsPanel { background-color: rgba(10,10,25,0.92); padding: 15px; border-radius: 8px; color: #fff; display: flex; flex-direction: column; gap: 10px; width: 420px;  max-height: 90vh; overflow-y: auto; border: 1px solid #335; }
+        .control-group {
+            display: grid;
+            grid-template-columns: 240px 1fr; /* Label and Input Box */
+            align-items: center;
+            gap: 10px;
+        }
         .control-group label, .control-group input[type="checkbox"] + label { font-size: 0.85em; }
-        .control-group input[type="range"] { width: 100%; }
-        .control-group span { text-align: right; font-size: 0.85em; }
+        .control-group input[type="number"] { /* Style for number inputs */
+            width: 100%;
+            padding: 4px;
+            background-color: #2a2a3a;
+            color: #eee;
+            border: 1px solid #557;
+            border-radius: 3px;
+            font-family: monospace;
+            text-align: right;
+        }
+        .control-group.checkbox-special label:first-child { grid-column: 1 / 2; }
+        .control-group.checkbox-special input[type="checkbox"] { grid-column: 2 / 3; justify-self: start; }
         button { padding: 8px 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; font-size: 0.85em; margin-top: 5px;}
         button:hover { background-color: #0056b3; }
         button:active { transform: translateY(1px); }
         button.active { background-color: #28a745; }
         button.active:hover { background-color: #1e7e34; }
         .control-section-title { font-size: 0.9em; font-weight: bold; margin-top: 10px; margin-bottom: 0px; color: #cce; border-bottom: 1px solid #446; padding-bottom: 3px; }
-        input[type="range"]:disabled, input[type="checkbox"]:disabled + label, input[type="checkbox"]:disabled { opacity: 0.4; }
+        input[type="number"]:disabled, input[type="checkbox"]:disabled + label, input[type="checkbox"]:disabled { opacity: 0.4; background-color: #111; }
         #toggleControlsButton { position: absolute; top: 10px; left: 10px; z-index: 20; background-color: rgba(50,50,80,0.8); padding: 10px 15px; border-radius: 0 5px 5px 0;}
         #info { position: absolute; bottom: 10px; left: 10px; color: #aaa; font-size: 0.8em; z-index: 5;}
         .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 5px; padding-left: 5px;}
@@ -33,44 +45,42 @@
     <button id="toggleControlsButton">Hide Controls</button>
     <div id="controlsContainer">
         <div id="controlsPanel">
-            <!-- All HTML Controls as before -->
             <div class="control-section-title">Simulation & Particles</div>
-            <div class="control-group"> <label for="numPointsSlider">Number of Particles:</label> <input type="range" id="numPointsSlider" min="50" max="2800" value="1590" step="10"> <span id="numPointsValue">200</span> </div>
-            <div class="control-group"> <label for="boundingSphereRadiusSlider">Bounding Sphere Radius:</label> <input type="range" id="boundingSphereRadiusSlider" min="5" max="50" value="25" step="1"> <span id="boundingSphereRadiusValue">15</span> </div>
-            <div class="control-group"> <label for="boundaryOutcomeFactorSlider">Boundary Outcome Factor:</label> <input type="range" id="boundaryOutcomeFactorSlider" min="0.0" max="2.0" value="1.0" step="0.1"> <span id="boundaryOutcomeFactorValue">2.0</span> </div>
+            <div class="control-group"> <label for="numPointsInput">Number of Particles:</label> <input type="number" id="numPointsInput" min="1" max="5000" value="400" step="10"> </div>
+            <div class="control-group"> <label for="boundingSphereRadiusInput">Bounding Sphere Radius:</label> <input type="number" id="boundingSphereRadiusInput" min="1" value="20" step="1"> </div>
+            <div class="control-group"> <label for="boundaryOutcomeFactorInput">Boundary Outcome Factor:</label> <input type="number" id="boundaryOutcomeFactorInput" min="0.0" max="2.0" value="1.0" step="0.1"> </div>
             <div class="checkbox-group"> <input type="checkbox" id="enableTrailsCheckbox"> <label for="enableTrailsCheckbox">Enable Particle Trails</label> </div>
-            <div class="control-group"> <label for="trailLengthSlider">Trail Length:</label> <input type="range" id="trailLengthSlider" min="2" max="200" value="100" step="1" disabled> <span id="trailLengthValue">20</span> </div>
-            <div class="control-group"> <label for="avgSpeedSlider">Avg Particle Speed:</label> <input type="range" id="avgSpeedSlider" min="0.1" max="5" value="0.8" step="0.1"> <span id="avgSpeedValue">0.8</span> </div>
-            <div class="control-group"> <label for="animSpeedSlider">Animation Speed:</label> <input type="range" id="animSpeedSlider" min="0.1" max="5" value="1" step="0.1"> <span id="animSpeedValue">1.0</span> </div>
+            <div class="control-group"> <label for="trailLengthInput">Trail Length:</label> <input type="number" id="trailLengthInput" min="2" value="30" step="1" disabled> </div>
+            <div class="control-group"> <label for="avgSpeedInput">Avg Particle Speed:</label> <input type="number" id="avgSpeedInput" min="0" value="0.5" step="0.1"> </div>
+            <div class="control-group"> <label for="animSpeedInput">Animation Speed:</label> <input type="number" id="animSpeedInput" min="0" value="1" step="0.1"> </div>
+            
             <div class="control-section-title">Attraction & Collision</div>
-            <div class="control-group"> <label for="numAttractorsSlider">Fixed Attractors:</label> <input type="range" id="numAttractorsSlider" min="0" max="10" value="0" step="1"> <span id="numAttractorsValue">1</span> </div>
-            <div class="control-group"> <label for="attractorSpreadSlider">Fixed Attr. Spread (R):</label> <input type="range" id="attractorSpreadSlider" min="0" max="10" value="0" step="0.5"> <span id="attractorSpreadValue">0.0</span> </div>
-            <div class="control-group"> <label for="attractorStrengthSlider">Fixed Attr. Gravity:</label> <input type="range" id="attractorStrengthSlider" min="-20" max="20" value="5" step="0.01"> <span id="attractorStrengthValue">5.00</span> </div>
-            <div class="control-group"> <label for="attractorStrengthMultiplierSlider">Fixed Attr. Gravity Multiplier:</label> <input type="range" id="attractorStrengthMultiplierSlider" min="0.5" max="3.0" value="1.0" step="0.1"> <span id="attractorStrengthMultiplierValue">1.0</span> </div>
+            <div class="control-group"> <label for="numAttractorsInput">Fixed Attractors:</label> <input type="number" id="numAttractorsInput" min="0" max="10" value="1" step="1"> </div>
+            <div class="control-group"> <label for="attractorSpreadInput">Fixed Attr. Spread (R):</label> <input type="number" id="attractorSpreadInput" min="0" value="0" step="0.5"> </div>
+            <div class="control-group"> <label for="attractorStrengthInput">Fixed Attr. Gravity:</label> <input type="number" id="attractorStrengthInput" min="0" value="10" step="0.1"> </div>
+            <div class="control-group"> <label for="attractorStrengthMultiplierInput">Fixed Attr. Gravity Multiplier:</label> <input type="number" id="attractorStrengthMultiplierInput" min="0.1" value="1.0" step="0.1"> </div>
             <div class="control-group checkbox-special"> <label for="enableDipoleCheckbox">Enable Attractor Dipole Field</label> <input type="checkbox" id="enableDipoleCheckbox"> </div>
-            <div class="control-group"> <label for="dipoleFieldStrengthSlider">Dipole Field Strength:</label> <input type="range" id="dipoleFieldStrengthSlider" min="1" max="50" value="10" step="0.1" disabled> <span id="dipoleFieldStrengthValue">10</span> </div>
-            <div class="control-group"> <label for="particleChargeSlider">Particle "Charge":</label> <input type="range" id="particleChargeSlider" min="-10" max="10" value="-1" step="0.1" disabled> <span id="particleChargeValue">-1.0</span> </div>
-            <div class="control-group checkbox-special"> <label for="particlesAttractCheckbox">Particles Attract Each Other</label> <input type="checkbox" id="particlesAttractCheckbox"> </div>
-            <div class="control-group"> <label for="particleAttractionStrengthSlider">Particle Attr. Strength:</label> <input type="range" id="particleAttractionStrengthSlider" min="-10" max="10" value="10" step="0.01"> <span id="particleAttractionStrengthValue">0.01</span> </div>
-            <div class="control-group"> <label for="particleAttractionDistanceSlider">Particle Attr. Max Dist:</label> <input type="range" id="particleAttractionDistanceSlider" min="0.1" max="20" value="7.5" step="0.1"> <span id="particleAttractionDistanceValue">2.0</span> </div>
+            <div class="control-group"> <label for="dipoleFieldStrengthInput">Dipole Field Strength:</label> <input type="number" id="dipoleFieldStrengthInput" min="0" value="10" step="1" disabled> </div>
+            <div class="control-group"> <label for="particleChargeInput">Particle "Charge":</label> <input type="number" id="particleChargeInput" value="-1" step="0.5" disabled> </div>
+            <div class="control-group checkbox-special"> <label for="particlesAttractCheckbox">Particles Attract Each Other</label> <input type="checkbox" id="particlesAttractCheckbox" checked> </div>
+            <div class="control-group"> <label for="particleAttractionStrengthInput">Particle Attr. Strength:</label> <input type="number" id="particleAttractionStrengthInput" min="0" value="0.0001" step="0.00001"> </div>
+            <div class="control-group"> <label for="particleAttractionDistanceInput">Particle Attr. Max Dist:</label> <input type="number" id="particleAttractionDistanceInput" min="0.1" value="2.5" step="0.1"> </div>
             <div class="checkbox-group">  <input type="checkbox" id="enableCollisionsCheckbox"> <label for="enableCollisionsCheckbox">Enable Particle Collisions</label> </div>
-            <div class="control-group">  <label for="collisionRestitutionSlider">Collision Restitution:</label> <input type="range" id="collisionRestitutionSlider" min="0.1" max="1.0" value="0.8" step="0.01" enabled> <span id="collisionRestitutionValue">0.8</span> </div>
-            <div class="control-group">  <label for="collisionOutcomeFactorSlider">Collision Outcome Factor:</label> <input type="range" id="collisionOutcomeFactorSlider" min="0.0" max="2.0" value="0.9" step="0.01" enabled> <span id="collisionOutcomeFactorValue">0.95</span> </div>
-            <div class="control-section-title">Appearance</div>
+            <div class="control-group">  <label for="collisionRestitutionInput">Collision Restitution:</label> <input type="number" id="collisionRestitutionInput" min="0.1" max="1.0" value="0.8" step="0.05" disabled> </div>
+            <div class="control-group">  <label for="collisionOutcomeFactorInput">Collision Outcome Factor:</label> <input type="number" id="collisionOutcomeFactorInput" min="0.0" max="2.0" value="1.0" step="0.1" disabled> </div>
+
+            <div class="control-section-title">Appearance & UI</div>
             <button id="togglePointStyleButton">Style: Sharp Squares</button> <button id="toggleBlurButton">Enable Blur</button>
-            <div class="control-group"> <label for="blurDiameterSlider">Blur Diameter:</label> <input type="range" id="blurDiameterSlider" min="0.05" max="5" value="0.57" step="0.01" enabled> <span id="blurDiameterValue">0.3</span> </div>
-            <div class="control-section-title">Coloring</div>
+            <div class="control-group"> <label for="blurDiameterInput">Blur Diameter:</label> <input type="number" id="blurDiameterInput" min="0.01" value="0.3" step="0.01" disabled> </div>
             <button id="toggleColorModeButton">Color Mode: Speed</button> <button id="updateColorsButton">Refresh Particle Colors</button>
-            <div class="control-section-title">Interaction & Rotation</div>
             <button id="toggleInertialSpinButton">Enable Inertial Spin</button>
-            <div class="control-group"> <label for="inertiaFactorSlider">Inertia Factor:</label> <input type="range" id="inertiaFactorSlider" min="1" max="30" value="7" step="0.5" disabled> <span id="inertiaFactorValue">7.0</span> </div>
-            <div class="control-group"> <label for="autoRotateSpeedSlider">Auto-Rotate Speed:</label> <input type="range" id="autoRotateSpeedSlider" min="-30" max="30" value=".25" step="0.5"> <span id="autoRotateSpeedValue">0.0</span> </div>
-            <div class="control-section-title">Background</div>
+            <div class="control-group"> <label for="inertiaFactorInput">Inertia Factor:</label> <input type="number" id="inertiaFactorInput" min="0" value="7" step="0.5" disabled> </div>
+            <div class="control-group"> <label for="autoRotateSpeedInput">Auto-Rotate Speed:</label> <input type="number" id="autoRotateSpeedInput" value="0" step="0.5"> </div>
             <button id="toggleBgAnimationButton">Animate Background</button>
-            <div class="control-group"> <label for="bgAnimationSpeedSlider">BG Anim Speed:</label> <input type="range" id="bgAnimationSpeedSlider" min="0.01" max="0.5" value="0.05" step="0.01" disabled> <span id="bgAnimationSpeedValue">0.05</span> </div>
+            <div class="control-group"> <label for="bgAnimationSpeedInput">BG Anim Speed:</label> <input type="number" id="bgAnimationSpeedInput" min="0" value="0.05" step="0.01" disabled> </div>
         </div>
     </div>
-    <div id="info">Mouse: Rotate (LMB), Pan (RMB), Zoom (Scroll). N-body default. Boundary/Collision outcomes have chance.</div>
+    <div id="info">Mouse: Rotate (LMB), Pan (RMB), Zoom (Scroll). Edit values and press Enter or click away to apply.</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -98,21 +108,23 @@
         let isInertialSpinEnabled, isDraggingForSpin, spinVelocityX, lastSpinMouseX, lastSpinTime, inertiaFactor, MAX_AUTO_ROTATE_SPEED_CAP, autoRotateSpeed;
         let areControlsVisible;
 
+        // DOM Element Variables
         let controlsContainer, toggleControlsButton,
-            numPointsSlider, numPointsValue, boundingSphereRadiusSlider, boundingSphereRadiusValue, boundaryOutcomeFactorSlider, boundaryOutcomeFactorValue,
-            enableTrailsCheckbox, trailLengthSlider, trailLengthValue,
-            avgSpeedSlider, avgSpeedValue, animSpeedSlider, animSpeedValue,
-            numAttractorsSlider, numAttractorsValue, attractorSpreadSlider, attractorSpreadValue, attractorStrengthSlider, attractorStrengthValue, attractorStrengthMultiplierSlider, attractorStrengthMultiplierValue, 
-            enableDipoleCheckbox, dipoleFieldStrengthSlider, dipoleFieldStrengthValue, particleChargeSlider, particleChargeValue,
-            particlesAttractCheckbox, particleAttractionStrengthSlider, particleAttractionStrengthValue, particleAttractionDistanceSlider, particleAttractionDistanceValue,
-            enableCollisionsCheckbox, collisionRestitutionSlider, collisionRestitutionValue, collisionOutcomeFactorSlider, collisionOutcomeFactorValue,
-            togglePointStyleButton, toggleBlurButton, blurDiameterSlider, blurDiameterValue,
+            numPointsInput, boundingSphereRadiusInput, boundaryOutcomeFactorInput,
+            enableTrailsCheckbox, trailLengthInput,
+            avgSpeedInput, animSpeedInput,
+            numAttractorsInput, attractorSpreadInput, attractorStrengthInput, attractorStrengthMultiplierInput, 
+            enableDipoleCheckbox, dipoleFieldStrengthInput, particleChargeInput,
+            particlesAttractCheckbox, particleAttractionStrengthInput, particleAttractionDistanceInput,
+            enableCollisionsCheckbox, collisionRestitutionInput, collisionOutcomeFactorInput,
+            togglePointStyleButton, toggleBlurButton, blurDiameterInput,
             toggleColorModeButton, updateColorsButton,
-            toggleInertialSpinButton, inertiaFactorSlider, inertiaFactorValue,
-            autoRotateSpeedSlider, autoRotateSpeedValue,
-            toggleBgAnimationButton, bgAnimationSpeedSlider, bgAnimationSpeedValue;
+            toggleInertialSpinButton, inertiaFactorInput,
+            autoRotateSpeedInput,
+            toggleBgAnimationButton, bgAnimationSpeedInput;
 
-        // --- Function Definitions (All defined before init() is called) ---
+
+        // --- Function Definitions ---
 
         function createSoftCircleTexture() { 
             const canvas = document.createElement('canvas'); const size = 64; canvas.width = size; canvas.height = size;
@@ -125,74 +137,67 @@
 
         function initDOMReferences() {
             controlsContainer = document.getElementById('controlsContainer'); toggleControlsButton = document.getElementById('toggleControlsButton');
-            numPointsSlider = document.getElementById('numPointsSlider'); numPointsValue = document.getElementById('numPointsValue');
-            boundingSphereRadiusSlider = document.getElementById('boundingSphereRadiusSlider');  boundingSphereRadiusValue = document.getElementById('boundingSphereRadiusValue');   
-            boundaryOutcomeFactorSlider = document.getElementById('boundaryOutcomeFactorSlider');  boundaryOutcomeFactorValue = document.getElementById('boundaryOutcomeFactorValue');   
-            enableTrailsCheckbox = document.getElementById('enableTrailsCheckbox'); trailLengthSlider = document.getElementById('trailLengthSlider'); trailLengthValue = document.getElementById('trailLengthValue');
-            avgSpeedSlider = document.getElementById('avgSpeedSlider'); avgSpeedValue = document.getElementById('avgSpeedValue');
-            animSpeedSlider = document.getElementById('animSpeedSlider'); animSpeedValue = document.getElementById('animSpeedValue');
-            numAttractorsSlider = document.getElementById('numAttractorsSlider'); numAttractorsValue = document.getElementById('numAttractorsValue');
-            attractorSpreadSlider = document.getElementById('attractorSpreadSlider'); attractorSpreadValue = document.getElementById('attractorSpreadValue');
-            attractorStrengthSlider = document.getElementById('attractorStrengthSlider'); attractorStrengthValue = document.getElementById('attractorStrengthValue');
-            attractorStrengthMultiplierSlider = document.getElementById('attractorStrengthMultiplierSlider'); attractorStrengthMultiplierValue = document.getElementById('attractorStrengthMultiplierValue');   
-            enableDipoleCheckbox = document.getElementById('enableDipoleCheckbox'); dipoleFieldStrengthSlider = document.getElementById('dipoleFieldStrengthSlider'); dipoleFieldStrengthValue = document.getElementById('dipoleFieldStrengthValue'); particleChargeSlider = document.getElementById('particleChargeSlider'); particleChargeValue = document.getElementById('particleChargeValue');
-            particlesAttractCheckbox = document.getElementById('particlesAttractCheckbox');  particleAttractionStrengthSlider = document.getElementById('particleAttractionStrengthSlider');  particleAttractionStrengthValue = document.getElementById('particleAttractionStrengthValue');  particleAttractionDistanceSlider = document.getElementById('particleAttractionDistanceSlider');  particleAttractionDistanceValue = document.getElementById('particleAttractionDistanceValue'); 
-            enableCollisionsCheckbox = document.getElementById('enableCollisionsCheckbox');  collisionRestitutionSlider = document.getElementById('collisionRestitutionSlider');  collisionRestitutionValue = document.getElementById('collisionRestitutionValue');    collisionOutcomeFactorSlider = document.getElementById('collisionOutcomeFactorSlider');  collisionOutcomeFactorValue = document.getElementById('collisionOutcomeFactorValue');   
-            togglePointStyleButton = document.getElementById('togglePointStyleButton'); toggleBlurButton = document.getElementById('toggleBlurButton'); blurDiameterSlider = document.getElementById('blurDiameterSlider'); blurDiameterValue = document.getElementById('blurDiameterValue');
-            toggleColorModeButton = document.getElementById('toggleColorModeButton'); updateColorsButton = document.getElementById('updateColorsButton');
-            toggleInertialSpinButton = document.getElementById('toggleInertialSpinButton'); inertiaFactorSlider = document.getElementById('inertiaFactorSlider'); inertiaFactorValue = document.getElementById('inertiaFactorValue');
-            autoRotateSpeedSlider = document.getElementById('autoRotateSpeedSlider'); autoRotateSpeedValue = document.getElementById('autoRotateSpeedValue');
-            toggleBgAnimationButton = document.getElementById('toggleBgAnimationButton'); bgAnimationSpeedSlider = document.getElementById('bgAnimationSpeedSlider'); bgAnimationSpeedValue = document.getElementById('bgAnimationSpeedValue');
+            numPointsInput = document.getElementById('numPointsInput');
+            boundingSphereRadiusInput = document.getElementById('boundingSphereRadiusInput');
+            boundaryOutcomeFactorInput = document.getElementById('boundaryOutcomeFactorInput');
+            enableTrailsCheckbox = document.getElementById('enableTrailsCheckbox');
+            trailLengthInput = document.getElementById('trailLengthInput');
+            avgSpeedInput = document.getElementById('avgSpeedInput');
+            animSpeedInput = document.getElementById('animSpeedInput');
+            numAttractorsInput = document.getElementById('numAttractorsInput');
+            attractorSpreadInput = document.getElementById('attractorSpreadInput');
+            attractorStrengthInput = document.getElementById('attractorStrengthInput');
+            attractorStrengthMultiplierInput = document.getElementById('attractorStrengthMultiplierInput');
+            enableDipoleCheckbox = document.getElementById('enableDipoleCheckbox');
+            dipoleFieldStrengthInput = document.getElementById('dipoleFieldStrengthInput');
+            particleChargeInput = document.getElementById('particleChargeInput');
+            particlesAttractCheckbox = document.getElementById('particlesAttractCheckbox');
+            particleAttractionStrengthInput = document.getElementById('particleAttractionStrengthInput');
+            particleAttractionDistanceInput = document.getElementById('particleAttractionDistanceInput');
+            enableCollisionsCheckbox = document.getElementById('enableCollisionsCheckbox');
+            collisionRestitutionInput = document.getElementById('collisionRestitutionInput');
+            collisionOutcomeFactorInput = document.getElementById('collisionOutcomeFactorInput');
+            togglePointStyleButton = document.getElementById('togglePointStyleButton');
+            toggleBlurButton = document.getElementById('toggleBlurButton');
+            blurDiameterInput = document.getElementById('blurDiameterInput');
+            toggleColorModeButton = document.getElementById('toggleColorModeButton');
+            updateColorsButton = document.getElementById('updateColorsButton');
+            toggleInertialSpinButton = document.getElementById('toggleInertialSpinButton');
+            inertiaFactorInput = document.getElementById('inertiaFactorInput');
+            autoRotateSpeedInput = document.getElementById('autoRotateSpeedInput');
+            toggleBgAnimationButton = document.getElementById('toggleBgAnimationButton');
+            bgAnimationSpeedInput = document.getElementById('bgAnimationSpeedInput');
         }
 
-        function updateAllSliderValues() {
-            if (numPointsValue && numPointsSlider) numPointsValue.textContent = numPointsSlider.value;
-            if (boundingSphereRadiusValue && boundingSphereRadiusSlider) boundingSphereRadiusValue.textContent = parseFloat(boundingSphereRadiusSlider.value).toFixed(0); 
-            if (boundaryOutcomeFactorValue && boundaryOutcomeFactorSlider) boundaryOutcomeFactorValue.textContent = parseFloat(boundaryOutcomeFactorSlider.value).toFixed(1); 
-            if (trailLengthValue && trailLengthSlider) trailLengthValue.textContent = trailLengthSlider.value;
-            if (avgSpeedValue && avgSpeedSlider) avgSpeedValue.textContent = parseFloat(avgSpeedSlider.value).toFixed(1);
-            if (animSpeedValue && animSpeedSlider) animSpeedValue.textContent = parseFloat(animSpeedSlider.value).toFixed(1);
-            if (numAttractorsValue && numAttractorsSlider) numAttractorsValue.textContent = numAttractorsSlider.value;
-            if (attractorSpreadValue && attractorSpreadSlider) attractorSpreadValue.textContent = parseFloat(attractorSpreadSlider.value).toFixed(1);
-            if (attractorStrengthValue && attractorStrengthSlider) attractorStrengthValue.textContent = parseFloat(attractorStrengthSlider.value).toFixed(2);
-            if (attractorStrengthMultiplierValue && attractorStrengthMultiplierSlider) attractorStrengthMultiplierValue.textContent = parseFloat(attractorStrengthMultiplierSlider.value).toFixed(1); 
-            if (dipoleFieldStrengthValue && dipoleFieldStrengthSlider) dipoleFieldStrengthValue.textContent = parseFloat(dipoleFieldStrengthSlider.value).toFixed(0);
-            if (particleChargeValue && particleChargeSlider) particleChargeValue.textContent = parseFloat(particleChargeSlider.value).toFixed(1);
-            if (particleAttractionStrengthValue && particleAttractionStrengthSlider) particleAttractionStrengthValue.textContent = parseFloat(particleAttractionStrengthSlider.value).toExponential(1); 
-            if (particleAttractionDistanceValue && particleAttractionDistanceSlider) particleAttractionDistanceValue.textContent = parseFloat(particleAttractionDistanceSlider.value).toFixed(1); 
-            if (collisionRestitutionValue && collisionRestitutionSlider) collisionRestitutionValue.textContent = parseFloat(collisionRestitutionSlider.value).toFixed(2); 
-            if (collisionOutcomeFactorValue && collisionOutcomeFactorSlider) collisionOutcomeFactorValue.textContent = parseFloat(collisionOutcomeFactorSlider.value).toFixed(1); 
-            if (blurDiameterValue && blurDiameterSlider) blurDiameterValue.textContent = parseFloat(blurDiameterSlider.value).toFixed(2);
-            if (inertiaFactorValue && inertiaFactorSlider) inertiaFactorValue.textContent = parseFloat(inertiaFactorSlider.value).toFixed(1);
-            if (autoRotateSpeedValue && autoRotateSpeedSlider) autoRotateSpeedValue.textContent = parseFloat(autoRotateSpeedSlider.value).toFixed(1);
-            if (bgAnimationSpeedValue && bgAnimationSpeedSlider) bgAnimationSpeedValue.textContent = parseFloat(bgAnimationSpeedSlider.value).toFixed(2);
-        }
-        
-function resetParticle(particle) {
-            // --- CHANGE: Create particles in a flat disc on the X-Z plane ---
-            const maxRadius = boundingSphereRadius * 0.5; // Start within half the boundary
+        function resetParticle(particle) {
+            const maxRadius = boundingSphereRadius * 0.7; 
             const angle = Math.random() * Math.PI * 2;
-            const radius = Math.random() * maxRadius;
+            const radiusFactor = Math.random(); // Use simple random for more central density
+            const radius = radiusFactor * maxRadius;
+
+            // Give a little thickness to the disc
+            const height = (Math.random() - 0.5) * (maxRadius * 0.05);
 
             particle.position.set(
                 Math.cos(angle) * radius,
-                0, // Set Y to 0 to keep it flat
+                height, 
                 Math.sin(angle) * radius
             );
-           
+            
             const speed = averageParticleSpeed * (0.8 + Math.random() * 0.4);
-           
-            // --- CHANGE: Give a tangential velocity for a spinning effect ---
+            
+            // Give a tangential velocity for a spinning effect
             let tangent = new THREE.Vector3(-particle.position.z, 0, particle.position.x);
-            if (tangent.lengthSq() === 0) tangent.set(1,0,0); // Failsafe for particle at origin
-           
+            if (tangent.lengthSq() === 0) tangent.set(1,0,0); 
+            
             particle.velocity.copy(tangent.normalize().multiplyScalar(speed));
-           
-            // Optional: Add a small random component to the velocity to make it less perfect
+            
+            // Add a small random component to the velocity to make it less perfect
             particle.velocity.x += (Math.random() - 0.5) * 0.1;
+            particle.velocity.y += (Math.random() - 0.5) * 0.1;
             particle.velocity.z += (Math.random() - 0.5) * 0.1;
 
-            particle.history = []; // Clear trail history
+            particle.history = []; 
         }
 
         function clearTrails() {
@@ -403,67 +408,72 @@ function resetParticle(particle) {
             particleColorsAttribute.needsUpdate = true; updateTrailMaterials();  
         }
 
+        function updateButtonStates() {
+            if(!enableTrailsCheckbox) return; 
+            enableTrailsCheckbox.checked = areTrailsEnabled;
+            if (trailLengthInput) trailLengthInput.disabled = !areTrailsEnabled;
+            if (particlesAttractCheckbox) particlesAttractCheckbox.checked = particlesAttractEachOther; 
+            if (particleAttractionStrengthInput) particleAttractionStrengthInput.disabled = !particlesAttractEachOther; 
+            if (particleAttractionDistanceInput) particleAttractionDistanceInput.disabled = !particlesAttractEachOther; 
+            if (enableCollisionsCheckbox) enableCollisionsCheckbox.checked = areCollisionsEnabled;
+            if (collisionRestitutionInput) collisionRestitutionInput.disabled = !areCollisionsEnabled; 
+            if (collisionOutcomeFactorInput) collisionOutcomeFactorInput.disabled = !areCollisionsEnabled; 
+            if (enableDipoleCheckbox) enableDipoleCheckbox.checked = isDipoleEnabled;
+            if (dipoleFieldStrengthInput) dipoleFieldStrengthInput.disabled = !isDipoleEnabled;
+            if (particleChargeInput) particleChargeInput.disabled = !isDipoleEnabled;
+            if (togglePointStyleButton) togglePointStyleButton.textContent = `Style: ${pointStyle === 'square' ? 'Sharp Squares' : 'Soft Circles'}`;
+            if (toggleBlurButton) { toggleBlurButton.textContent = isBlurActive ? "Disable Blur" : "Enable Blur"; toggleBlurButton.classList.toggle('active', isBlurActive); }
+            if (blurDiameterInput) blurDiameterInput.disabled = !isBlurActive;
+            if (toggleColorModeButton) toggleColorModeButton.textContent = `Color Mode: ${colorizationMode === 'speed' ? 'Speed' : 'Distance'}`;
+            if (toggleInertialSpinButton) { toggleInertialSpinButton.textContent = isInertialSpinEnabled ? "Disable Inertial Spin" : "Enable Inertial Spin"; toggleInertialSpinButton.classList.toggle('active', isInertialSpinEnabled); }
+            if (inertiaFactorInput) inertiaFactorInput.disabled = !isInertialSpinEnabled;
+            if (toggleBgAnimationButton) { toggleBgAnimationButton.textContent = isBgColorAnimated ? "Stop BG Animation" : "Animate Background"; toggleBgAnimationButton.classList.toggle('active', isBgColorAnimated); }
+            if (bgAnimationSpeedInput) bgAnimationSpeedInput.disabled = !isBgColorAnimated;
+        }
+
         function setupEventListeners() {
             window.addEventListener('resize', onWindowResize, false);
             if (toggleControlsButton) toggleControlsButton.addEventListener('click', () => { areControlsVisible = !areControlsVisible; if (controlsContainer) controlsContainer.classList.toggle('hidden', !areControlsVisible); if (toggleControlsButton) toggleControlsButton.textContent = areControlsVisible ? "Hide Controls" : "Show Controls"; if (controlsContainer && controlsContainer.offsetWidth && toggleControlsButton) toggleControlsButton.style.left = areControlsVisible ? (controlsContainer.offsetWidth + 15) + 'px' : '10px'; });
             if (controlsContainer && controlsContainer.offsetWidth && toggleControlsButton) { toggleControlsButton.style.left = (controlsContainer.offsetWidth + 15) + 'px';}
-            if (numPointsSlider) numPointsSlider.addEventListener('input', (e) => { numPoints = parseInt(e.target.value); if(numPointsValue) numPointsValue.textContent = numPoints; recreateParticlesAndTrails(); });
-            if (boundingSphereRadiusSlider) boundingSphereRadiusSlider.addEventListener('input', (e) => { boundingSphereRadius = parseFloat(e.target.value); boundingSphereRadiusSq = boundingSphereRadius * boundingSphereRadius; if(boundingSphereRadiusValue) boundingSphereRadiusValue.textContent = boundingSphereRadius.toFixed(0);});
-            if (boundaryOutcomeFactorSlider) boundaryOutcomeFactorSlider.addEventListener('input', (e) => { boundaryOutcomeFactor = parseFloat(e.target.value); if(boundaryOutcomeFactorValue) boundaryOutcomeFactorValue.textContent = boundaryOutcomeFactor.toFixed(1);});
+            
+            if (numPointsInput) numPointsInput.addEventListener('change', (e) => { numPoints = parseInt(e.target.value); recreateParticlesAndTrails(); });
+            if (boundingSphereRadiusInput) boundingSphereRadiusInput.addEventListener('change', (e) => { boundingSphereRadius = parseFloat(e.target.value); boundingSphereRadiusSq = boundingSphereRadius * boundingSphereRadius;});
+            if (boundaryOutcomeFactorInput) boundaryOutcomeFactorInput.addEventListener('change', (e) => { boundaryOutcomeFactor = parseFloat(e.target.value); });
             if (enableTrailsCheckbox) enableTrailsCheckbox.addEventListener('change', (e) => { areTrailsEnabled = e.target.checked; if (areTrailsEnabled) { recreateParticlesAndTrails(); } else { clearTrails(); } updateButtonStates();});
-            if (trailLengthSlider) trailLengthSlider.addEventListener('input', (e) => { trailLength = parseInt(e.target.value); if(trailLengthValue) trailLengthValue.textContent = trailLength; });
-            if (avgSpeedSlider) avgSpeedSlider.addEventListener('input', (e) => { averageParticleSpeed = parseFloat(e.target.value); if(avgSpeedValue) avgSpeedValue.textContent = averageParticleSpeed.toFixed(1); recreateParticlesAndTrails(); });
-            if (animSpeedSlider) animSpeedSlider.addEventListener('input', (e) => { animationSpeedFactor = parseFloat(e.target.value); if(animSpeedValue) animSpeedValue.textContent = animationSpeedFactor.toFixed(1); });
-            if (numAttractorsSlider) numAttractorsSlider.addEventListener('input', (e) => { numAttractors = parseInt(e.target.value); if(numAttractorsValue) numAttractorsValue.textContent = numAttractors; recreateAttractors(); });
-            if (attractorSpreadSlider) attractorSpreadSlider.addEventListener('input', (e) => { attractorSpreadRadius = parseFloat(e.target.value); if(attractorSpreadValue) attractorSpreadValue.textContent = attractorSpreadRadius.toFixed(1); recreateAttractors(); });
-            if (attractorStrengthSlider) attractorStrengthSlider.addEventListener('input', (e) => { attractorStrength = parseFloat(e.target.value); if(attractorStrengthValue) attractorStrengthValue.textContent = attractorStrength.toFixed(2); });
-            if (attractorStrengthMultiplierSlider) attractorStrengthMultiplierSlider.addEventListener('input', (e) => { attractorStrengthMultiplier = parseFloat(e.target.value); if(attractorStrengthMultiplierValue) attractorStrengthMultiplierValue.textContent = attractorStrengthMultiplier.toFixed(1); });
+            if (trailLengthInput) trailLengthInput.addEventListener('change', (e) => { trailLength = parseInt(e.target.value); });
+            if (avgSpeedInput) avgSpeedInput.addEventListener('change', (e) => { averageParticleSpeed = parseFloat(e.target.value); recreateParticlesAndTrails(); });
+            if (animSpeedInput) animSpeedInput.addEventListener('change', (e) => { animationSpeedFactor = parseFloat(e.target.value); });
+            if (numAttractorsInput) numAttractorsInput.addEventListener('change', (e) => { numAttractors = parseInt(e.target.value); recreateAttractors(); });
+            if (attractorSpreadInput) attractorSpreadInput.addEventListener('change', (e) => { attractorSpreadRadius = parseFloat(e.target.value); recreateAttractors(); });
+            if (attractorStrengthInput) attractorStrengthInput.addEventListener('change', (e) => { attractorStrength = parseFloat(e.target.value); });
+            if (attractorStrengthMultiplierInput) attractorStrengthMultiplierInput.addEventListener('change', (e) => { attractorStrengthMultiplier = parseFloat(e.target.value); });
             if (enableDipoleCheckbox) enableDipoleCheckbox.addEventListener('change', (e) => { isDipoleEnabled = e.target.checked; recreateAttractors(); updateButtonStates(); });
-            if (dipoleFieldStrengthSlider) dipoleFieldStrengthSlider.addEventListener('input', (e) => { dipoleFieldStrength = parseFloat(e.target.value); if(dipoleFieldStrengthValue) dipoleFieldStrengthValue.textContent = dipoleFieldStrength.toFixed(0);});
-            if (particleChargeSlider) particleChargeSlider.addEventListener('input', (e) => { particleCharge = parseFloat(e.target.value); if(particleChargeValue) particleChargeValue.textContent = particleCharge.toFixed(1);});
+            if (dipoleFieldStrengthInput) dipoleFieldStrengthInput.addEventListener('change', (e) => { dipoleFieldStrength = parseFloat(e.target.value); });
+            if (particleChargeInput) particleChargeInput.addEventListener('change', (e) => { particleCharge = parseFloat(e.target.value); });
             if (particlesAttractCheckbox) particlesAttractCheckbox.addEventListener('change', (e) => { particlesAttractEachOther = e.target.checked; updateButtonStates(); });
-            if (particleAttractionStrengthSlider) particleAttractionStrengthSlider.addEventListener('input', (e) => { particleAttractionStrength = parseFloat(e.target.value); if(particleAttractionStrengthValue) particleAttractionStrengthValue.textContent = particleAttractionStrength.toExponential(1);});
-            if (particleAttractionDistanceSlider) particleAttractionDistanceSlider.addEventListener('input', (e) => { particleAttractionMaxDistance = parseFloat(e.target.value); particleAttractionMaxDistanceSq = particleAttractionMaxDistance * particleAttractionMaxDistance; if(particleAttractionDistanceValue) particleAttractionDistanceValue.textContent = particleAttractionMaxDistance.toFixed(1);});
+            if (particleAttractionStrengthInput) particleAttractionStrengthInput.addEventListener('change', (e) => { particleAttractionStrength = parseFloat(e.target.value);});
+            if (particleAttractionDistanceInput) particleAttractionDistanceInput.addEventListener('change', (e) => { particleAttractionMaxDistance = parseFloat(e.target.value); particleAttractionMaxDistanceSq = particleAttractionMaxDistance * particleAttractionMaxDistance; });
             if (enableCollisionsCheckbox) enableCollisionsCheckbox.addEventListener('change', (e) => { areCollisionsEnabled = e.target.checked; updateButtonStates(); });
-            if (collisionRestitutionSlider) collisionRestitutionSlider.addEventListener('input', (e) => { collisionRestitution = parseFloat(e.target.value); if(collisionRestitutionValue) collisionRestitutionValue.textContent = collisionRestitution.toFixed(2);}); 
-            if (collisionOutcomeFactorSlider) collisionOutcomeFactorSlider.addEventListener('input', (e) => { collisionOutcomeFactor = parseFloat(e.target.value); if(collisionOutcomeFactorValue) collisionOutcomeFactorValue.textContent = collisionOutcomeFactor.toFixed(1);});
+            if (collisionRestitutionInput) collisionRestitutionInput.addEventListener('change', (e) => { collisionRestitution = parseFloat(e.target.value); }); 
+            if (collisionOutcomeFactorInput) collisionOutcomeFactorInput.addEventListener('change', (e) => { collisionOutcomeFactor = parseFloat(e.target.value); });
             if (togglePointStyleButton) togglePointStyleButton.addEventListener('click', () => { pointStyle = (pointStyle === 'square') ? 'soft_circle' : 'square'; updatePointMaterialStyle(); updateButtonStates(); });
             if (toggleBlurButton) toggleBlurButton.addEventListener('click', () => { isBlurActive = !isBlurActive; updatePointMaterialStyle(); updateTrailMaterials(); updateButtonStates(); });
-            if (blurDiameterSlider) blurDiameterSlider.addEventListener('input', (e) => { blurDiameter = parseFloat(e.target.value); if(blurDiameterValue) blurDiameterValue.textContent = blurDiameter.toFixed(2); if (isBlurActive && pointsObject) { pointsObject.material.size = blurDiameter; } });
+            if (blurDiameterInput) blurDiameterInput.addEventListener('change', (e) => { blurDiameter = parseFloat(e.target.value); if (isBlurActive && pointsObject) { pointsObject.material.size = blurDiameter; } });
             if (toggleColorModeButton) toggleColorModeButton.addEventListener('click', () => { colorizationMode = (colorizationMode === 'speed') ? 'distance_center' : 'speed'; updateParticleColors(); updateTrailMaterials(); updateButtonStates(); });
             if (updateColorsButton) updateColorsButton.addEventListener('click', () => { updateParticleColors(); updateTrailMaterials(); });
             if (toggleInertialSpinButton) toggleInertialSpinButton.addEventListener('click', () => { isInertialSpinEnabled = !isInertialSpinEnabled; if (!isInertialSpinEnabled && controls && controls.autoRotate && spinVelocityX !== 0) { controls.autoRotate = false; spinVelocityX = 0; } else if (isInertialSpinEnabled && autoRotateSpeed !== 0 && controls) { controls.autoRotate = false; } updateButtonStates(); });
-            if (inertiaFactorSlider) inertiaFactorSlider.addEventListener('input', (e) => { inertiaFactor = parseFloat(e.target.value); if(inertiaFactorValue) inertiaFactorValue.textContent = inertiaFactor.toFixed(1); });
-            if (autoRotateSpeedSlider) autoRotateSpeedSlider.addEventListener('input', (e) => { autoRotateSpeed = parseFloat(e.target.value); if(autoRotateSpeedValue) autoRotateSpeedValue.textContent = autoRotateSpeed.toFixed(1); if ((!isInertialSpinEnabled || spinVelocityX === 0) && controls) { controls.autoRotateSpeed = autoRotateSpeed; controls.autoRotate = autoRotateSpeed !== 0; } });
+            if (inertiaFactorInput) inertiaFactorInput.addEventListener('change', (e) => { inertiaFactor = parseFloat(e.target.value); });
+            if (autoRotateSpeedInput) autoRotateSpeedInput.addEventListener('change', (e) => { autoRotateSpeed = parseFloat(e.target.value); if ((!isInertialSpinEnabled || spinVelocityX === 0) && controls) { controls.autoRotateSpeed = autoRotateSpeed; controls.autoRotate = autoRotateSpeed !== 0; } });
             if (toggleBgAnimationButton) toggleBgAnimationButton.addEventListener('click', () => { isBgColorAnimated = !isBgColorAnimated; if (!isBgColorAnimated && renderer) renderer.setClearColor(defaultBgColor); updateButtonStates(); });
-            if (bgAnimationSpeedSlider) bgAnimationSpeedSlider.addEventListener('input', (e) => { bgColorAnimationSpeed = parseFloat(e.target.value); if(bgAnimationSpeedValue) bgAnimationSpeedValue.textContent = bgColorAnimationSpeed.toFixed(2); });
+            if (bgAnimationSpeedInput) bgAnimationSpeedInput.addEventListener('change', (e) => { bgColorAnimationSpeed = parseFloat(e.target.value); });
             
             if(renderer && renderer.domElement) { renderer.domElement.addEventListener('mousedown', onCanvasMouseDown, false); window.addEventListener('mousemove', onWindowMouseMove, false); window.addEventListener('mouseup', onWindowMouseUp, false); }
         }
-
-        function updateButtonStates() {
-            if(!enableTrailsCheckbox) return; 
-            enableTrailsCheckbox.checked = areTrailsEnabled;
-            if (trailLengthSlider) trailLengthSlider.disabled = !areTrailsEnabled;
-            if (particlesAttractCheckbox) particlesAttractCheckbox.checked = particlesAttractEachOther; 
-            if (particleAttractionStrengthSlider) particleAttractionStrengthSlider.disabled = !particlesAttractEachOther; 
-            if (particleAttractionDistanceSlider) particleAttractionDistanceSlider.disabled = !particlesAttractEachOther; 
-            if (enableCollisionsCheckbox) enableCollisionsCheckbox.checked = areCollisionsEnabled;
-            if (collisionRestitutionSlider) collisionRestitutionSlider.disabled = !areCollisionsEnabled; 
-            if (collisionOutcomeFactorSlider) collisionOutcomeFactorSlider.disabled = !areCollisionsEnabled; 
-            if (enableDipoleCheckbox) enableDipoleCheckbox.checked = isDipoleEnabled;
-            if (dipoleFieldStrengthSlider) dipoleFieldStrengthSlider.disabled = !isDipoleEnabled;
-            if (particleChargeSlider) particleChargeSlider.disabled = !isDipoleEnabled;
-            if (togglePointStyleButton) togglePointStyleButton.textContent = `Style: ${pointStyle === 'square' ? 'Sharp Squares' : 'Soft Circles'}`;
-            if (toggleBlurButton) { toggleBlurButton.textContent = isBlurActive ? "Disable Blur" : "Enable Blur"; toggleBlurButton.classList.toggle('active', isBlurActive); }
-            if (blurDiameterSlider) blurDiameterSlider.disabled = !isBlurActive;
-            if (toggleColorModeButton) toggleColorModeButton.textContent = `Color Mode: ${colorizationMode === 'speed' ? 'Speed' : 'Distance'}`;
-            if (toggleInertialSpinButton) { toggleInertialSpinButton.textContent = isInertialSpinEnabled ? "Disable Inertial Spin" : "Enable Inertial Spin"; toggleInertialSpinButton.classList.toggle('active', isInertialSpinEnabled); }
-            if (inertiaFactorSlider) inertiaFactorSlider.disabled = !isInertialSpinEnabled;
-            if (toggleBgAnimationButton) { toggleBgAnimationButton.textContent = isBgColorAnimated ? "Stop BG Animation" : "Animate Background"; toggleBgAnimationButton.classList.toggle('active', isBgColorAnimated); }
-            if (bgAnimationSpeedSlider) bgAnimationSpeedSlider.disabled = !isBgColorAnimated;
-        }
-
+        
+        function onCanvasMouseDown(event) { if (isInertialSpinEnabled && event.button === 0) { isDraggingForSpin = true; if(controls) controls.autoRotate = false; lastSpinMouseX = event.clientX; lastSpinTime = performance.now(); spinVelocityX = 0;}};
+        function onWindowMouseMove(event) { if (isDraggingForSpin) { const currentTime = performance.now(); const deltaTime = currentTime - lastSpinTime; if (deltaTime > 0) { const deltaX = event.clientX - lastSpinMouseX; spinVelocityX = deltaX / deltaTime; } lastSpinMouseX = event.clientX; lastSpinTime = currentTime;}};
+        function onWindowMouseUp(event) { if (isDraggingForSpin && event.button === 0) { isDraggingForSpin = false; if (Math.abs(spinVelocityX) > 0.01 && controls) {  let targetAutoRotateSpeed = spinVelocityX * inertiaFactor;  controls.autoRotateSpeed = Math.max(-MAX_AUTO_ROTATE_SPEED_CAP, Math.min(MAX_AUTO_ROTATE_SPEED_CAP, targetAutoRotateSpeed)); controls.autoRotate = true; } else if (controls) {  controls.autoRotateSpeed = autoRotateSpeed; controls.autoRotate = autoRotateSpeed !== 0; spinVelocityX = 0; }}};
+        
         function recreateAttractors() { 
             if (!scene) return;  
             attractorObjects.forEach(obj => scene.remove(obj)); 
@@ -502,15 +512,11 @@ function resetParticle(particle) {
             });
         }
         
-        function onCanvasMouseDown(event) { if (isInertialSpinEnabled && event.button === 0) { isDraggingForSpin = true; if(controls) controls.autoRotate = false; lastSpinMouseX = event.clientX; lastSpinTime = performance.now(); spinVelocityX = 0;}};
-        function onWindowMouseMove(event) { if (isDraggingForSpin) { const currentTime = performance.now(); const deltaTime = currentTime - lastSpinTime; if (deltaTime > 0) { const deltaX = event.clientX - lastSpinMouseX; spinVelocityX = deltaX / deltaTime; } lastSpinMouseX = event.clientX; lastSpinTime = currentTime;}};
-        function onWindowMouseUp(event) { if (isDraggingForSpin && event.button === 0) { isDraggingForSpin = false; if (Math.abs(spinVelocityX) > 0.01 && controls) {  let targetAutoRotateSpeed = spinVelocityX * inertiaFactor;  controls.autoRotateSpeed = Math.max(-MAX_AUTO_ROTATE_SPEED_CAP, Math.min(MAX_AUTO_ROTATE_SPEED_CAP, targetAutoRotateSpeed)); controls.autoRotate = true; } else if (controls) {  controls.autoRotateSpeed = autoRotateSpeed; controls.autoRotate = autoRotateSpeed !== 0; spinVelocityX = 0; }}};
-        
         function init() {
             initDOMReferences(); 
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            if (boundingSphereRadiusSlider) { boundingSphereRadius = parseFloat(boundingSphereRadiusSlider.value); } else { boundingSphereRadius = 15.0; }
+            if (boundingSphereRadiusInput) { boundingSphereRadius = parseFloat(boundingSphereRadiusInput.value); } else { boundingSphereRadius = 15.0; }
             boundingSphereRadiusSq = boundingSphereRadius * boundingSphereRadius; 
             camera.position.z = boundingSphereRadius + 10; 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -529,30 +535,29 @@ function resetParticle(particle) {
             isInertialSpinEnabled = false; inertiaFactor = 7.0; autoRotateSpeed = 0;
             isBgColorAnimated = false; bgColorAnimationSpeed = 0.05; currentBgHue = 0; defaultBgColor = new THREE.Color(0x000000);
             areControlsVisible = true; originalPointSize = 0.05; baseCentralPull = 0.001;
-            if (numPointsSlider) numPoints = parseInt(numPointsSlider.value); 
-            if (boundaryOutcomeFactorSlider) boundaryOutcomeFactor = parseFloat(boundaryOutcomeFactorSlider.value);
+            if (numPointsInput) numPoints = parseInt(numPointsInput.value); 
+            if (boundaryOutcomeFactorInput) boundaryOutcomeFactor = parseFloat(boundaryOutcomeFactorInput.value);
             if (enableTrailsCheckbox) areTrailsEnabled = enableTrailsCheckbox.checked;
-            if (trailLengthSlider) trailLength = parseInt(trailLengthSlider.value);
-            if (avgSpeedSlider) averageParticleSpeed = parseFloat(avgSpeedSlider.value);
-            if (animSpeedSlider) animationSpeedFactor = parseFloat(animSpeedSlider.value); 
-            if (numAttractorsSlider) numAttractors = parseInt(numAttractorsSlider.value); 
-            if (attractorSpreadSlider) attractorSpreadRadius = parseFloat(attractorSpreadSlider.value); 
-            if (attractorStrengthSlider) attractorStrength = parseFloat(attractorStrengthSlider.value); 
-            if (attractorStrengthMultiplierSlider) attractorStrengthMultiplier = parseFloat(attractorStrengthMultiplierSlider.value);
+            if (trailLengthInput) trailLength = parseInt(trailLengthInput.value);
+            if (avgSpeedInput) averageParticleSpeed = parseFloat(avgSpeedInput.value);
+            if (animSpeedInput) animationSpeedFactor = parseFloat(animSpeedInput.value); 
+            if (numAttractorsInput) numAttractors = parseInt(numAttractorsInput.value); 
+            if (attractorSpreadInput) attractorSpreadRadius = parseFloat(attractorSpreadInput.value); 
+            if (attractorStrengthInput) attractorStrength = parseFloat(attractorStrengthInput.value); 
+            if (attractorStrengthMultiplierInput) attractorStrengthMultiplier = parseFloat(attractorStrengthMultiplierInput.value);
             if (enableDipoleCheckbox) isDipoleEnabled = enableDipoleCheckbox.checked;
-            if (dipoleFieldStrengthSlider) dipoleFieldStrength = parseFloat(dipoleFieldStrengthSlider.value);
-            if (particleChargeSlider) particleCharge = parseFloat(particleChargeSlider.value);
+            if (dipoleFieldStrengthInput) dipoleFieldStrength = parseFloat(dipoleFieldStrengthInput.value);
+            if (particleChargeInput) particleCharge = parseFloat(particleChargeInput.value);
             if (particlesAttractCheckbox) particlesAttractEachOther = particlesAttractCheckbox.checked; 
-            if (particleAttractionStrengthSlider) particleAttractionStrength = parseFloat(particleAttractionStrengthSlider.value); 
-            if (particleAttractionDistanceSlider) { particleAttractionMaxDistance = parseFloat(particleAttractionDistanceSlider.value); particleAttractionMaxDistanceSq = particleAttractionMaxDistance * particleAttractionMaxDistance; }
+            if (particleAttractionStrengthInput) particleAttractionStrength = parseFloat(particleAttractionStrengthInput.value); 
+            if (particleAttractionDistanceInput) { particleAttractionMaxDistance = parseFloat(particleAttractionDistanceInput.value); particleAttractionMaxDistanceSq = particleAttractionMaxDistance * particleAttractionMaxDistance; }
             if (enableCollisionsCheckbox) areCollisionsEnabled = enableCollisionsCheckbox.checked; 
-            if (collisionRestitutionSlider) collisionRestitution = parseFloat(collisionRestitutionSlider.value); 
-            if (collisionOutcomeFactorSlider) collisionOutcomeFactor = parseFloat(collisionOutcomeFactorSlider.value); 
-            if (blurDiameterSlider) blurDiameter = parseFloat(blurDiameterSlider.value); 
-            if (bgAnimationSpeedSlider) bgColorAnimationSpeed = parseFloat(bgAnimationSpeedSlider.value); 
-            if (inertiaFactorSlider) inertiaFactor = parseFloat(inertiaFactorSlider.value);
-            if (autoRotateSpeedSlider) autoRotateSpeed = parseFloat(autoRotateSpeedSlider.value);
-            updateAllSliderValues(); 
+            if (collisionRestitutionInput) collisionRestitution = parseFloat(collisionRestitutionInput.value); 
+            if (collisionOutcomeFactorInput) collisionOutcomeFactor = parseFloat(collisionOutcomeFactorInput.value); 
+            if (blurDiameterInput) blurDiameter = parseFloat(blurDiameterInput.value); 
+            if (bgAnimationSpeedInput) bgColorAnimationSpeed = parseFloat(bgAnimationSpeedInput.value); 
+            if (inertiaFactorInput) inertiaFactor = parseFloat(inertiaFactorInput.value);
+            if (autoRotateSpeedInput) autoRotateSpeed = parseFloat(autoRotateSpeedInput.value);
             recreateAttractors();
             recreateParticlesAndTrails();
             setupEventListeners(); 
