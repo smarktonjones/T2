@@ -3,31 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Particle Galaxy Simulator</title>
+    <title>Optimized Particle Galaxy Simulator - Final</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #000; color: #eee;}
         #controlsContainer { position: absolute; top: 10px; left: 10px; z-index: 10; transition: transform 0.3s ease-in-out; }
         #controlsContainer.hidden { transform: translateX(-110%); }
         #controlsPanel { background-color: rgba(10,10,25,0.92); padding: 15px; border-radius: 8px; color: #fff; display: flex; flex-direction: column; gap: 10px; width: 420px;  max-height: 90vh; overflow-y: auto; border: 1px solid #335; }
-        .control-group {
-            display: grid;
-            grid-template-columns: 240px 1fr; /* Label and Input Box */
-            align-items: center;
-            gap: 10px;
-        }
-        .control-group label, .control-group input[type="checkbox"] + label { font-size: 0.85em; }
-        .control-group input[type="number"] { /* Style for number inputs */
-            width: 100%;
-            padding: 4px;
-            background-color: #2a2a3a;
-            color: #eee;
-            border: 1px solid #557;
-            border-radius: 3px;
-            font-family: monospace;
-            text-align: right;
-        }
+        .control-group { display: grid; grid-template-columns: 240px 1fr; align-items: center; gap: 10px; }
         .control-group.checkbox-special label:first-child { grid-column: 1 / 2; }
         .control-group.checkbox-special input[type="checkbox"] { grid-column: 2 / 3; justify-self: start; }
+        .control-group label, .control-group input[type="checkbox"] + label { font-size: 0.85em; }
+        .control-group input[type="number"] { width: 100%; padding: 4px; background-color: #2a2a3a; color: #eee; border: 1px solid #557; border-radius: 3px; font-family: monospace; text-align: right; }
         button { padding: 8px 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; font-size: 0.85em; margin-top: 5px;}
         button:hover { background-color: #0056b3; }
         button:active { transform: translateY(1px); }
@@ -46,14 +32,14 @@
     <div id="controlsContainer">
         <div id="controlsPanel">
             <div class="control-section-title">Simulation & Particles</div>
-            <div class="control-group"> <label for="numPointsInput">Number of Particles:</label> <input type="number" id="numPointsInput" min="1" max="5000" value="400" step="10"> </div>
+            <div class="control-group"> <label for="numPointsInput">Number of Particles:</label> <input type="number" id="numPointsInput" min="1" max="5000" value="1000" step="50"> </div>
+            <div class="control-group"> <label for="gridCellSizeInput">Grid Cell Size (Performance):</label> <input type="number" id="gridCellSizeInput" min="0.5" max="10" value="3.0" step="0.1"> </div>
             <div class="control-group"> <label for="boundingSphereRadiusInput">Bounding Sphere Radius:</label> <input type="number" id="boundingSphereRadiusInput" min="1" value="20" step="1"> </div>
             <div class="control-group"> <label for="boundaryOutcomeFactorInput">Boundary Outcome Factor:</label> <input type="number" id="boundaryOutcomeFactorInput" min="0.0" max="2.0" value="1.0" step="0.1"> </div>
             <div class="checkbox-group"> <input type="checkbox" id="enableTrailsCheckbox"> <label for="enableTrailsCheckbox">Enable Particle Trails</label> </div>
             <div class="control-group"> <label for="trailLengthInput">Trail Length:</label> <input type="number" id="trailLengthInput" min="2" value="30" step="1" disabled> </div>
             <div class="control-group"> <label for="avgSpeedInput">Avg Particle Speed:</label> <input type="number" id="avgSpeedInput" min="0" value="0.5" step="0.1"> </div>
             <div class="control-group"> <label for="animSpeedInput">Animation Speed:</label> <input type="number" id="animSpeedInput" min="0" value="1" step="0.1"> </div>
-            
             <div class="control-section-title">Attraction & Collision</div>
             <div class="control-group"> <label for="numAttractorsInput">Fixed Attractors:</label> <input type="number" id="numAttractorsInput" min="0" max="10" value="1" step="1"> </div>
             <div class="control-group"> <label for="attractorSpreadInput">Fixed Attr. Spread (R):</label> <input type="number" id="attractorSpreadInput" min="0" value="0" step="0.5"> </div>
@@ -68,7 +54,6 @@
             <div class="checkbox-group">  <input type="checkbox" id="enableCollisionsCheckbox"> <label for="enableCollisionsCheckbox">Enable Particle Collisions</label> </div>
             <div class="control-group">  <label for="collisionRestitutionInput">Collision Restitution:</label> <input type="number" id="collisionRestitutionInput" min="0.1" max="1.0" value="0.8" step="0.05" disabled> </div>
             <div class="control-group">  <label for="collisionOutcomeFactorInput">Collision Outcome Factor:</label> <input type="number" id="collisionOutcomeFactorInput" min="0.0" max="2.0" value="1.0" step="0.1" disabled> </div>
-
             <div class="control-section-title">Appearance & UI</div>
             <button id="togglePointStyleButton">Style: Sharp Squares</button> <button id="toggleBlurButton">Enable Blur</button>
             <div class="control-group"> <label for="blurDiameterInput">Blur Diameter:</label> <input type="number" id="blurDiameterInput" min="0.01" value="0.3" step="0.01" disabled> </div>
@@ -86,11 +71,12 @@
     <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // --- Global Variable Declarations ---
+        // --- 1. Global Variable Declarations ---
         let scene, camera, renderer, pointsObject, controls;
         let particlesData = [], particleTrails = []; 
         const clock = new THREE.Clock();
         
+        let spatialGrid, gridCellSize;
         let boundingSphereRadius, boundingSphereRadiusSq, boundaryOutcomeFactor; 
         let particlesAttractEachOther, particleAttractionStrength, particleAttractionMaxDistance, particleAttractionMaxDistanceSq; 
         let areCollisionsEnabled, collisionRestitution,  collisionOutcomeFactor; 
@@ -107,10 +93,9 @@
         let colorizationMode, isBgColorAnimated, bgColorAnimationSpeed, currentBgHue, defaultBgColor;
         let isInertialSpinEnabled, isDraggingForSpin, spinVelocityX, lastSpinMouseX, lastSpinTime, inertiaFactor, MAX_AUTO_ROTATE_SPEED_CAP, autoRotateSpeed;
         let areControlsVisible;
-
-        // DOM Element Variables
+        
         let controlsContainer, toggleControlsButton,
-            numPointsInput, boundingSphereRadiusInput, boundaryOutcomeFactorInput,
+            numPointsInput, gridCellSizeInput, boundingSphereRadiusInput, boundaryOutcomeFactorInput,
             enableTrailsCheckbox, trailLengthInput,
             avgSpeedInput, animSpeedInput,
             numAttractorsInput, attractorSpreadInput, attractorStrengthInput, attractorStrengthMultiplierInput, 
@@ -123,8 +108,7 @@
             autoRotateSpeedInput,
             toggleBgAnimationButton, bgAnimationSpeedInput;
 
-
-        // --- Function Definitions ---
+        // --- 2. Function Definitions ---
 
         function createSoftCircleTexture() { 
             const canvas = document.createElement('canvas'); const size = 64; canvas.width = size; canvas.height = size;
@@ -138,6 +122,7 @@
         function initDOMReferences() {
             controlsContainer = document.getElementById('controlsContainer'); toggleControlsButton = document.getElementById('toggleControlsButton');
             numPointsInput = document.getElementById('numPointsInput');
+            gridCellSizeInput = document.getElementById('gridCellSizeInput');
             boundingSphereRadiusInput = document.getElementById('boundingSphereRadiusInput');
             boundaryOutcomeFactorInput = document.getElementById('boundaryOutcomeFactorInput');
             enableTrailsCheckbox = document.getElementById('enableTrailsCheckbox');
@@ -172,31 +157,17 @@
         function resetParticle(particle) {
             const maxRadius = boundingSphereRadius * 0.7; 
             const angle = Math.random() * Math.PI * 2;
-            const radiusFactor = Math.random(); // Use simple random for more central density
+            const radiusFactor = Math.random(); 
             const radius = radiusFactor * maxRadius;
-
-            // Give a little thickness to the disc
             const height = (Math.random() - 0.5) * (maxRadius * 0.05);
-
-            particle.position.set(
-                Math.cos(angle) * radius,
-                height, 
-                Math.sin(angle) * radius
-            );
-            
+            particle.position.set( Math.cos(angle) * radius, height, Math.sin(angle) * radius );
             const speed = averageParticleSpeed * (0.8 + Math.random() * 0.4);
-            
-            // Give a tangential velocity for a spinning effect
             let tangent = new THREE.Vector3(-particle.position.z, 0, particle.position.x);
             if (tangent.lengthSq() === 0) tangent.set(1,0,0); 
-            
             particle.velocity.copy(tangent.normalize().multiplyScalar(speed));
-            
-            // Add a small random component to the velocity to make it less perfect
             particle.velocity.x += (Math.random() - 0.5) * 0.1;
             particle.velocity.y += (Math.random() - 0.5) * 0.1;
             particle.velocity.z += (Math.random() - 0.5) * 0.1;
-
             particle.history = []; 
         }
 
@@ -252,7 +223,22 @@
             const delta = deltaTime * animationSpeedFactor;
             const forceVector = new THREE.Vector3(); 
 
-            // Apply forces and update velocities/positions
+            // 1. Update Spatial Grid (New Optimization Step)
+            spatialGrid = {}; 
+            for (let i = 0; i < particlesData.length; i++) {
+                const p = particlesData[i];
+                if (!p) continue;
+                const cellX = Math.floor(p.position.x / gridCellSize);
+                const cellY = Math.floor(p.position.y / gridCellSize);
+                const cellZ = Math.floor(p.position.z / gridCellSize);
+                const cellKey = `${cellX},${cellY},${cellZ}`;
+                if (!spatialGrid[cellKey]) {
+                    spatialGrid[cellKey] = [];
+                }
+                spatialGrid[cellKey].push(p);
+            }
+
+            // 2. Apply Forces and update velocities/positions
             for (let i = 0; i < particlesData.length; i++) {
                 const particle = particlesData[i];
                 if (!particle) continue; 
@@ -266,6 +252,7 @@
                     }
                 }
 
+                // Fixed Attractors and Dipoles
                 if (numAttractors > 0) {
                     for (let j = 0; j < attractors.length; j++) {
                         const attractorCenter = attractors[j];
@@ -303,16 +290,43 @@
                     }
                 }
 
-                if (particlesAttractEachOther) {
-                    for (let j = 0; j < particlesData.length; j++) {
-                        if (i === j) continue; 
-                        const otherParticle = particlesData[j];
-                        if (!otherParticle) continue;
-                        forceVector.subVectors(otherParticle.position, particle.position);
-                        const distSq = forceVector.lengthSq();
-                        if (distSq < particleAttractionMaxDistanceSq && distSq > 0.0001) { 
-                            const forceMagnitude = particleAttractionStrength / (distSq + 0.001); 
-                            totalAcceleration.add(forceVector.normalize().multiplyScalar(forceMagnitude));
+                // N-body and Collision logic using the spatial grid
+                if (particlesAttractEachOther || areCollisionsEnabled) {
+                    const cellX = Math.floor(particle.position.x / gridCellSize);
+                    const cellY = Math.floor(particle.position.y / gridCellSize);
+                    const cellZ = Math.floor(particle.position.z / gridCellSize);
+
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dz = -1; dz <= 1; dz++) {
+                                const neighborCellKey = `${cellX + dx},${cellY + dy},${cellZ + dz}`;
+                                if (spatialGrid[neighborCellKey]) {
+                                    for (const otherParticle of spatialGrid[neighborCellKey]) {
+                                        const p1_idx = i; // We already have index i
+                                        const p2_idx = particlesData.indexOf(otherParticle);
+                                        if (p1_idx === p2_idx) continue;
+
+                                        if (particlesAttractEachOther) {
+                                            forceVector.subVectors(otherParticle.position, particle.position);
+                                            const distSq = forceVector.lengthSq();
+                                            if (distSq < particleAttractionMaxDistanceSq && distSq > 0.0001) { 
+                                                const forceMagnitude = particleAttractionStrength / (distSq + 0.001); 
+                                                totalAcceleration.add(forceVector.normalize().multiplyScalar(forceMagnitude));
+                                            }
+                                        }
+
+                                        if (areCollisionsEnabled && p1_idx < p2_idx) {
+                                            const distVec = new THREE.Vector3().subVectors(otherParticle.position, particle.position);
+                                            const dist = distVec.length();
+                                            const minDist = PARTICLE_RADIUS * 2; 
+                                            if (dist < minDist) {
+                                                const p1 = particle; const p2 = otherParticle;
+                                                const randCollision = Math.random(); let collisionOutcomeProcessed = false; if (collisionOutcomeFactor > 1.0) { const creationChance = Math.min(1.0, collisionOutcomeFactor - 1.0); if (randCollision < creationChance) { const boostFactor = 1.5 + Math.random() * 1.5; const primaryParticle = (Math.random() < 0.5) ? p1 : p2; const secondaryParticle = (primaryParticle === p1) ? p2 : p1; primaryParticle.velocity.multiplyScalar(boostFactor); const pushDirection = new THREE.Vector3().subVectors(secondaryParticle.position, primaryParticle.position).normalize(); if (pushDirection.lengthSq() > 0) { secondaryParticle.velocity.add(pushDirection.multiplyScalar(averageParticleSpeed * 0.3)); } secondaryParticle.velocity.clampLength(0, averageParticleSpeed * 10); primaryParticle.velocity.clampLength(0, averageParticleSpeed * 20); const penetration = minDist - dist; if (penetration > 0) { const normal = distVec.normalize(); const correction = normal.clone().multiplyScalar(penetration * 0.51); p1.position.sub(correction); p2.position.add(correction); } collisionOutcomeProcessed = true; } } else if (collisionOutcomeFactor < 1.0) { const deletionChance = Math.min(1.0, 1.0 - collisionOutcomeFactor); if (randCollision < deletionChance) { if (Math.random() < 0.5) resetParticle(p1); else resetParticle(p2); collisionOutcomeProcessed = true; } } if (!collisionOutcomeProcessed) { const penetration = minDist - dist; const normal = distVec.clone().normalize(); const correction = normal.clone().multiplyScalar(penetration * 0.51); p1.position.sub(correction); p2.position.add(correction); const v1 = p1.velocity.clone(); const v2 = p2.velocity.clone(); const collisionNormal = normal.clone(); const v1nScalar = v1.dot(collisionNormal); const v2nScalar = v2.dot(collisionNormal); const v1t = v1.clone().sub(collisionNormal.clone().multiplyScalar(v1nScalar)); const v2t = v2.clone().sub(collisionNormal.clone().multiplyScalar(v2nScalar)); const v1nScalarNew = v1nScalar * (1 - collisionRestitution) / 2 + v2nScalar * (1 + collisionRestitution) / 2; const v2nScalarNew = v1nScalar * (1 + collisionRestitution) / 2 + v2nScalar * (1 - collisionRestitution) / 2; const v1nNew = collisionNormal.clone().multiplyScalar(v1nScalarNew); const v2nNew = collisionNormal.clone().multiplyScalar(v2nScalarNew); p1.velocity.copy(v1t.add(v1nNew)); p2.velocity.copy(v2t.add(v2nNew)); }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -320,58 +334,16 @@
                 if (baseCentralPull > 0 && numAttractors === 0 && !particlesAttractEachOther) { 
                     const originPullDir = particle.position.clone().negate();
                     const distToOriginSq = particle.position.lengthSq();
-                    if (distToOriginSq > 0.01) {
-                         totalAcceleration.add(originPullDir.normalize().multiplyScalar(baseCentralPull * Math.sqrt(distToOriginSq) * 0.05)); 
-                    }
+                    if (distToOriginSq > 0.01) { totalAcceleration.add(originPullDir.normalize().multiplyScalar(baseCentralPull * Math.sqrt(distToOriginSq) * 0.05)); }
                 }
 
                 particle.velocity.add(totalAcceleration.multiplyScalar(delta));
                 const maxSpeed = averageParticleSpeed * (particlesAttractEachOther ? 15 : 5); 
-                if (particle.velocity.lengthSq() > maxSpeed * maxSpeed) {
-                    particle.velocity.normalize().multiplyScalar(maxSpeed);
-                }
+                if (particle.velocity.lengthSq() > maxSpeed * maxSpeed) { particle.velocity.normalize().multiplyScalar(maxSpeed); }
                 particle.position.add(particle.velocity.clone().multiplyScalar(delta));
             }
 
-            if (areCollisionsEnabled) {
-                for (let i = 0; i < particlesData.length; i++) {
-                    const p1 = particlesData[i]; if (!p1) continue;
-                    for (let j = i + 1; j < particlesData.length; j++) {
-                        const p2 = particlesData[j]; if (!p2) continue;
-                        const distVec = new THREE.Vector3().subVectors(p2.position, p1.position);
-                        const dist = distVec.length();
-                        const minDist = PARTICLE_RADIUS * 2; 
-                        if (dist < minDist) { 
-                            const randCollision = Math.random(); let collisionOutcomeProcessed = false;
-                            if (collisionOutcomeFactor > 1.0) { 
-                                const creationChance = Math.min(1.0, collisionOutcomeFactor - 1.0);
-                                if (randCollision < creationChance) {
-                                    const boostFactor = 1.5 + Math.random() * 1.5; const primaryParticle = (Math.random() < 0.5) ? p1 : p2; const secondaryParticle = (primaryParticle === p1) ? p2 : p1;
-                                    primaryParticle.velocity.multiplyScalar(boostFactor); const pushDirection = new THREE.Vector3().subVectors(secondaryParticle.position, primaryParticle.position).normalize();
-                                    if (pushDirection.lengthSq() > 0) { secondaryParticle.velocity.add(pushDirection.multiplyScalar(averageParticleSpeed * 0.3)); }
-                                    secondaryParticle.velocity.clampLength(0, averageParticleSpeed * 10); primaryParticle.velocity.clampLength(0, averageParticleSpeed * 20); 
-                                    const penetration = minDist - dist; if (penetration > 0) { const normal = distVec.normalize(); const correction = normal.clone().multiplyScalar(penetration * 0.51); p1.position.sub(correction); p2.position.add(correction); }
-                                    collisionOutcomeProcessed = true;
-                                }
-                            } else if (collisionOutcomeFactor < 1.0) { 
-                                const deletionChance = Math.min(1.0, 1.0 - collisionOutcomeFactor);
-                                if (randCollision < deletionChance) { if (Math.random() < 0.5) resetParticle(p1); else resetParticle(p2); collisionOutcomeProcessed = true; }
-                            }
-                            if (!collisionOutcomeProcessed) { 
-                                const penetration = minDist - dist; const normal = distVec.clone().normalize(); const correction = normal.clone().multiplyScalar(penetration * 0.51); p1.position.sub(correction); p2.position.add(correction);
-                                const v1 = p1.velocity.clone(); const v2 = p2.velocity.clone(); const collisionNormal = normal.clone(); 
-                                const v1nScalar = v1.dot(collisionNormal); const v2nScalar = v2.dot(collisionNormal);
-                                const v1t = v1.clone().sub(collisionNormal.clone().multiplyScalar(v1nScalar)); const v2t = v2.clone().sub(collisionNormal.clone().multiplyScalar(v2nScalar));
-                                const v1nScalarNew = v1nScalar * (1 - collisionRestitution) / 2 + v2nScalar * (1 + collisionRestitution) / 2;
-                                const v2nScalarNew = v1nScalar * (1 + collisionRestitution) / 2 + v2nScalar * (1 - collisionRestitution) / 2;
-                                const v1nNew = collisionNormal.clone().multiplyScalar(v1nScalarNew); const v2nNew = collisionNormal.clone().multiplyScalar(v2nScalarNew);
-                                p1.velocity.copy(v1t.add(v1nNew)); p2.velocity.copy(v2t.add(v2nNew));
-                            }
-                        }
-                    }
-                }
-            }
-
+            // Final update of buffer attributes and bounding sphere check
             for (let i = 0; i < particlesData.length; i++) {
                 const particle = particlesData[i]; if (!particle) continue;
                 if (particle.position.lengthSq() > boundingSphereRadiusSq) {
@@ -437,6 +409,7 @@
             if (controlsContainer && controlsContainer.offsetWidth && toggleControlsButton) { toggleControlsButton.style.left = (controlsContainer.offsetWidth + 15) + 'px';}
             
             if (numPointsInput) numPointsInput.addEventListener('change', (e) => { numPoints = parseInt(e.target.value); recreateParticlesAndTrails(); });
+            if (gridCellSizeInput) gridCellSizeInput.addEventListener('change', (e) => { gridCellSize = parseFloat(e.target.value); });
             if (boundingSphereRadiusInput) boundingSphereRadiusInput.addEventListener('change', (e) => { boundingSphereRadius = parseFloat(e.target.value); boundingSphereRadiusSq = boundingSphereRadius * boundingSphereRadius;});
             if (boundaryOutcomeFactorInput) boundaryOutcomeFactorInput.addEventListener('change', (e) => { boundaryOutcomeFactor = parseFloat(e.target.value); });
             if (enableTrailsCheckbox) enableTrailsCheckbox.addEventListener('change', (e) => { areTrailsEnabled = e.target.checked; if (areTrailsEnabled) { recreateParticlesAndTrails(); } else { clearTrails(); } updateButtonStates();});
@@ -516,7 +489,7 @@
             initDOMReferences(); 
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            if (boundingSphereRadiusInput) { boundingSphereRadius = parseFloat(boundingSphereRadiusInput.value); } else { boundingSphereRadius = 15.0; }
+            boundingSphereRadius = parseFloat(boundingSphereRadiusInput.value) || 15.0; 
             boundingSphereRadiusSq = boundingSphereRadius * boundingSphereRadius; 
             camera.position.z = boundingSphereRadius + 10; 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -535,7 +508,11 @@
             isInertialSpinEnabled = false; inertiaFactor = 7.0; autoRotateSpeed = 0;
             isBgColorAnimated = false; bgColorAnimationSpeed = 0.05; currentBgHue = 0; defaultBgColor = new THREE.Color(0x000000);
             areControlsVisible = true; originalPointSize = 0.05; baseCentralPull = 0.001;
+            gridCellSize = 3.0; // Initialize grid cell size
+            
+            // Read initial values from DOM
             if (numPointsInput) numPoints = parseInt(numPointsInput.value); 
+            if (gridCellSizeInput) gridCellSize = parseFloat(gridCellSizeInput.value);
             if (boundaryOutcomeFactorInput) boundaryOutcomeFactor = parseFloat(boundaryOutcomeFactorInput.value);
             if (enableTrailsCheckbox) areTrailsEnabled = enableTrailsCheckbox.checked;
             if (trailLengthInput) trailLength = parseInt(trailLengthInput.value);
@@ -558,6 +535,7 @@
             if (bgAnimationSpeedInput) bgColorAnimationSpeed = parseFloat(bgAnimationSpeedInput.value); 
             if (inertiaFactorInput) inertiaFactor = parseFloat(inertiaFactorInput.value);
             if (autoRotateSpeedInput) autoRotateSpeed = parseFloat(autoRotateSpeedInput.value);
+
             recreateAttractors();
             recreateParticlesAndTrails();
             setupEventListeners(); 
