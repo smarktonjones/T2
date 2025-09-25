@@ -32,35 +32,35 @@
     <div id="controlsContainer">
         <div id="controlsPanel">
             <div class="control-section-title">Simulation & Particles</div>
-            <div class="control-group"> <label for="numPointsInput">Number of Particles:</label> <input type="number" id="numPointsInput" min="1" max="5000" value="1000" step="50"> </div>
-            <div class="control-group"> <label for="gridCellSizeInput">Grid Cell Size (Performance):</label> <input type="number" id="gridCellSizeInput" min="0.5" max="10" value="3.0" step="0.1"> </div>
-            <div class="control-group"> <label for="boundingSphereRadiusInput">Bounding Sphere Radius:</label> <input type="number" id="boundingSphereRadiusInput" min="1" value="20" step="1"> </div>
+            <div class="control-group"> <label for="numPointsInput">Number of Particles:</label> <input type="number" id="numPointsInput" min="1" max="5000" value="5000" step="50"> </div>
+            <div class="control-group"> <label for="gridCellSizeInput">Grid Cell Size (Performance):</label> <input type="number" id="gridCellSizeInput" min="0.5" max="10" value=".08" step="0.1"> </div>
+            <div class="control-group"> <label for="boundingSphereRadiusInput">Bounding Sphere Radius:</label> <input type="number" id="boundingSphereRadiusInput" min="1" value="7" step="1"> </div>
             <div class="control-group"> <label for="boundaryOutcomeFactorInput">Boundary Outcome Factor:</label> <input type="number" id="boundaryOutcomeFactorInput" min="0.0" max="2.0" value="1.0" step="0.1"> </div>
             <div class="checkbox-group"> <input type="checkbox" id="enableTrailsCheckbox"> <label for="enableTrailsCheckbox">Enable Particle Trails</label> </div>
             <div class="control-group"> <label for="trailLengthInput">Trail Length:</label> <input type="number" id="trailLengthInput" min="2" value="30" step="1" disabled> </div>
-            <div class="control-group"> <label for="avgSpeedInput">Avg Particle Speed:</label> <input type="number" id="avgSpeedInput" min="0" value="0.5" step="0.1"> </div>
-            <div class="control-group"> <label for="animSpeedInput">Animation Speed:</label> <input type="number" id="animSpeedInput" min="0" value="1" step="0.1"> </div>
+            <div class="control-group"> <label for="avgSpeedInput">Avg Particle Speed:</label> <input type="number" id="avgSpeedInput" min="0" value="0.1" step="0.1"> </div>
+            <div class="control-group"> <label for="animSpeedInput">Animation Speed:</label> <input type="number" id="animSpeedInput" min="0" value="2.1" step="0.1"> </div>
             <div class="control-section-title">Attraction & Collision</div>
             <div class="control-group"> <label for="numAttractorsInput">Fixed Attractors:</label> <input type="number" id="numAttractorsInput" min="0" max="10" value="1" step="1"> </div>
-            <div class="control-group"> <label for="attractorSpreadInput">Fixed Attr. Spread (R):</label> <input type="number" id="attractorSpreadInput" min="0" value="0" step="0.5"> </div>
-            <div class="control-group"> <label for="attractorStrengthInput">Fixed Attr. Gravity:</label> <input type="number" id="attractorStrengthInput" min="0" value="10" step="0.1"> </div>
+            <div class="control-group"> <label for="attractorSpreadInput">Fixed Attr. Spread (R):</label> <input type="number" id="attractorSpreadInput" min="0" value="3" step="0.5"> </div>
+            <div class="control-group"> <label for="attractorStrengthInput">Fixed Attr. Gravity:</label> <input type="number" id="attractorStrengthInput" min="0" value="0.1" step="0.1"> </div>
             <div class="control-group"> <label for="attractorStrengthMultiplierInput">Fixed Attr. Gravity Multiplier:</label> <input type="number" id="attractorStrengthMultiplierInput" min="0.1" value="1.0" step="0.1"> </div>
             <div class="control-group checkbox-special"> <label for="enableDipoleCheckbox">Enable Attractor Dipole Field</label> <input type="checkbox" id="enableDipoleCheckbox"> </div>
             <div class="control-group"> <label for="dipoleFieldStrengthInput">Dipole Field Strength:</label> <input type="number" id="dipoleFieldStrengthInput" min="0" value="10" step="1" disabled> </div>
             <div class="control-group"> <label for="particleChargeInput">Particle "Charge":</label> <input type="number" id="particleChargeInput" value="-1" step="0.5" disabled> </div>
             <div class="control-group checkbox-special"> <label for="particlesAttractCheckbox">Particles Attract Each Other</label> <input type="checkbox" id="particlesAttractCheckbox" checked> </div>
-            <div class="control-group"> <label for="particleAttractionStrengthInput">Particle Attr. Strength:</label> <input type="number" id="particleAttractionStrengthInput" min="0" value="0.0001" step="0.00001"> </div>
-            <div class="control-group"> <label for="particleAttractionDistanceInput">Particle Attr. Max Dist:</label> <input type="number" id="particleAttractionDistanceInput" min="0.1" value="2.5" step="0.1"> </div>
+            <div class="control-group"> <label for="particleAttractionStrengthInput">Particle Attr. Strength:</label> <input type="number" id="particleAttractionStrengthInput" min="0" value="0.001" step="0.00001"> </div>
+            <div class="control-group"> <label for="particleAttractionDistanceInput">Particle Attr. Max Dist:</label> <input type="number" id="particleAttractionDistanceInput" min="0.1" value="0.9" step="0.1"> </div>
             <div class="checkbox-group">  <input type="checkbox" id="enableCollisionsCheckbox"> <label for="enableCollisionsCheckbox">Enable Particle Collisions</label> </div>
             <div class="control-group">  <label for="collisionRestitutionInput">Collision Restitution:</label> <input type="number" id="collisionRestitutionInput" min="0.1" max="1.0" value="0.8" step="0.05" disabled> </div>
             <div class="control-group">  <label for="collisionOutcomeFactorInput">Collision Outcome Factor:</label> <input type="number" id="collisionOutcomeFactorInput" min="0.0" max="2.0" value="1.0" step="0.1" disabled> </div>
             <div class="control-section-title">Appearance & UI</div>
             <button id="togglePointStyleButton">Style: Sharp Squares</button> <button id="toggleBlurButton">Enable Blur</button>
-            <div class="control-group"> <label for="blurDiameterInput">Blur Diameter:</label> <input type="number" id="blurDiameterInput" min="0.01" value="0.3" step="0.01" disabled> </div>
+            <div class="control-group"> <label for="blurDiameterInput">Blur Diameter:</label> <input type="number" id="blurDiameterInput" min="0.01" value="0.3" step="0.01" checked> </div>
             <button id="toggleColorModeButton">Color Mode: Speed</button> <button id="updateColorsButton">Refresh Particle Colors</button>
             <button id="toggleInertialSpinButton">Enable Inertial Spin</button>
             <div class="control-group"> <label for="inertiaFactorInput">Inertia Factor:</label> <input type="number" id="inertiaFactorInput" min="0" value="7" step="0.5" disabled> </div>
-            <div class="control-group"> <label for="autoRotateSpeedInput">Auto-Rotate Speed:</label> <input type="number" id="autoRotateSpeedInput" value="0" step="0.5"> </div>
+            <div class="control-group"> <label for="autoRotateSpeedInput">Auto-Rotate Speed:</label> <input type="number" id="autoRotateSpeedInput" value="0.5" step="0.5"> </div>
             <button id="toggleBgAnimationButton">Animate Background</button>
             <div class="control-group"> <label for="bgAnimationSpeedInput">BG Anim Speed:</label> <input type="number" id="bgAnimationSpeedInput" min="0" value="0.05" step="0.01" disabled> </div>
         </div>
