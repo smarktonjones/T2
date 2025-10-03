@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 30SEP2025 mgh -->
+<!-- version as of 03OCT2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -137,7 +137,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.85</h5>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.9</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -224,12 +224,13 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "**PERIODIC ORAL EXAM (T-2)**",
         "**INITIAL ORAL EXAM (T-1)**",
-	"**RETIREMENT EXAM (T-2)**",
+        "**RETIREMENT EXAM (T-2)**",
         "**SEPARATION EXAM (T-2)**  ",
-		"**SICK CALL / LIMITED EXAM (T-3)**"
+        "**SICK CALL / LIMITED EXAM (T-3)**"
       ],
       "selected": "**PERIODIC ORAL EXAM (T-2)**"
     },
@@ -243,6 +244,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "alerts": [
         "None"
       ]
@@ -257,10 +259,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": " Reviewed. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -273,6 +276,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "LEARNING NEEDS:  Language: English. ",
         "LEARNING NEEDS:  Language: ESOL. ",
@@ -290,6 +294,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Learning Type: Written/Verbal. ",
         "Learning Type: Written. ",
@@ -307,6 +312,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Impairments: None. ",
         "Impairments: Hearing Aid. ",
@@ -324,6 +330,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Cultural: None.",
         "Cultural: Other."
@@ -340,6 +347,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "FLIGHT STATUS: N/A",
         "FLIGHT STATUS: AVIATOR",
@@ -358,6 +366,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "systolic": "120",
       "diastolic": "80",
       "isPriorTxChecked": false,
@@ -378,10 +387,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "S:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -394,10 +404,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "content": "None",
       "internalLabel": "Chief Concern:",
       "prefixLabel": "PRESENTING COMPLAINT: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -410,6 +421,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "value": "0"
     },
     {
@@ -422,17 +434,18 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "content": "None",
       "internalLabel": "Tobacco / Vaping",
       "prefixLabel": "TOBACCO/VAPING: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "Vaping",
         "Cigarettes",
         "Smokeless Tobacco",
         "Nicotene pouches",
-	"0.5 Pack Per Day",
-	"0.5 Can Per Day"
+        "0.5 Pack Per Day",
+        "0.5 Can Per Day"
       ]
     }
   ],
@@ -447,10 +460,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "O:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -463,6 +477,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "options": [
         "BWX: TODAY",
         "BWX: REVIEWED",
@@ -481,6 +496,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "options": [
         "PANO: REVIEWED",
         "PANO: TODAY",
@@ -499,6 +515,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": " ",
       "internalLabel": "Radiographs Other",
       "prefixLabel": "",
@@ -517,6 +534,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "No Pathology Noted.",
       "internalLabel": "Radiographic Findings",
       "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
@@ -540,6 +558,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "100%",
+      "fillColor": "#d6eefb",
       "content": "None.",
       "internalLabel": "Caries / Defective",
       "prefixLabel": "CARIES/DEFECTIVE RESTORATIONS: ",
@@ -558,6 +577,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "100%",
+      "fillColor": "#e0ffff",
       "content": "None. ",
       "internalLabel": "Incipient",
       "prefixLabel": "INCIPIENT CARIES: ",
@@ -578,6 +598,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "WNL.",
       "internalLabel": "Soft Tissue / OCS",
       "prefixLabel": "SOFT TISSUE / OCS: ",
@@ -602,6 +623,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "WNL. ",
       "internalLabel": "Periodontal",
       "prefixLabel": "PERIO: ",
@@ -624,6 +646,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "WNL. ",
       "internalLabel": "Endodontic",
       "prefixLabel": "ENDO: ",
@@ -640,6 +663,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "endoTests": [
         "Percussion",
         "Palpation",
@@ -696,6 +720,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "WNL. ",
       "internalLabel": "TMJ",
       "prefixLabel": "TMJ: ",
@@ -718,6 +743,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "WNL. ",
       "internalLabel": "Occlusion",
       "prefixLabel": "OCCLUSION: ",
@@ -727,7 +753,7 @@
         "Bonded Retainer 6-11",
         "Crossbite ",
         "Anterior Open Bite",
-	"Crowding"
+        "Crowding"
       ]
     },
     {
@@ -740,6 +766,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "40%",
+      "fillColor": "",
       "content": "WNL. ",
       "internalLabel": "Oral Surgery",
       "prefixLabel": "ORAL SURGERY: ",
@@ -748,7 +775,7 @@
         "Missing: 1,16,17,32",
         "1,16,17,32 Present",
         "Unerupted - ",
-	    "Partially erupted - ",
+        "Partially erupted - ",
         "Communicating - "
       ]
     },
@@ -762,6 +789,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "40%",
+      "fillColor": "",
       "content": "WNL. ",
       "internalLabel": "Other Findings",
       "prefixLabel": "OTHER FINDINGS: ",
@@ -781,6 +809,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "scores": [
         "",
         "",
@@ -811,10 +840,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "A:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -827,6 +857,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
       "internalLabel": "Diagnosis of CC",
       "prefixLabel": "DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT: ",
@@ -843,10 +874,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "Gingivitis Localized",
       "internalLabel": "Perio Diagnosis",
       "prefixLabel": "PERIO DIAGNOSIS: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "Gingivitis Localized",
         "Gingivitis Generalized",
@@ -870,6 +902,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
       "internalLabel": "Endo Diagnosis",
       "prefixLabel": "ENDO DIAGNOSIS",
@@ -899,6 +932,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
       "internalLabel": "Oral Surgery Diagnosis",
       "prefixLabel": "ORAL SURGERY DIAGNOSIS: ",
@@ -919,6 +953,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "CARIES RISK: Low",
         "CARIES RISK: Moderate",
@@ -936,6 +971,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "PERIO RISK: Low",
         "PERIO RISK: Moderate",
@@ -953,6 +989,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "CANCER RISK: Low",
         "CANCER RISK: Moderate",
@@ -970,10 +1007,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "Findings reviewed / Patient informed and consents to Treatment Plan.",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     }
   ],
@@ -988,10 +1026,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "P:   CHARTING OF TREATMENT PLAN IN DENTRIX",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -1004,6 +1043,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f6ffed",
       "content": "",
       "internalLabel": "Caries Risk Management",
       "prefixLabel": "",
@@ -1025,6 +1065,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#d9f7be",
       "txRows": [
         "Oral Hygiene",
         "Operative",
@@ -1039,12 +1080,7 @@
         "SRP",
         "RECALL"
       ],
-      "txData": {
-        "Oral Hygiene-CLASS 2": {
-          "text": "RDH",
-          "priority": 1
-        }
-      }
+      "txData": {}
     }
   ],
   "footer": [
@@ -1058,6 +1094,7 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
+      "fillColor": "#fffbe6",
       "content": "Default",
       "internalLabel": "Dental Technician Name",
       "prefixLabel": "DENTAL TECHNICIAN: ",
@@ -1072,7 +1109,7 @@
         "STEWART",
         "MORRIS",
         "BABCOCK",
-	    "VILLANUEVA",
+        "VILLANUEVA",
         "TURNER"
       ]
     },
@@ -1086,6 +1123,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "formatType": "newline",
       "customChars": ""
     },
@@ -1099,12 +1137,13 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
+      "fillColor": "#fffbe6",
       "content": "",
       "internalLabel": "Dentist Block",
       "prefixLabel": "DENTAL OFFICER: ",
       "defaultText": "",
       "dropdownOptions": [
-	    "TP FLEMING",
+        "TP FLEMING",
         "JA HOGAN",
         "RJ ALOVA",
         "MG HORNING DDS  1912969445",
@@ -1122,15 +1161,19 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
+      "fillColor": "#fffbe6",
       "content": "",
       "internalLabel": "Signature Block",
       "prefixLabel": "",
       "defaultText": "",
-      "dropdownOptions": ["  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "]
+      "dropdownOptions": [
+        "  .  . .   . ____ .  .    _   _    _    _  .  .  _    ",
+        " /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  ",
+        "/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "
+      ]
     }
   ]
 }
-
 
 
 
@@ -1243,6 +1286,54 @@
 
 
 
+        // **** START OF palette CODE ****
+
+const COLOR_PALETTE = [
+    // Default & Blues
+    { name: 'Default Blue', value: '#e6f7ff' },
+    { name: 'Light Blue', value: '#d6eefb' },
+
+    // Greens
+    { name: 'Light Green', value: '#f6ffed' },
+    { name: 'Mint Green', value: '#d9f7be' },
+    
+    // Reds & Pinks
+    { name: 'Light Red', value: '#fff1f0' },
+    { name: 'Light Pink', value: '#ffefff' },
+    
+    // Yellows & Oranges
+    { name: 'Light Yellow', value: '#fffbe6' },
+    { name: 'Light Orange', value: '#fff7e6' },
+    { name: 'Gold', value: '#fff1b8' },
+
+    // Purples
+    { name: 'Light Purple', value: '#f9f0ff' },
+    { name: 'Lavender', value: '#efdbff' },
+
+    // Cyans & Teals
+    { name: 'Light Cyan', value: '#e6fffb' },
+    { name: 'Sky Blue', value: '#dcf4ff' },
+
+    // Grays & Neutrals
+    { name: 'White', value: '#ffffff' },
+    { name: 'Light Gray 1', value: '#fafafa' },
+    { name: 'Light Gray 2', value: '#f5f5f5' },
+    { name: 'Light Gray 3', value: '#f0f0f0' },
+    { name: 'Medium Gray', value: '#e8e8e8' },
+    
+    // Other
+    { name: 'Beige', value: '#fffaf0' },
+    { name: 'Aqua', value: '#e0ffff' }
+];
+
+
+        // **** END OF palette CODE ****
+
+
+
+
+
+
 
 		
 	    const updateTxPlanSummary = (element) => { 
@@ -1288,14 +1379,26 @@
             if (data.originalId) draggable.dataset.originalId = data.originalId;
             if (data.required) draggable.dataset.required = 'true'; 
 
-		            // **** START OF NEW CODE for width****
+		            // **** START OF CODE for width****
             // Check for and apply the custom width
             if (data.width) {
                 draggable.style.width = data.width;
                 draggable.dataset.width = data.width;
             }
-            // **** END OF NEW CODE ****
+            // **** END OF width CODE ****
 		
+
+            // **** START OF color CODE ****
+            // Check for and apply the custom fill color
+            if (data.fillColor) {
+                draggable.style.backgroundColor = data.fillColor;
+                draggable.dataset.fillColor = data.fillColor;
+            }
+            // **** END OF color CODE ****
+
+
+
+
 		if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
             if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || "Click to edit..."; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
             else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
@@ -1358,7 +1461,7 @@
         };
 
         const getElementState = (element) => {
-            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || ''};
+            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
             if (type === 'enhanced-textbox') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions); }
 
             // **** START OF NEW CODE for tx plan****
@@ -1736,18 +1839,30 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
 
 
 		
-            // **** START OF REPLACEMENT for width****
-            if (state.type !== 'formatter') { // Formatters don't need sizing
-                generalPropsHtml = `<fieldset><legend>Sizing & Display</legend>
-                    <label>Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
+            // **** START OF REPLACEMENT CODE for width and color ****
+            if (state.type !== 'formatter') {
+                // Build the color options for the dropdown
+                let colorOptions = COLOR_PALETTE.map(color => 
+                    `<option value="${color.value}" ${state.fillColor === color.value ? 'selected' : ''}>${color.name}</option>`
+                ).join('');
+
+                generalPropsHtml = `
+                <fieldset><legend>Sizing & Display</legend>
+                    <label>Fill Color: 
+                        <select id="prop-fill-color">
+                            ${colorOptions}
+                        </select>
+                    </label>
+                    <label style="margin-top: 10px;">Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
                     <hr style="margin:10px 0;">
                     <label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label>
                     <label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element's value</label>
                 </fieldset>`;
             } else {
-                generalPropsHtml = ''; // No options for formatter
+                generalPropsHtml = '';
             }
-            // **** END OF REPLACEMENT ****
+            // **** END OF REPLACEMENT CODE for width and color ****
+
 
 
 		
@@ -1768,12 +1883,24 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
             else if(newState.type === 'painscale' || newState.type === 'alert' || newState.type === 'checkbox') { newState.required = document.getElementById('prop-required').checked; }
             newState.isHidden = document.getElementById('prop-hidden').checked; newState.doNotReset = document.getElementById('prop-no-reset').checked;
 
-            // **** START OF NEW CODE for width****
+            // **** START OF CODE for width****
             const widthInput = document.getElementById('prop-width');
             if (widthInput) {
                 newState.width = widthInput.value.trim();
             }
-            // **** END OF NEW CODE ****
+            // **** END OF width CODE ****
+
+
+            // **** START OF color CODE ****
+            const colorSelect = document.getElementById('prop-fill-color');
+            if (colorSelect) {
+                // If the selected color is the default, save an empty string to keep the JSON clean.
+                // Otherwise, save the selected color value.
+                newState.fillColor = colorSelect.value === COLOR_PALETTE[0].value ? '' : colorSelect.value;
+            }
+            // **** END OF color CODE ****
+
+
 
 		
             if (newState.type !== 'formatter' && !newState.type.startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
