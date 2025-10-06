@@ -1,5 +1,6 @@
+
 <!DOCTYPE html>
-<!-- version as of 28AUG2025 mgh -->
+<!-- version as of 03OCT2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,9 +15,11 @@
             --modal-bg: rgba(0,0,0,0.5); --danger-color: #d93025;
             --warning-color: #fd7e14; --success-color: #28a745; --success-hover: #218838;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
-        h1 { text-align: center; margin-top: 0; }
-		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold;}
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
+			  background-image: linear-gradient(to bottom, #fafafa, #e8e8e8); /* The gradient */
+			  color: var(--text-color); margin: 0; padding: 20px; }
+        h1 { text-align: center; margin-top: 0; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
 		h5 { text-align: center; margin-top: 0; font-weight: light;}	    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
         .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
@@ -135,7 +138,7 @@
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.8</h5>
+    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.9</h5>
     <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
@@ -222,6 +225,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#d9f7be",
       "options": [
         "-OPERATIVE APPT- ",
         "-CEREC APPT- ",
@@ -239,6 +243,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#d9f7be",
       "content": "#",
       "internalLabel": "Tooth / Procedure",
       "prefixLabel": "",
@@ -255,6 +260,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "----------------CLINICAL NOTE-------------------",
       "internalLabel": "",
       "prefixLabel": "",
@@ -273,6 +279,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "S: PRESENTING CONCERN: ",
       "internalLabel": "",
       "prefixLabel": "",
@@ -289,6 +296,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fff7e6",
       "content": "None. ",
       "internalLabel": "CC",
       "prefixLabel": "",
@@ -307,6 +315,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fff7e6",
       "value": "0"
     }
   ],
@@ -321,6 +330,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "O/A:  ",
       "internalLabel": "",
       "prefixLabel": "",
@@ -337,6 +347,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e6fffb",
       "content": "#",
       "internalLabel": "Diagnosis",
       "prefixLabel": "",
@@ -367,6 +378,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "P:  ",
       "internalLabel": "",
       "prefixLabel": "",
@@ -383,6 +395,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "anestheticTypes": [
         {
           "name": "2% Lidocaine",
@@ -400,11 +413,7 @@
           "epi": 9
         }
       ],
-      "anestheticValues": {
-        "2% Lidocaine": 0,
-        "4% Septocaine": 0,
-        "0.5% Marcaine": 0
-      },
+      "anestheticValues": {},
       "includeTopical": false
     },
     {
@@ -417,6 +426,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "content": " Isolite. ",
       "internalLabel": "Isolation",
       "prefixLabel": "",
@@ -438,7 +448,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "",
+      "fillColor": "#efdbff",
+      "content": "Click to edit...",
       "internalLabel": "Materials",
       "prefixLabel": "",
       "defaultText": "Click to edit...",
@@ -446,8 +457,8 @@
         "Excavate. Etch. Optibond Universal. Revolution. A2B Filtek Supreme. Occlusion. Floss. Finish. Polish. F-Varnish.",
         "Excavate. Valiant PhD. Occlusion. Floss. F-Varnish.",
         "Excavate. Conditioner. Fuji IILC A2. Finish. Polish. F-Varnish.",
-        "1 x (00-Cord) (removed) (performed physical/visual sulcular inspection). Viscostat. ",
         "Sectioned crown. Excavated core. Endo-onlay prep. Etch. Optibond universal. Permaflow purple orifices / undercuts.",
+        "1 x (00-Cord) 1 x (0-Cord) (removed) (performed physical/visual sulcular inspection). Viscostat clear.",
         "CEREC scan/design/mill/glaze A2 LT e.max . Check interproximal contacts. HF. Panavia V5 cementation. Occlusion. Floss. Finish. BWX check.",
         "Excavate. Access MB1,DB,P, Minimal on MB2. Root ZX estimation. Pulpectomy. EDTA. Sodium Hypochlorite. Paper Points. Calcium Hydroxide. Cotton Pellets. Fuji Triage. Occlusion reduced. "
       ]
@@ -464,6 +475,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "**Next Visit**",
       "internalLabel": "",
       "prefixLabel": "",
@@ -480,6 +492,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fff1f0",
       "txRows": [
         "Oral Hygiene",
         "Operative",
@@ -494,12 +507,7 @@
         "RECALL",
         "#"
       ],
-      "txData": {
-        "Oral Hygiene-CLASS 2": {
-          "text": "RDH",
-          "priority": 1
-        }
-      }
+      "txData": {}
     },
     {
       "type": "enhanced-textbox",
@@ -511,6 +519,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "----------------------------------------------------",
       "internalLabel": "",
       "prefixLabel": "",
@@ -527,6 +536,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "alerts": [
         "None"
       ]
@@ -541,6 +551,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "PT IDX2. MED REC. HQR. LEARNING ASSESS. PT INFORMED, VERBAL CONSENT & POST-OP INST.",
       "internalLabel": "",
       "prefixLabel": "",
@@ -559,6 +570,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "//DUP “dental_team(horning-do, sanderson-dt)completed extraoral&intraoral pre-procedure verification site marking odontogram, radiograph, caries performed a time out & tooth count prior to initiating procedure above. re-verification was continuous throughout the procedure.” DHAFORM205 //DUP",
       "internalLabel": "",
       "prefixLabel": "",
@@ -575,6 +587,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "M G HORNING DDS\n1912969445\n  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /    ",
       "internalLabel": "",
       "prefixLabel": "",
@@ -583,7 +596,6 @@
     }
   ]
 }
-
 
 
 
@@ -655,8 +667,22 @@
             // This is crucial: after resetting, we must immediately update the live output,
             // which in turn triggers an auto-save of the newly reset state to localStorage.
             updateLiveOutput(); 
-            
-            alert(`Reset ${resetCount} element(s) to their template default values.`);
+
+            // ---  Re-apply the lock state after resetting ---
+            const lockToggle = document.getElementById('lock-layout-toggle');
+            if (lockToggle.checked) {
+                console.log("Reset complete. Re-applying layout lock.");
+                // This will find all the newly created elements and correctly set draggable="false"
+                lockToggle.dispatchEvent(new Event('change'));
+            }
+            // **** END OF lock reset CODE
+			
+            alert(`Reset ${resetCount} element(s) to their default values.`);
+
+
+
+
+			
         };
 
 // **** START OF FULL RESET CODE ****
@@ -678,6 +704,54 @@
 
 		
 // **** END OF Session Persistence Logic ****
+
+
+
+        // **** START OF palette CODE ****
+
+const COLOR_PALETTE = [
+    // Default & Blues
+    { name: 'Default Blue', value: '#e6f7ff' },
+    { name: 'Light Blue', value: '#d6eefb' },
+
+    // Greens
+    { name: 'Light Green', value: '#f6ffed' },
+    { name: 'Mint Green', value: '#d9f7be' },
+    
+    // Reds & Pinks
+    { name: 'Light Red', value: '#fff1f0' },
+    { name: 'Light Pink', value: '#ffefff' },
+    
+    // Yellows & Oranges
+    { name: 'Light Yellow', value: '#fffbe6' },
+    { name: 'Light Orange', value: '#fff7e6' },
+    { name: 'Gold', value: '#fff1b8' },
+
+    // Purples
+    { name: 'Light Purple', value: '#f9f0ff' },
+    { name: 'Lavender', value: '#efdbff' },
+
+    // Cyans & Teals
+    { name: 'Light Cyan', value: '#e6fffb' },
+    { name: 'Sky Blue', value: '#dcf4ff' },
+
+    // Grays & Neutrals
+    { name: 'White', value: '#ffffff' },
+    { name: 'Light Gray 1', value: '#fafafa' },
+    { name: 'Light Gray 2', value: '#f5f5f5' },
+    { name: 'Light Gray 3', value: '#f0f0f0' },
+    { name: 'Medium Gray', value: '#e8e8e8' },
+    
+    // Other
+    { name: 'Beige', value: '#fffaf0' },
+    { name: 'Aqua', value: '#e0ffff' }
+];
+
+
+        // **** END OF palette CODE ****
+
+
+
 
 
 
@@ -726,14 +800,26 @@
             if (data.originalId) draggable.dataset.originalId = data.originalId;
             if (data.required) draggable.dataset.required = 'true'; 
 
-		            // **** START OF NEW CODE for width****
+		            // **** START OF CODE for width****
             // Check for and apply the custom width
             if (data.width) {
                 draggable.style.width = data.width;
                 draggable.dataset.width = data.width;
             }
-            // **** END OF NEW CODE ****
+            // **** END OF width CODE ****
 		
+
+            // **** START OF color CODE ****
+            // Check for and apply the custom fill color
+            if (data.fillColor) {
+                draggable.style.backgroundColor = data.fillColor;
+                draggable.dataset.fillColor = data.fillColor;
+            }
+            // **** END OF color CODE ****
+
+
+
+
 		if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
             if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || "Click to edit..."; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
             else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
@@ -796,7 +882,7 @@
         };
 
         const getElementState = (element) => {
-            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || ''};
+            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
             if (type === 'enhanced-textbox') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions); }
 
             // **** START OF NEW CODE for tx plan****
@@ -1174,18 +1260,30 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
 
 
 		
-            // **** START OF REPLACEMENT for width****
-            if (state.type !== 'formatter') { // Formatters don't need sizing
-                generalPropsHtml = `<fieldset><legend>Sizing & Display</legend>
-                    <label>Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
+            // **** START OF REPLACEMENT CODE for width and color ****
+            if (state.type !== 'formatter') {
+                // Build the color options for the dropdown
+                let colorOptions = COLOR_PALETTE.map(color => 
+                    `<option value="${color.value}" ${state.fillColor === color.value ? 'selected' : ''}>${color.name}</option>`
+                ).join('');
+
+                generalPropsHtml = `
+                <fieldset><legend>Sizing & Display</legend>
+                    <label>Fill Color: 
+                        <select id="prop-fill-color">
+                            ${colorOptions}
+                        </select>
+                    </label>
+                    <label style="margin-top: 10px;">Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
                     <hr style="margin:10px 0;">
                     <label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label>
                     <label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element's value</label>
                 </fieldset>`;
             } else {
-                generalPropsHtml = ''; // No options for formatter
+                generalPropsHtml = '';
             }
-            // **** END OF REPLACEMENT ****
+            // **** END OF REPLACEMENT CODE for width and color ****
+
 
 
 		
@@ -1206,12 +1304,24 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
             else if(newState.type === 'painscale' || newState.type === 'alert' || newState.type === 'checkbox') { newState.required = document.getElementById('prop-required').checked; }
             newState.isHidden = document.getElementById('prop-hidden').checked; newState.doNotReset = document.getElementById('prop-no-reset').checked;
 
-            // **** START OF NEW CODE for width****
+            // **** START OF CODE for width****
             const widthInput = document.getElementById('prop-width');
             if (widthInput) {
                 newState.width = widthInput.value.trim();
             }
-            // **** END OF NEW CODE ****
+            // **** END OF width CODE ****
+
+
+            // **** START OF color CODE ****
+            const colorSelect = document.getElementById('prop-fill-color');
+            if (colorSelect) {
+                // If the selected color is the default, save an empty string to keep the JSON clean.
+                // Otherwise, save the selected color value.
+                newState.fillColor = colorSelect.value === COLOR_PALETTE[0].value ? '' : colorSelect.value;
+            }
+            // **** END OF color CODE ****
+
+
 
 		
             if (newState.type !== 'formatter' && !newState.type.startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
