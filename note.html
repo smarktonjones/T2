@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <!-- version as of 03OCT2025 mgh -->
 <html lang="en">
@@ -18,7 +17,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
 			  background-image: linear-gradient(to bottom, #fafafa, #e8e8e8); /* The gradient */
 			  color: var(--text-color); margin: 0; padding: 20px; }
-        h1 { text-align: center; margin-top: 0; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+        h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
 		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
 		h5 { text-align: center; margin-top: 0; font-weight: light;}	    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
@@ -134,12 +133,154 @@
         /* **** END OF NEW CODE **** */
 
 
+        /* **** logo CODE **** */
+    .logo {
+      position: relative;
+      width: 450px;
+      height: 300px;
+    }
+
+
+.logo-container {
+position: absolute;
+left: 0;
+transform: translateY(-55%) translateX(20%) scale(0.25, 0.3);
+transform-origin: left bottom;
+z-index: -1;
+opacity: 0.4;
+}
+
+    .quarter {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      border-top-left-radius: 210px 140px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .quarter::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.5), transparent 60%);
+      border-top-left-radius: 210px 140px;
+    }
+
+    .navy {
+      background: linear-gradient(135deg, lightgray, white);
+      top: 0;
+      left: 0;
+    }
+
+    .yellow {
+      background: linear-gradient(135deg, white, lightgray);
+      bottom: 0;
+      right: 0;
+      transform: rotate(180deg);
+    }
+
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60px;
+      height: 60px;
+      margin: -30px 0 0 -30px;
+      background: linear-gradient(145deg, white, lightgray);
+      border-radius: 50%;
+      box-shadow:
+        inset 0 5px 10px rgba(255, 255, 255, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .center::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.6), transparent 70%);
+      border-radius: 50%;
+    }
+
+    .text-top-right,
+    .text-bottom-left {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 60px;
+      padding: 10px;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6),
+                   -1px -1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Upper Right Text - Dental Note */
+    .text-top-right {
+      top: 0;
+      right: 0;
+      color: lightgray; /* blue */
+      font-weight: 700; /* bold */
+      justify-content: flex-end; /* right-align text within quadrant */
+      text-align: right;
+      line-height: .7;
+      padding-right: 40px;
+      padding-top: 30px;
+    }
+
+    /* Lower Left Text - Maker */
+    .text-bottom-left {
+      bottom: 0;
+      left: 0;
+      color: lightgray;
+      font-weight: 100; /* thin font */
+      font-style: normal;
+      justify-content: flex-start;
+      text-align: right;
+      line-height: .7;
+      padding-left: 20px;
+      padding-bottom: 20px;
+    }
+
+        /* **** END OF LOGO CODE **** */
+
+
 	    
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.9</h5>
-    <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
+
+
+
+
+
+<div class="logo-container" >
+  <div class="logo">
+    <!-- Stretched Shapes -->
+    <div class="quarter navy"></div>
+    <div class="quarter yellow"></div>
+
+    <!-- Center Circle -->
+    <div class="center"></div>
+
+    <!-- Text Labels -->
+    <div class="text-top-right">Dental Note</div>
+    <div class="text-bottom-left">Maker v1.9</div>
+  </div>
+
+</div>
+
+    <h1>ORAL EXAM</h1>
+
+    <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
     <div class="controls">
@@ -1546,8 +1687,12 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 
 
 
--NAVMED 6600/13 JSON default-<br>
-<h6>Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a></h6>
+
+
+
+<center><br><h6>-NAVMED 6600/13 JSON default-<br>
+Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a></h6></center>
+
 <script>
 // ===================================================================================
 //
