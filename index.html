@@ -17,7 +17,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
 			  background-image: linear-gradient(to bottom, #fafafa, #e8e8e8); /* The gradient */
 			  color: var(--text-color); margin: 0; padding: 20px; }
-        h1 { text-align: center; margin-top: 0; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+        h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
 		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
 		h5 { text-align: center; margin-top: 0; font-weight: light;}	    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
@@ -142,11 +142,11 @@
 
 
 .logo-container {
-position: relative;
-width: 0px;
-height: 10px;
-transform: scale(0.25, 0.3);
-
+position: absolute;
+right: 0;
+transform: translateY(-65%) scale(0.25, 0.3);
+transform-origin: right bottom;
+z-index: -1;
 }
 
     .quarter {
@@ -279,7 +279,7 @@ transform: scale(0.25, 0.3);
 
     <h1>ORAL EXAM</h1>
 
-    <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
+    <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
     <div class="controls">
