@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vocabulary Matching Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      @keyframes feedback-animation {
+        0% { opacity: 0; transform: scale(0.5); }
+        20% { opacity: 1; transform: scale(1.2); }
+        80% { opacity: 1; transform: scale(1.2); }
+        100% { opacity: 0; transform: scale(1.5); }
+      }
+      .animate-feedback {
+        animation: feedback-animation 2s ease-in-out forwards;
+      }
+      @keyframes pulse-red {
+        50% { opacity: 0.7; }
+      }
+      .animate-pulse-red {
+        animation: pulse-red 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="root" class="h-screen flex items-center justify-center p-4 pt-20 bg-gray-100">
+      <!-- App content will be rendered here by JavaScript -->
+    </div>
+
+    <script type="module">
+      const rootElement = document.getElementById('root');
+
+      // --- STATE MANAGEMENT ---
+      let gameState = 'INPUT'; // 'INPUT', 'PLAYING', 'WON'
+      let rawWords = '';
+      let rawDefinitions = '';
+      let vocabulary = [];
+      let shuffledDefinitions = [];
+      let selectedWordId = null;
+      let correctPairs = new Map();
+      let error = null;
+      let wrongMatches = 0;
+      let firstTryCorrect = 0;
+      let attemptedWords = new Set();
+      let animation = null;
+
+      // --- UTILITY ---
+      const shuffleArray = (array) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+
+      // --- EVENT HANDLERS ---
+      window.handleStartGame = () => {
+        error = null;
+
+        const wordsInput = document.getElementById('words-textarea').value;
+        const definitionsInput = document.getElementById('definitions-textarea').value;
+
+        const words = wordsInput.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        const definitions = definitionsInput.split('\n').map(d => d.trim()).filter(d => d.length > 0);
+
+        if (words.length < 2) {
+            error = "Please enter at least 2 words and their definitions.";
+            gameState = 'INPUT';
+            render();
+            return;
+        }
+
+        if (words.length !== definitions.length) {
+            error = "The number of words must match the number of definitions.";
+            gameState = 'INPUT';
+            render();
+            return;
+        }
+
+        const vocabData = words.map((word, index) => ({
+            word,
+            definition: definitions[index],
+            id: `item-${index}-${word}`
+        }));
+
+        vocabulary = vocabData;
+        const definitionItems = vocabData.map(item => ({ id: item.id, definition: item.definition }));
+        shuffledDefinitions = shuffleArray(definitionItems);
+        correctPairs = new Map();
+        selectedWordId = null;
+        wrongMatches = 0;
+        firstTryCorrect = 0;
+        attemptedWords = new Set();
+        gameState = 'PLAYING';
+        render();
+      };
+
+      window.handleReset = () => {
+        gameState = 'INPUT';
+        rawWords = '';
+        rawDefinitions = '';
+        error = null;
+        render();
+      };
+      
+      window.handleItemClick = (type, id) => {
+        if (correctPairs.has(id) || Array.from(correctPairs.values()).includes(id)) {
+            return;
+        }
+
+        if (type === 'word') {
+            selectedWordId = selectedWordId === id ? null : id;
+        } else if (type === 'definition' && selectedWordId) {
+            const wordItem = vocabulary.find(v => v.id === selectedWordId);
+            const isCorrect = wordItem?.id === id;
+            const hasBeenAttempted = attemptedWords.has(selectedWordId);
+            
+            const currentSelectedWordId = selectedWordId;
+            selectedWordId = null; 
+
+            if (isCorrect) {
+                correctPairs.set(currentSelectedWordId, id);
+                if (!hasBeenAttempted) {
+                    firstTryCorrect++;
+                }
+                animation = { type: 'heart', key: Date.now() };
+            } else {
+                wrongMatches++;
+                animation = { type: 'poop', key: Date.now() };
+            }
+            
+            attemptedWords.add(currentSelectedWordId);
+            setTimeout(() => {
+                animation = null;
+                render();
+            }, 2000);
+
+            if (correctPairs.size === vocabulary.length) {
+              setTimeout(() => {
+                gameState = 'WON';
+                render();
+              }, 500);
+            }
+        }
+        render();
+      };
+
+
+      // --- RENDER FUNCTIONS (Generate HTML strings) ---
+      const renderInputScreen = () => `
+        <div class="w-full max-w-2xl mx-auto p-8 bg-white rounded-xl shadow-lg">
+          <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Vocabulary Match</h1>
+          <p class="text-center text-gray-500 mb-6">Enter words on the left and matching definitions on the right. One per line.</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label for="words-textarea" class="block text-sm font-medium text-gray-700 mb-1">Words</label>
+                <textarea id="words-textarea" class="w-full h-48 p-4 border-2 border-dashed border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="vocabulary\nchallenge\nawesome\n...">${rawWords}</textarea>
+            </div>
+            <div>
+                <label for="definitions-textarea" class="block text-sm font-medium text-gray-700 mb-1">Definitions</label>
+                <textarea id="definitions-textarea" class="w-full h-48 p-4 border-2 border-dashed border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="The body of words used in a particular language.\nA call to take part in a contest or competition.\nExtremely impressive or daunting.\n...">${rawDefinitions}</textarea>
+            </div>
+          </div>
+          ${error ? `<p class="text-red-500 text-sm mt-4 text-center">${error}</p>` : ''}
+          <button onclick="handleStartGame()" class="w-full mt-4 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-all duration-300 transform hover:scale-105">
+            Start Game
+          </button>
+        </div>`;
+      
+      const renderGameScreen = () => {
+        const isWordCorrect = (wordId) => correctPairs.has(wordId);
+        const isDefinitionCorrect = (defId) => Array.from(correctPairs.values()).includes(defId);
+        
+        return `
+        <div class="w-full max-w-6xl mx-auto relative h-full flex flex-col">
+            <div class="absolute -top-16 right-0 bg-white p-3 rounded-lg shadow-md border flex gap-6 text-center z-10">
+                <div><div class="text-2xl font-bold text-green-600">${firstTryCorrect}</div><div class="text-xs text-gray-500 uppercase">First Try</div></div>
+                <div><div class="text-2xl font-bold text-red-600">${wrongMatches}</div><div class="text-xs text-gray-500 uppercase">Wrong</div></div>
+            </div>
+            <div class="flex-grow overflow-y-auto pr-4">
+                <div class="grid grid-cols-2 gap-x-24 gap-y-4">
+                    <div class="flex flex-col gap-4">
+                        ${vocabulary.map(item => `
+                            <div onclick="handleItemClick('word', '${item.id}')" class="p-4 border-2 border-dotted rounded-lg text-lg transition-all duration-200
+                            ${isWordCorrect(item.id) ? 'bg-blue-100 border-blue-400 border-solid cursor-not-allowed text-gray-500' : 
+                              selectedWordId === item.id ? 'bg-yellow-200 border-yellow-500 border-solid ring-2 ring-yellow-400' :
+                              'bg-white border-gray-400 hover:border-gray-600 hover:bg-gray-50 cursor-pointer'}">
+                                ${item.word}
+                            </div>`).join('')}
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        ${shuffledDefinitions.map(item => `
+                            <div onclick="handleItemClick('definition', '${item.id}')" class="p-4 border-2 border-dotted rounded-lg text-base transition-all duration-200
+                            ${isDefinitionCorrect(item.id) ? 'bg-blue-100 border-blue-400 border-solid cursor-not-allowed text-gray-500' :
+                              'bg-white border-gray-400 hover:border-gray-600 hover:bg-gray-50 cursor-pointer'}">
+                                ${item.definition}
+                            </div>`).join('')}
+                    </div>
+                </div>
+            </div>
+            ${animation ? `
+            <div key="${animation.key}" class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+              <div class="animate-feedback"><span class="text-9xl drop-shadow-lg">${animation.type === 'heart' ? '💖' : '💩'}</span></div>
+            </div>` : ''}
+        </div>`;
+      };
+      
+      const renderWinScreen = () => `
+        <div class="text-center p-8 bg-white rounded-xl shadow-lg">
+            <h1 class="text-6xl font-black text-red-500 animate-pulse-red">CORRECT, Good job Evie!</h1>
+            <button onclick="handleReset()" class="mt-8 py-3 px-8 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition-all duration-300 transform hover:scale-105">
+              Play Again
+            </button>
+        </div>`;
+
+      // --- MAIN RENDER FUNCTION ---
+      const render = () => {
+        // Save state before re-rendering
+        const wordsTextarea = document.getElementById('words-textarea');
+        if (wordsTextarea) rawWords = wordsTextarea.value;
+        const definitionsTextarea = document.getElementById('definitions-textarea');
+        if (definitionsTextarea) rawDefinitions = definitionsTextarea.value;
+
+        let content = '';
+        switch (gameState) {
+          case 'INPUT':   content = renderInputScreen(); break;
+          case 'PLAYING': content = `<div class="w-full h-full">${renderGameScreen()}</div>`; break;
+          case 'WON':     
+            content = `<div class="relative w-full h-full">
+                          ${renderGameScreen()}
+                          <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 rounded-xl">
+                              ${renderWinScreen()}
+                          </div>
+                       </div>`;
+            break;
+        }
+        rootElement.innerHTML = `<div class="w-full h-full">${content}</div>`;
+      };
+
+      // --- APP INITIALIZATION ---
+      render();
+    </script>
+</body>
+</html>
