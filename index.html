@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 16OCT2025 mgh -->
+<!-- version as of 30OCT2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -335,7 +335,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.1</div>
+    <div class="text-bottom-left">Maker v2.11</div>
   </div>
 
 </div>
@@ -2632,7 +2632,7 @@ const handleCombinedInput = (event) => {
         const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ', cursorPos - 2);
         const lastWord = textBeforeCursor.substring(lastSpaceIndex + 1).trim();
 
-        const match = lastWord.match(/^(\d+)([a-zA-Z]+)$/);
+        const match = lastWord.match(/^(\d+)(?![mM]{2}$)([a-zA-Z]+)$/);
         
         if (match) {
             const toothNumber = match[1];
