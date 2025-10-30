@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 10OCT2025 mgh -->
+<!-- version as of 30OCT2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -252,6 +252,68 @@ opacity: 0.4;
 
         /* **** END OF LOGO CODE **** */
 
+        /* **** style for charting CODE **** */
+        .container {
+            max-width: 850px; /* Wider to accommodate labels */
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chart-output {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            text-align: center;
+        }
+        /* SVG Styles */
+        svg {
+            border: 1px solid #eee;
+            background-color: #fcfcfc;
+            width: 100%;
+            max-width: 800px; /* Match container width for consistency */
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+        .tooth-outline {
+            fill: #e0e0e0;
+            stroke: #999;
+            stroke-width: 1;
+        }
+        .tooth-surface {
+            fill: #f0f0f0; /* Default surface color, slightly lighter */
+            stroke: #bbb;
+            stroke-width: 0.5;
+        }
+        .caries {
+            fill: red !important; /* Mark caries in red */
+        }
+        .tooth-label {
+            font-size: 7px; /* Labels for tooth numbers */
+            text-anchor: middle;
+            fill: #333;
+            font-weight: bold;
+        }
+        .arch-line {
+            stroke: #aaa;
+            stroke-width: 2;
+            fill: none;
+        }
+        .mouth-label {
+            font-size: 10px;
+            font-weight: bold;
+            fill: #555;
+            text-anchor: middle;
+        }
+        .label-line {
+            stroke: #ccc;
+            stroke-width: 1;
+            stroke-dasharray: 3 3;
+        }
+
+
 
    
     </style>
@@ -273,7 +335,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.0</div>
+    <div class="text-bottom-left">Maker v2.11</div>
   </div>
 
 </div>
@@ -291,7 +353,16 @@ opacity: 0.4;
         <button id="reset-btn" class="control-btn">Reset Values</button>
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
-    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
+    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
+
+        <div class="chart-output">
+            <h2>Caries Charting</h2> <h5>From Treatment Plan element - (duplicate in Dentrix)</h5>
+            <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+
+
+<button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
 
            <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
@@ -712,7 +783,7 @@ opacity: 0.4;
       "doNotReset": false,
       "width": "",
       "fillColor": "",
-      "content": "//DUP “dental_team(horning-do, sanderson-dt)completed extraoral&intraoral pre-procedure verification site marking odontogram, radiograph, caries performed a time out & tooth count prior to initiating procedure above. re-verification was continuous throughout the procedure.” DHAFORM205 //DUP",
+      "content": "//DUP “dental_team(horning-do, stewart-dt)completed extraoral&intraoral pre-procedure verification site marking odontogram, radiograph, caries performed a time out & tooth count prior to initiating procedure above. re-verification was continuous throughout the procedure.” DHAFORM205 //DUP",
       "internalLabel": "",
       "prefixLabel": "",
       "defaultText": "Click to edit...",
@@ -737,9 +808,6 @@ opacity: 0.4;
     }
   ]
 }
-
-
-
 
 
 
@@ -1095,7 +1163,7 @@ const COLOR_PALETTE = [
 };
    
    
-   const getBPStatus = (s, d) => { if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 80) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal'; };
+   const getBPStatus = (s, d) => { if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 85) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal'; };
         const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
         const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
         const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
@@ -1333,6 +1401,10 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
 
 // Auto-save the entire state to the browser's local storage on every change.
             saveCurrentStateToLocalStorage();
+
+// Update Charting on every change.
+		generateChart();
+
         };
 
 
@@ -1714,6 +1786,7 @@ document.addEventListener('keydown', (event) => {
    else {
        event.preventDefault();
        document.getElementById('copy-btn-top').click();
+
    }
 });
 
@@ -1972,7 +2045,7 @@ const handleCombinedInput = (event) => {
         const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ', cursorPos - 2);
         const lastWord = textBeforeCursor.substring(lastSpaceIndex + 1).trim();
 
-        const match = lastWord.match(/^(\d+)([a-zA-Z]+)$/);
+        const match = lastWord.match(/^(\d+)(?![mM]{2}$)([a-zA-Z]+)$/);
         
         if (match) {
             const toothNumber = match[1];
@@ -1981,7 +2054,7 @@ const handleCombinedInput = (event) => {
             console.log(`Auto-Correct: Detected tooth shorthand "${lastWord}"`);
 
             const correctedShorthand = `(${surfaceLetters.toUpperCase()})`;
-            const replacement = `#${toothNumber}${correctedShorthand}`;
+            const replacement = `#${toothNumber}${correctedShorthand},`;
 
             console.log(`Auto-Correct: Formatting to "${replacement}"`);
             
@@ -2138,6 +2211,318 @@ function attachEventListeners() {
     
     document.addEventListener('DOMContentLoaded', init);
 })();
+
+
+
+
+    // **** CHARTING CODE ****
+
+
+
+        const dentalChartSVG = document.getElementById('dentalChart');
+        const teethData = {}; // Stores references to SVG path elements for each tooth's surfaces
+
+        // Tooth positions (Universal Numbering System)
+        const toothPositions = {
+            // Upper Right (1-8)
+            1: { x: 50, y: 100, isUpper: true, quadrant: 1 },
+            2: { x: 100, y: 100, isUpper: true, quadrant: 1 },
+            3: { x: 150, y: 100, isUpper: true, quadrant: 1 },
+            4: { x: 200, y: 100, isUpper: true, quadrant: 1 },
+            5: { x: 250, y: 100, isUpper: true, quadrant: 1 },
+            6: { x: 300, y: 100, isUpper: true, quadrant: 1 },
+            7: { x: 350, y: 100, isUpper: true, quadrant: 1 },
+            8: { x: 400, y: 100, isUpper: true, quadrant: 1 }, // Midline between 8 and 9
+
+            // Upper Left (9-16)
+            9: { x: 450, y: 100, isUpper: true, quadrant: 2 },
+            10: { x: 500, y: 100, isUpper: true, quadrant: 2 },
+            11: { x: 550, y: 100, isUpper: true, quadrant: 2 },
+            12: { x: 600, y: 100, isUpper: true, quadrant: 2 },
+            13: { x: 650, y: 100, isUpper: true, quadrant: 2 },
+            14: { x: 700, y: 100, isUpper: true, quadrant: 2 },
+            15: { x: 750, y: 100, isUpper: true, quadrant: 2 },
+            16: { x: 800, y: 100, isUpper: true, quadrant: 2 },
+
+            // Lower Right (25-32)
+            32: { x: 50, y: 300, isUpper: false, quadrant: 4 },
+            31: { x: 100, y: 300, isUpper: false, quadrant: 4 },
+            30: { x: 150, y: 300, isUpper: false, quadrant: 4 },
+            29: { x: 200, y: 300, isUpper: false, quadrant: 4 },
+            28: { x: 250, y: 300, isUpper: false, quadrant: 4 },
+            27: { x: 300, y: 300, isUpper: false, quadrant: 4 },
+            26: { x: 350, y: 300, isUpper: false, quadrant: 4 },
+            25: { x: 400, y: 300, isUpper: false, quadrant: 4 }, // Midline between 25 and 24
+
+            // Lower Left (17-24)
+            24: { x: 450, y: 300, isUpper: false, quadrant: 3 },
+            23: { x: 500, y: 300, isUpper: false, quadrant: 3 },
+            22: { x: 550, y: 300, isUpper: false, quadrant: 3 },
+            21: { x: 600, y: 300, isUpper: false, quadrant: 3 },
+            20: { x: 650, y: 300, isUpper: false, quadrant: 3 },
+            19: { x: 700, y: 300, isUpper: false, quadrant: 3 },
+            18: { x: 750, y: 300, isUpper: false, quadrant: 3 },
+            17: { x: 800, y: 300, isUpper: false, quadrant: 3 },
+        };
+
+        // --- Drawing the initial blank chart ---
+        function createTooth(toothNum, x, y, size = 18, isUpper = true, quadrant) {
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group.setAttribute("id", `tooth-group-${toothNum}`);
+
+            // Outer circle (overall tooth shape)
+            const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            outerCircle.setAttribute("cx", x);
+            outerCircle.setAttribute("cy", y);
+            outerCircle.setAttribute("r", size);
+            outerCircle.setAttribute("class", "tooth-outline");
+            group.appendChild(outerCircle);
+
+            teethData[toothNum] = {}; // Initialize store for this tooth's surfaces
+
+            const smallSize = size * 0.7; // Size of individual surface rects
+            const offset = size * 0.6;    // Offset from center for surface rects
+
+            // Determine if on right side (1 or 4) or left side (2 or 3) for M/D orientation
+            const isRightQuadrant = (quadrant === 1 || quadrant === 4);
+
+            // FLIPPED SIGNS FOR VISUAL 180 DEGREE ROTATION (relative to previous version)
+            const mesialXOffset = isRightQuadrant ? offset : -offset;
+            const distalXOffset = isRightQuadrant ? -offset : offset;
+
+            const buccalFacialYOffset = isUpper ? -offset : offset;
+            const lingualYOffset = isUpper ? offset : -offset;
+
+
+
+            // M (Mesial)
+            const M_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            M_path.setAttribute("x", x + mesialXOffset - smallSize / 2);
+            M_path.setAttribute("y", y - smallSize / 2);
+            M_path.setAttribute("width", smallSize);
+            M_path.setAttribute("height", smallSize);
+            M_path.setAttribute("class", "tooth-surface");
+            M_path.setAttribute("id", `tooth-${toothNum}-M`);
+            M_path.setAttribute("data-surface", "M");
+            group.appendChild(M_path);
+            teethData[toothNum]['M'] = M_path;
+
+            // D (Distal)
+            const D_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            D_path.setAttribute("x", x + distalXOffset - smallSize / 2);
+            D_path.setAttribute("y", y - smallSize / 2);
+            D_path.setAttribute("width", smallSize);
+            D_path.setAttribute("height", smallSize);
+            D_path.setAttribute("class", "tooth-surface");
+            D_path.setAttribute("id", `tooth-${toothNum}-D`);
+            D_path.setAttribute("data-surface", "D");
+            group.appendChild(D_path);
+            teethData[toothNum]['D'] = D_path;
+
+            // B/F (Buccal/Facial - outer side, towards cheek/lip)
+            const BF_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            BF_path.setAttribute("x", x - smallSize / 2);
+            BF_path.setAttribute("y", y + buccalFacialYOffset - smallSize / 2);
+            BF_path.setAttribute("width", smallSize);
+            BF_path.setAttribute("height", smallSize);
+            BF_path.setAttribute("class", "tooth-surface");
+            BF_path.setAttribute("id", `tooth-${toothNum}-BF`);
+            BF_path.setAttribute("data-surface", "B"); // Store as B, also acts as F
+            group.appendChild(BF_path);
+            teethData[toothNum]['B'] = BF_path;
+            teethData[toothNum]['F'] = BF_path;
+
+            // L (Lingual - inner side, towards tongue)
+            const L_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            L_path.setAttribute("x", x - smallSize / 2);
+            L_path.setAttribute("y", y + lingualYOffset - smallSize / 2);
+            L_path.setAttribute("width", smallSize);
+            L_path.setAttribute("height", smallSize);
+            L_path.setAttribute("class", "tooth-surface");
+            L_path.setAttribute("id", `tooth-${toothNum}-L`);
+            L_path.setAttribute("data-surface", "L");
+            group.appendChild(L_path);
+            teethData[toothNum]['L'] = L_path;
+
+
+			// O/I (Occlusal/Incisal - center)
+            const OI_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            OI_path.setAttribute("x", x - smallSize / 2);
+            OI_path.setAttribute("y", y - smallSize / 2);
+            OI_path.setAttribute("width", smallSize);
+            OI_path.setAttribute("height", smallSize);
+            OI_path.setAttribute("class", "tooth-surface");
+            OI_path.setAttribute("id", `tooth-${toothNum}-O`);
+            OI_path.setAttribute("data-surface", "O");
+            group.appendChild(OI_path);
+            teethData[toothNum]['O'] = OI_path;
+            teethData[toothNum]['I'] = OI_path; // Incisal for anterior teeth shares this path
+			
+
+            // Tooth number label
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("x", x);
+            label.setAttribute("y", isUpper ? y + size + 8 : y - size - 4);
+            label.setAttribute("class", "tooth-label");
+            label.textContent = toothNum;
+            group.appendChild(label);
+
+            return group;
+        }
+
+        function initializeChart() {
+            dentalChartSVG.innerHTML = ''; // Clear previous chart
+
+            // --- Mouth Labels and Lines ---
+            // Facial Label (Upper)
+            dentalChartSVG.appendChild(createLabel("Facial", 425, 30, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 40, 780, 40, "label-line"));
+
+            // Lingual Label (Upper)
+            dentalChartSVG.appendChild(createLabel("Lingual", 425, 170, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 180, 780, 180, "label-line"));
+
+
+            // Lingual Label (Lower)
+            dentalChartSVG.appendChild(createLabel("Lingual", 425, 230, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 240, 780, 240, "label-line"));
+
+            // Facial Label (Lower)
+            dentalChartSVG.appendChild(createLabel("Facial", 425, 370, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 380, 780, 380, "label-line"));
+
+
+            // --- Arch Lines (simplified path) ---
+            const upperArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            upperArchLine.setAttribute("d", "M 20 120 C 200 60, 600 60, 830 120");
+            upperArchLine.setAttribute("class", "arch-line");
+            dentalChartSVG.appendChild(upperArchLine);
+
+            const lowerArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            lowerArchLine.setAttribute("d", "M 20 280 C 200 340, 600 340, 830 280");
+            lowerArchLine.setAttribute("class", "arch-line");
+            dentalChartSVG.appendChild(lowerArchLine);
+
+            // --- Tooth Elements ---
+            // Upper teeth (1-16)
+            for (let i = 1; i <= 16; i++) {
+                const pos = toothPositions[i];
+                if (pos) {
+                    dentalChartSVG.appendChild(createTooth(i, pos.x, pos.y, 18, pos.isUpper, pos.quadrant));
+                }
+            }
+
+            // Lower teeth (17-32) - drawing 32 down to 17 for left-to-right display
+            for (let i = 32; i >= 17; i--) {
+                const pos = toothPositions[i];
+                if (pos) {
+                    dentalChartSVG.appendChild(createTooth(i, pos.x, pos.y, 18, pos.isUpper, pos.quadrant));
+                }
+            }
+
+            // Reset all surfaces to default color before marking
+            document.querySelectorAll('.tooth-surface').forEach(path => {
+                path.classList.remove('caries');
+            });
+        }
+
+        function createLabel(text, x, y, className) {
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("x", x);
+            label.setAttribute("y", y);
+            label.setAttribute("class", className);
+            label.textContent = text;
+            return label;
+        }
+
+        function createLine(x1, y1, x2, y2, className) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("class", className);
+            return line;
+        }
+
+
+        // --- Parsing and Charting Logic ---
+        const OPERATIVE_KEYWORD = "CHARTING OF TREATMENT PLAN IN DENTRIX";
+
+        function parsePrompt(fullPrompt) {
+            let relevantPrompt = fullPrompt.trim();
+            const keywordIndex = relevantPrompt.toUpperCase().indexOf(OPERATIVE_KEYWORD);
+
+            if (keywordIndex !== -1) {
+                // Take text after the keyword
+                relevantPrompt = relevantPrompt.substring(keywordIndex + OPERATIVE_KEYWORD.length).trim();
+            }
+            // If keyword not found, the fullPrompt (trimmed) is used.
+
+            const cariesData = [];
+            const regex = /(\d+)\s*\(([^)]+)\)/g;
+            let match;
+            while ((match = regex.exec(relevantPrompt)) !== null) { // Use relevantPrompt here
+                const toothNum = parseInt(match[1]);
+                const surfaceStr = match[2].toUpperCase();
+
+                const surfaces = new Set();
+
+                // First, check for common compound abbreviations
+                if (surfaceStr.includes('MOD')) {
+                    surfaces.add('M'); surfaces.add('O'); surfaces.add('D');
+                } else if (surfaceStr.includes('MO')) {
+                    surfaces.add('M'); surfaces.add('O');
+                } else if (surfaceStr.includes('DO')) {
+                    surfaces.add('D'); surfaces.add('O');
+                } else if (surfaceStr.includes('MI')) {
+                    surfaces.add('M'); surfaces.add('I');
+                } else if (surfaceStr.includes('DI')) {
+                    surfaces.add('D'); surfaces.add('I');
+                }
+
+                // Then, iterate through the string to catch individual surfaces,
+                // including those that might be part of or combined with compounds (e.g., MODFL)
+                for (let i = 0; i < surfaceStr.length; i++) {
+                    const s = surfaceStr[i];
+                    if (['M', 'O', 'D', 'I', 'B', 'F', 'L'].includes(s)) {
+                        surfaces.add(s);
+                    }
+                }
+                cariesData.push({ toothNum, surfaces: Array.from(surfaces) });
+            }
+            return cariesData;
+        }
+
+        function markCaries(cariesInfo) {
+            cariesInfo.forEach(item => {
+                const toothNum = item.toothNum;
+                item.surfaces.forEach(surface => {
+                    const surfacePath = teethData[toothNum] && teethData[toothNum][surface];
+                    if (surfacePath) {
+                        surfacePath.classList.add('caries');
+                    } else {
+                        console.warn(`Could not find SVG element for tooth ${toothNum}, surface ${surface}. This might be an invalid surface or a drawing error.`);
+                        const centralSurface = teethData[toothNum] && (teethData[toothNum]['O'] || teethData[toothNum]['I']);
+                        if (centralSurface) {
+                            centralSurface.classList.add('caries');
+                        }
+                    }
+                });
+            });
+        }
+
+        function generateChart() {
+            initializeChart();
+            const prompt = document.getElementById('live-output').value;
+            const cariesToMark = parsePrompt(prompt);
+            markCaries(cariesToMark);
+        }
+
+
+
+
+
 </script>
 
 
