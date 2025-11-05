@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 30OCT2025 mgh -->
+<!-- version as of 05NOV2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1470,7 +1470,10 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
    const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; 
 																													  
 // this is where the textbox editor focus gets set
-textboxEditorTextarea.focus();}; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
+textboxEditorTextarea.focus();
+if (textarea.value === activeElementForEditor.dataset.defaultText) { textboxEditorTextarea.select();};																									  
+																													  
+																													  }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
 
 
 
