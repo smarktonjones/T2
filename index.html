@@ -388,10 +388,12 @@ opacity: 0.4;
 
     <!-- NEW container for action buttons that appear on text selection -->
     <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
-        <b>Send Selected Text To:</b><br>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 3">Op Class 3</button>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 2">Op Class 2</button>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 1">Op Class 1</button>
+        <b>Send Selected Text To Treatment Plan Block:</b><br>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 3">Op Class 3</button>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 2">Op Class 2</button>
+		<!-- remove the hardcoded operative -->
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 3">OMS Class 3</button>
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 2">OMS Class 2</button>
     </div>
 
     <div id="textbox-editor-snippets">
@@ -2017,7 +2019,7 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             }
 
             const state = getElementState(txPlanElement);
-            const key = `Operative-${targetClass}`; // Hardcoded to "Operative" row
+            const key = `${targetClass}`; // removed Hardcoded to "Operative" row with `Operative-${targetClass}`
 
             const existingEntry = state.txData[key] || { text: '', priority: 0 };
             const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
@@ -2043,11 +2045,11 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             const selection = window.getSelection();
             const isTextareaFocused = document.activeElement === textboxEditorTextarea;
             
-            // Show the action bar only if the textarea is focused and has selected text
+            // Show the action bar only if the textarea is focused and has selected text - 06NOV change the else from 'none' to 'block' to keep visible
             if (isTextareaFocused && selection.toString().trim().length > 0) {
                 selectionActionsDiv.style.display = 'block';
             } else {
-                selectionActionsDiv.style.display = 'none';
+                selectionActionsDiv.style.display = 'block';
             }
         });
         
