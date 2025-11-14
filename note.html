@@ -335,7 +335,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.11</div>
+    <div class="text-bottom-left">Maker v2.12</div>
   </div>
 
 </div>
@@ -362,7 +362,7 @@ opacity: 0.4;
 
 
 
-<button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
+<center><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></center></div>
     <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
 
            <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
@@ -388,10 +388,15 @@ opacity: 0.4;
 
     <!-- NEW container for action buttons that appear on text selection -->
     <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
-        <b>Send Selected Text To:</b><br>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 3">Op Class 3</button>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 2">Op Class 2</button>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 1">Op Class 1</button>
+        <b>Send Selected Text To Treatment Plan Block:</b><br>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 3">Oper Class 3</button>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 2">Oper Class 2</button> -
+		<!-- remove the hardcoded operative -->
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 3">OMS Class 3</button>
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 2">OMS Class 2</button> -
+		<button class="control-btn selection-action-btn" data-target-class="Endo-CLASS 3">Endo Class 3</button> -
+		<button class="control-btn selection-action-btn" data-target-class="Pros-CLASS 3">Pros Class 3</button>
+		<button class="control-btn selection-action-btn" data-target-class="Pros-CLASS 2">Pros Class 2</button>
     </div>
 
     <div id="textbox-editor-snippets">
@@ -476,7 +481,7 @@ opacity: 0.4;
       "content": "----------------CLINICAL NOTE-------------------",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     }
   ],
@@ -495,7 +500,7 @@ opacity: 0.4;
       "content": "S: PRESENTING CONCERN: ",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -512,7 +517,7 @@ opacity: 0.4;
       "content": "None. ",
       "internalLabel": "CC",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "CONSTANT THROBBING PAIN FOR X DAYS.  POINTS TO X."
       ]
@@ -594,7 +599,7 @@ opacity: 0.4;
       "content": "P:  ",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -639,10 +644,10 @@ opacity: 0.4;
       "doNotReset": false,
       "width": "",
       "fillColor": "#f9f0ff",
-      "content": " Isolite. ",
+      "content": "Isolite. ",
       "internalLabel": "Isolation",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "Isolite. ",
       "dropdownOptions": [
         " Isolite. ",
         " Rubber Dam. ",
@@ -661,10 +666,10 @@ opacity: 0.4;
       "doNotReset": false,
       "width": "",
       "fillColor": "#efdbff",
-      "content": "Click to edit...",
+      "content": "",
       "internalLabel": "Materials",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "Excavate. Etch. Optibond Universal. Revolution. A2B Filtek Supreme. Occlusion. Floss. Finish. Polish. F-Varnish.",
         "Excavate. Valiant PhD. Occlusion. Floss. F-Varnish.",
@@ -691,7 +696,7 @@ opacity: 0.4;
       "content": "**Next Visit**",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -735,7 +740,7 @@ opacity: 0.4;
       "content": "----------------------------------------------------",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -767,7 +772,7 @@ opacity: 0.4;
       "content": "PT IDX2. MED REC. HQR. LEARNING ASSESS. PT INFORMED, VERBAL CONSENT & POST-OP INST.",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "PT IDX2. MED REC. HQR. LEARNING ASSESS. PT INFORMED, VERBAL CONSENT & POST-OP INST."
       ]
@@ -786,7 +791,7 @@ opacity: 0.4;
       "content": "//DUP “dental_team(horning-do, stewart-dt)completed extraoral&intraoral pre-procedure verification site marking odontogram, radiograph, caries performed a time out & tooth count prior to initiating procedure above. re-verification was continuous throughout the procedure.” DHAFORM205 //DUP",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -803,11 +808,13 @@ opacity: 0.4;
       "content": "M G HORNING DDS\n1912969445\n  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /    ",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     }
   ]
 }
+
+
 
 
 
@@ -1219,7 +1226,7 @@ const COLOR_PALETTE = [
 
 
 if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
-            if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || "Click to edit..."; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
+            if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || ""; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
             else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
             else if (type === 'bloodpressure') { draggable.dataset.discussSystolic = data.discussSystolic || '130'; draggable.dataset.discussDiastolic = data.discussDiastolic || '80'; draggable.dataset.checkboxSystolic = data.checkboxSystolic || '140'; draggable.dataset.checkboxDiastolic = data.checkboxDiastolic || '90'; }   
    else if (type === 'anesthetic') { draggable.dataset.anestheticTypes = JSON.stringify(data.anestheticTypes || [ { name: '2% Lidocaine', mg: 34, epi: 17 }, { name: '4% Septocaine', mg: 68, epi: 17 }, { name: '0.5% Marcaine', mg: 9, epi: 9 } ]); draggable.dataset.anestheticValues = JSON.stringify(data.anestheticValues || {}); draggable.dataset.includeTopical = data.includeTopical === false ? 'false' : 'true';}
@@ -1429,7 +1436,7 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             }
 
             const state = getElementState(txPlanElement);
-            const key = `Operative-${targetClass}`; // Hardcoded to "Operative" row
+            const key = `${targetClass}`; // removed Hardcoded to "Operative" row with `Operative-${targetClass}`
 
             const existingEntry = state.txData[key] || { text: '', priority: 0 };
             const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
@@ -1455,11 +1462,11 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             const selection = window.getSelection();
             const isTextareaFocused = document.activeElement === textboxEditorTextarea;
             
-            // Show the action bar only if the textarea is focused and has selected text
+            // Show the action bar only if the textarea is focused and has selected text - 06NOV change the else from 'none' to 'block' to keep visible
             if (isTextareaFocused && selection.toString().trim().length > 0) {
                 selectionActionsDiv.style.display = 'block';
             } else {
-                selectionActionsDiv.style.display = 'none';
+                selectionActionsDiv.style.display = 'block';
             }
         });
         
@@ -1468,11 +1475,10 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
    
    
    const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; 
-																													  
 // this is where the textbox editor focus gets set
-textboxEditorTextarea.focus();
-if (textarea.value === activeElementForEditor.dataset.defaultText) { textboxEditorTextarea.select();};																									  
-																													  
+   textboxEditorTextarea.focus();
+// this is where the default text gets highlighted for easier deletion - if there is a default text defined
+   if (textarea.value === activeElementForEditor.dataset.defaultText) { textboxEditorTextarea.select();};
 																													  }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
 
 
@@ -1994,7 +2000,11 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 
 
 <center><br><h6>-NAVMED 6600/13 JSON default-<br>
-Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a></h6></center>
+Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
+<br><br>links<br>
+<a href="https://www.perio.org/wp-content/uploads/2019/08/Staging-and-Grading-Periodontitis.pdf" target="_blank">Perio Staging & Grading</a><br>
+<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9826047/table/iej13816-tbl-0003/" target="_blank">Endo Pulpal & Periradicular Diagnoses</a>
+</h6></center>
 
 <script>
 // ===================================================================================
