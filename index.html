@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 05NOV2025 mgh -->
+<!-- version as of 21NOV2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,11 +19,14 @@
  color: var(--text-color); margin: 0; padding: 20px; }
         h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
 h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h4 { text-align: center; margin-top: 0; color: var(--text-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
 h5 { text-align: center; margin-top: 0; font-weight: light;}    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
         .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); }
-        .add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
+		.section-extra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); background-color: black;}
+        .section-extra-container { background-image: linear-gradient(to bottom, #f9f9f9, #f0f2f5); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+		.add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
         
         .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
         .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  }
@@ -345,18 +348,22 @@ opacity: 0.4;
     <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
+
     <div class="controls">
-        <button id="import-btn" class="control-btn">Import JSON File...</button>
+	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button>
+		<button id="import-btn" class="control-btn">Import JSON File...</button>
         <button id="export-btn" class="control-btn">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values</button>
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
-    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
+	<BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
+<div id="extra-section" class="section-extra-container">
+    <div class="output-container" style="margin-top: 20px;"><h4>Live Note Preview</h4><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
 
         <div class="chart-output">
-            <h2>Caries Charting</h2> <h5>From Treatment Plan element - (duplicate in Dentrix)</h5>
+            <h4>Caries Charting Check</h4> <h5>Derived from Treatment Plan element - (to duplicate in Dentrix treatment plan)</h5>
             <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
 
@@ -2591,7 +2598,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 <a href="https://www.perio.org/wp-content/uploads/2019/08/Staging-and-Grading-Periodontitis.pdf" target="_blank">Perio Staging & Grading</a><br>
 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9826047/table/iej13816-tbl-0003/" target="_blank">Endo Pulpal & Periradicular Diagnoses</a>
 </h6></center>
-
+</div>
 <script>
 // ===================================================================================
 //
