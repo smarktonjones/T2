@@ -1881,6 +1881,7 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
                 draggable.innerHTML = `<span class="tx-plan-summary"></span>`;
                 updateTxPlanSummary(draggable);
                 draggable.addEventListener('click', () => openTxPlanEditor(draggable));
+	
             }
             // **** END OF NEW CODE ****
    
@@ -2191,6 +2192,7 @@ document.getElementById('textbox-editor-replace-btn').click(); });
             });
 
             txPlanModal.style.display = 'block';
+	
         };
 
         // **** END OF REPLACEMENT CODE ****
@@ -2625,7 +2627,9 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
     // ============================= CONFIGURATION ===================================
     //  !!! IMPORTANT !!! 
     //  Change 'myNotesTextbox' to the actual ID of your textbox element.
-    const targetTextboxId = 'textbox-editor-textarea'; 
+
+	const targetTextboxId = 'textbox-editor-textarea';
+	const targetTextboxId2 = 'tx-plan-table'; 
     // ===============================================================================
 
 
@@ -2743,10 +2747,25 @@ function attachEventListeners() {
             console.error(`Dental Suggester Error: Textbox with ID "${targetTextboxId}" not found.`);
             return;
         }
+
         injectStyles();
         createSuggestionsContainer();
         attachEventListeners();
         console.log(`Dental Suggester initialized successfully on #${targetTextboxId}.`);
+		init2();
+    }
+	//this then gets the autocorrect in the tx-plan module
+	function init2() {
+        textInput = document.getElementById(targetTextboxId2);
+        if (!textInput) {
+            console.error(`Dental Suggester Error: Textbox with ID "${targetTextboxId2}" not found.`);
+            return;
+        }
+
+        injectStyles();
+        createSuggestionsContainer();
+        attachEventListeners();
+        console.log(`Dental Suggester initialized successfully on #${targetTextboxId2}.`);
     }
 
     function injectStyles() {
