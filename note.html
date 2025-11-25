@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 05NOV2025 mgh -->
+<!-- version as of 25NOV2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,11 +19,14 @@
  color: var(--text-color); margin: 0; padding: 20px; }
         h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
 h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h4 { text-align: center; margin-top: 0; color: var(--text-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
 h5 { text-align: center; margin-top: 0; font-weight: light;}    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
         .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); }
-        .add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
+		.section-extra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); background-color: black;  }
+        .section-extra-container { margin: auto; width: 50%; background-image: linear-gradient(to bottom, #f9f9f9, #f0f2f5); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column;  transform: scale(0.75); opacity: 0.8;}
+		.add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
         
         .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
         .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  }
@@ -335,34 +338,29 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.12</div>
+    <div class="text-bottom-left">Maker v2.13</div>
   </div>
 
 </div>
 
     <h1>ORAL EXAM</h1>
 
-    <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
+    <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
+
     <div class="controls">
-        <button id="import-btn" class="control-btn">Import JSON File...</button>
+	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
+		<button id="import-btn" class="control-btn">Import JSON File...</button>
         <button id="export-btn" class="control-btn">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values</button>
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
-    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
-
-        <div class="chart-output">
-            <h2>Caries Charting</h2> <h5>From Treatment Plan element - (duplicate in Dentrix)</h5>
-            <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
 
 
 
-<center><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></center></div>
     <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
 
            <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
@@ -409,7 +407,7 @@ opacity: 0.4;
 </div>
 <!-- **** END OF MODIFIED HTML **** -->
     
-    </div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (Shift+Enter)</button></div></div></div>
+    </div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (<i>shortcut: Shift + Enter</i>)</button></div></div></div>
 
         <!-- **** START OF NEW CODE for tx plan**** -->
     <div id="tx-plan-modal" class="modal">
@@ -426,6 +424,29 @@ opacity: 0.4;
         </div>
     </div>
     <!-- **** END OF NEW CODE **** -->
+<div id="extra-section" class="section-extra-container">
+    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
+
+        <div class="chart-output">
+            <h4>Caries Charting Check</h4> <h5>Derived from Treatment Plan element - (to duplicate in Dentrix treatment plan)</h5>
+            <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+
+
+<center><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></center></div>
+</div>
+<div>
+
+<center><h6>-NAVMED 6600/13 JSON default-<br>
+Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
+<br><br>links<br>
+<a href="https://www.perio.org/wp-content/uploads/2019/08/Staging-and-Grading-Periodontitis.pdf" target="_blank">Perio Staging & Grading</a><br>
+<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9826047/table/iej13816-tbl-0003/" target="_blank">Endo Pulpal & Periradicular Diagnoses</a>
+</h6></center>
+</div>
+
+
 
 <script type="application/json" id="default-json-data">
 
@@ -1271,6 +1292,7 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
                 draggable.innerHTML = `<span class="tx-plan-summary"></span>`;
                 updateTxPlanSummary(draggable);
                 draggable.addEventListener('click', () => openTxPlanEditor(draggable));
+	
             }
             // **** END OF NEW CODE ****
    
@@ -1581,6 +1603,7 @@ document.getElementById('textbox-editor-replace-btn').click(); });
             });
 
             txPlanModal.style.display = 'block';
+	
         };
 
         // **** END OF REPLACEMENT CODE ****
@@ -1998,14 +2021,6 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 
 
 
-
-<center><br><h6>-NAVMED 6600/13 JSON default-<br>
-Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
-<br><br>links<br>
-<a href="https://www.perio.org/wp-content/uploads/2019/08/Staging-and-Grading-Periodontitis.pdf" target="_blank">Perio Staging & Grading</a><br>
-<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9826047/table/iej13816-tbl-0003/" target="_blank">Endo Pulpal & Periradicular Diagnoses</a>
-</h6></center>
-
 <script>
 // ===================================================================================
 //
@@ -2023,7 +2038,9 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
     // ============================= CONFIGURATION ===================================
     //  !!! IMPORTANT !!! 
     //  Change 'myNotesTextbox' to the actual ID of your textbox element.
-    const targetTextboxId = 'textbox-editor-textarea'; 
+
+	const targetTextboxId = 'textbox-editor-textarea';
+	const targetTextboxId2 = 'tx-plan-table'; 
     // ===============================================================================
 
 
@@ -2061,7 +2078,8 @@ const handleCombinedInput = (event) => {
         const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ', cursorPos - 2);
         const lastWord = textBeforeCursor.substring(lastSpaceIndex + 1).trim();
 
-        const match = lastWord.match(/^(\d+)(?![mM]{2}$)([a-zA-Z]+)$/);
+		 // --- auto corrects if starts with # or number then dash or number then letter but not mm for millimeter ---
+        const match = lastWord.match(/^#?(?!.*\)$)(\d+)-?\(?(?![mM]{2}\)?$)([a-zA-Z]+)\)?$/);
         
         if (match) {
             const toothNumber = match[1];
@@ -2140,10 +2158,25 @@ function attachEventListeners() {
             console.error(`Dental Suggester Error: Textbox with ID "${targetTextboxId}" not found.`);
             return;
         }
+
         injectStyles();
         createSuggestionsContainer();
         attachEventListeners();
         console.log(`Dental Suggester initialized successfully on #${targetTextboxId}.`);
+		init2();
+    }
+	//this then gets the autocorrect in the tx-plan module
+	function init2() {
+        textInput = document.getElementById(targetTextboxId2);
+        if (!textInput) {
+            console.error(`Dental Suggester Error: Textbox with ID "${targetTextboxId2}" not found.`);
+            return;
+        }
+
+        injectStyles();
+        createSuggestionsContainer();
+        attachEventListeners();
+        console.log(`Dental Suggester initialized successfully on #${targetTextboxId2}.`);
     }
 
     function injectStyles() {
