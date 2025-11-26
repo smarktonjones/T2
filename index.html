@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 25NOV2025 mgh -->
+<!-- version as of 26NOV2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -29,7 +29,27 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
 		.add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
         
         .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
-        .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  }
+        .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  
+        
+
+
+  /* --- START ANIMATION CODE --- */
+
+  transition: box-shadow 0.5s ease-out;
+
+  /* 2. Nested hover state */
+  &:hover {
+    
+    animation: breathing-glow 2s infinite ease-in-out;
+    
+    /* Optional: keeps it on top of other elements while glowing */
+    z-index: 100;
+
+  /* --- END ANIMATION CODE --- */
+}
+        
+        
+        }
         body.layout-locked .draggable-element {cursor: default;}
 
         /* Styles for Hidden Elements and highlighted */
@@ -317,6 +337,24 @@ opacity: 0.4;
         }
 
 
+
+/* pulse with Base Style of the Object */
+
+@keyframes breathing-glow {
+  0% {
+    /* Soft, close shadow */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);  /*rgba(0, 0, 0, 0.1); */
+    /* If you want a colored glow, change rgba(0,0,0,0.1) to a color like rgba(0, 150, 255, 0.3) */
+  }
+  50% {
+    /* WIDER spread (6px) and SOFTER blur (15px) */
+    box-shadow: 0 0 15px 6px rgba(0, 191, 255, 0.5);
+  }
+  100% {
+    /* Back to start */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);
+  }
+}
 
    
     </style>
