@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 26NOV2025 mgh -->
+<!-- version as of 02DEC2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -86,7 +86,7 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
 .bp-crisis { border-color: #8b0000 !important; animation: pulse 1.5s infinite; }
 /* **** END OF MODIFIED CSS **** */
    
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--bp-crisis); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--danger-color); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
         .psr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-family: monospace; }
         .psr-sextant { text-align: center; } .psr-sextant label { font-size: 0.8em; color: #555; display: block; }
         .psr-grid input[type="text"] { width: 100%; box-sizing: border-box; text-align: center; }
@@ -376,7 +376,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.13</div>
+    <div class="text-bottom-left">Maker v2.15</div>
   </div>
 
 </div>
@@ -1737,9 +1737,14 @@ const COLOR_PALETTE = [
 
             // --- Complaint/Diagnosis Check (runs first) ---
             const complaintSuggestion = checkComplaintDiagnosis(lines);
+			const FindTheCCElement = document.querySelector('[data-original-id="3-1"]'); //the CC element
             if (complaintSuggestion) {
                 suggestions.push(complaintSuggestion); // Use push, we will sort later if needed.
-            }
+				//add a style to the missed suggestion Element
+				FindTheCCElement.classList.add('bp-crisis');
+            } else {
+				FindTheCCElement.classList.remove('bp-crisis');
+				}
 
             // --- Caries Risk Evaluation and Cross-Check (NEW) ---
             const recommendedCariesRisk = evaluateCariesRisk(lines);
@@ -2252,6 +2257,7 @@ document.getElementById('textbox-editor-replace-btn').click(); });
             activeElementForEditor.dataset.txData = JSON.stringify(newData);
             updateTxPlanSummary(activeElementForEditor);
             updateLiveOutput();
+
             txPlanModal.style.display = 'none';
         };
 
@@ -2281,7 +2287,16 @@ document.getElementById('textbox-editor-replace-btn').click(); });
 
    
 
-document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; };
+document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; 
+
+//check the cc, etc with every Save
+const noteText = liveOutput.value;
+evaluateNote(noteText);
+
+
+
+
+};
 
 
 
