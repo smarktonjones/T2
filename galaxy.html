@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>3D GPU Galaxy Simulator – With Audio-Modulated Gravity</title>
+<style>
+    body { margin:0; overflow:hidden; background:#000; font-family:Arial, sans-serif; }
+    #gui {
+        position:absolute; top:10px; left:50px; z-index:100;
+        background:rgba(0,0,0,0.7); padding:15px; border-radius:8px; color:#fff;
+        user-select:none;
+    }
+    #gui label { display:block; margin:8px 0; }
+    #gui input, #gui select, #gui button { width:100%; padding:6px; margin-top:4px; box-sizing:border-box; }
+    #gui button { background:#0088ff; color:white; border:none; padding:10px; cursor:pointer; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<button id="toggleGui" style="position:absolute; top:10px; left:10px; z-index:101; background:rgba(0,0,0,0.7); color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Hide</button>
+
+<div id="gui">
+    <label>Particles <input type="number" id="num" value="200000" min="1000" max="300000" step="10000"></label>
+    <label>Base Gravity <input type="number" id="grav" value="2" step="0.01"></label>
+    <label>Velocity   <input type="number" id="vel" value="3" step="1"></label>
+    <label>Size       <input type="number" id="size" value="3" step="0.1"></label>
+    <label>Disk Radius<input type="number" id="radius" value="320" step="20"></label>
+    <label>Thickness  <input type="number" id="thick" value="14" step="1"></label>
+    <label>Sim Speed  <input type="number" id="speed" value="20" step="5"></label>
+    <label>Reset Radius (0=off) <input type="number" id="resetR" value="10000" step="50"></label>
+    <label>Num Central Attractors <input type="number" id="numAttract" value="1" min="1" step="1"></label>
+    <label>Attractor Distance <input type="number" id="attractDist" value="100" step="10"></label>
+    <label>Audio Strength <input type="number" id="audioS" value="300" step="0.1"></label>
+    <label>Sample Interval (ms) <input type="number" id="sampleInt" value="50" step="10" min="10"></label>
+    <label>Audio Effect <select id="audioMode"><option value="multiply">Multiply</option><option value="add">Add</option></select></label>
+    <button id="startAudio">Start Audio Capture</button>
+    <button id="restart">Restart Simulation</button>
+    <button id="fullScreen">Full Screen</button>
+</div>
+
+<!-- Use the sources you provided for compatibility -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<!-- All our code runs only AFTER both scripts are loaded -->
+<script>
+// Wait for the page (and the two scripts above) to be fully loaded
+window.addEventListener('load', function() {
+
+    // ------------------------------------------------------------------
+    // Scene setup
+    // ------------------------------------------------------------------
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 3000);
+    camera.position.set(0, 180, 700);
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+
+    // ------------------------------------------------------------------
+    // Glow texture
+    // ------------------------------------------------------------------
+    function glowTexture() {
+        const c = document.createElement('canvas');
+        c.width = c.height = 64;
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(32,32,0,32,32,32);
+        g.addColorStop(0,   '#fff');
+        g.addColorStop(0.4, '#fff');
+        g.addColorStop(1,   '#0000');
+        ctx.fillStyle = g;
+        ctx.fillRect(0,0,64,64);
+        return new THREE.CanvasTexture(c);
+    }
+    const tex = glowTexture();
+
+    // ------------------------------------------------------------------
+    // Particle system
+    // ------------------------------------------------------------------
+    let points, geometry, material;
+    let positions, velocities, colorArray;
+    let num; // Store num globally for simulate
+    let attractorPositions = []; // Array of [x,y,z] for attractors
+
+    function initParticle(i) {
+        const G     = +document.getElementById('grav').value;
+        const velM  = +document.getElementById('vel').value;
+        const R     = +document.getElementById('radius').value;
+        const thick = +document.getElementById('thick').value;
+
+        // Choose random attractor
+        const attractIdx = Math.floor(Math.random() * attractorPositions.length);
+        const attract = attractorPositions[attractIdx];
+
+        const phi = Math.random() * Math.PI * 2;
+        const r   = Math.sqrt(Math.random()) * R;
+        const relX = r * Math.cos(phi);
+        const relY = r * Math.sin(phi);
+        const relZ = (Math.random() - 0.5) * thick;
+
+        positions[i*3]   = attract[0] + relX;
+        positions[i*3+1] = attract[1] + relY;
+        positions[i*3+2] = attract[2] + relZ;
+
+        const dist = r; // Since relative to attractor
+        const v0   = Math.sqrt(G / dist) * velM;
+
+        velocities[i*3]   = -v0 * Math.sin(phi) * (0.9 + Math.random()*0.2);
+        velocities[i*3+1] =  v0 * Math.cos(phi) * (0.9 + Math.random()*0.2);
+        velocities[i*3+2] = (Math.random()-0.5)*0.02;
+
+        const hue = Math.random()*0.15;
+        colorArray[i*3]   = 1.0;
+        colorArray[i*3+1] = 0.9 - hue;
+        colorArray[i*3+2] = 0.7 - hue*1.5;
+    }
+
+    function initAttractors() {
+        const numAttract = +document.getElementById('numAttract').value;
+        const attractDist = +document.getElementById('attractDist').value;
+        attractorPositions = [];
+
+        if (numAttract === 1) {
+            attractorPositions.push([0, 0, 0]);
+        } else {
+            const offset = (numAttract - 1) * attractDist / 2;
+            for (let i = 0; i < numAttract; i++) {
+                const x = i * attractDist - offset;
+                attractorPositions.push([x, 0, 0]); // Along x-axis, centered
+            }
+        }
+    }
+
+    function init() {
+        num   = +document.getElementById('num').value;
+        const size  = +document.getElementById('size').value;
+
+        initAttractors();
+
+        if (points) scene.remove(points);
+        if (geometry) geometry.dispose();
+        if (material) material.dispose();
+
+        positions  = new Float32Array(num * 3);
+        velocities = new Float32Array(num * 3);
+        colorArray = new Float32Array(num * 3);
+
+        for (let i = 0; i < num; i++) {
+            initParticle(i);
+        }
+
+        geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color',    new THREE.BufferAttribute(colorArray, 3));
+
+        material = new THREE.PointsMaterial({
+            size: size,
+            map: tex,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            sizeAttenuation: true
+        });
+
+        points = new THREE.Points(geometry, material);
+        scene.add(points);
+    }
+
+    // ------------------------------------------------------------------
+    // Audio setup
+    // ------------------------------------------------------------------
+    let analyzer;
+    let current_amplitude = 0;
+    let intervalId;
+    let audioContext;
+
+    async function startAudioCapture() {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            stream.getVideoTracks().forEach(track => track.stop()); // Stop video track immediately
+
+            audioContext = new AudioContext();
+            const source = audioContext.createMediaStreamSource(stream);
+            analyzer = audioContext.createAnalyser();
+            analyzer.fftSize = 2048;
+            source.connect(analyzer);
+
+            updateInterval();
+        } catch (e) {
+            console.error('Error capturing audio:', e);
+        }
+    }
+
+    function updateAmplitude() {
+        if (!analyzer) return;
+        const data = new Uint8Array(analyzer.fftSize);
+        analyzer.getByteTimeDomainData(data);
+        let sumSq = 0;
+        for (let val of data) {
+            const amp = (val - 128) / 128;
+            sumSq += amp * amp;
+        }
+        current_amplitude = Math.sqrt(sumSq / data.length);
+    }
+
+    function updateInterval() {
+        if (intervalId) clearInterval(intervalId);
+        const sampleInt = +document.getElementById('sampleInt').value;
+        intervalId = setInterval(updateAmplitude, sampleInt);
+    }
+
+    // ------------------------------------------------------------------
+    // Simulation
+    // ------------------------------------------------------------------
+    const base_dt = 0.06;
+
+    function simulate() {
+        let G = +document.getElementById('grav').value;
+        const timeScale = +document.getElementById('speed').value;
+        const resetR = +document.getElementById('resetR').value;
+
+        const eff_dt = base_dt * timeScale;
+        const pos = geometry.attributes.position.array;
+        const vel = velocities;
+
+        // Apply audio modulation to gravity
+        let effective_G = G;
+        if (analyzer) {
+            const audioS = +document.getElementById('audioS').value;
+            const audioMode = document.getElementById('audioMode').value;
+            if (audioMode === 'multiply') {
+                effective_G = G * (1 + current_amplitude * audioS);
+            } else {
+                effective_G = G + current_amplitude * audioS;
+            }
+        }
+
+        const accels = new Float32Array(num * 3).fill(0);
+
+        // Central gravity from multiple attractors
+        for (let i = 0; i < num; i++) {
+            const px = pos[i*3], py = pos[i*3+1], pz = pos[i*3+2];
+            for (let attract of attractorPositions) {
+                const dx = attract[0] - px;
+                const dy = attract[1] - py;
+                const dz = attract[2] - pz;
+                const r2 = dx*dx + dy*dy + dz*dz;
+                if (r2 > 0.1) {
+                    const r = Math.sqrt(r2);
+                    const a = effective_G / (r2 * r);
+                    accels[i*3] += a * dx;
+                    accels[i*3+1] += a * dy;
+                    accels[i*3+2] += a * dz;
+                }
+            }
+        }
+
+        // Apply accelerations to velocities
+        for (let i = 0; i < num; i++) {
+            vel[i*3] += accels[i*3] * eff_dt;
+            vel[i*3+1] += accels[i*3+1] * eff_dt;
+            vel[i*3+2] += accels[i*3+2] * eff_dt;
+        }
+
+        // Update positions
+        for (let i = 0; i < num; i++) {
+            pos[i*3] += vel[i*3] * eff_dt;
+            pos[i*3+1] += vel[i*3+1] * eff_dt;
+            pos[i*3+2] += vel[i*3+2] * eff_dt;
+        }
+
+        // Reset particles if beyond radius from closest attractor
+        let colorNeedsUpdate = false;
+        if (resetR > 0) {
+            const resetR2 = resetR * resetR;
+            for (let i = 0; i < num; i++) {
+                const x = pos[i*3], y = pos[i*3+1], z = pos[i*3+2];
+                let minR2 = Infinity;
+                for (let attract of attractorPositions) {
+                    const dx = attract[0] - x;
+                    const dy = attract[1] - y;
+                    const dz = attract[2] - z;
+                    const r2 = dx*dx + dy*dy + dz*dz;
+                    if (r2 < minR2) minR2 = r2;
+                }
+                if (minR2 > resetR2) {
+                    initParticle(i);
+                    colorNeedsUpdate = true;
+                }
+            }
+        }
+
+        geometry.attributes.position.needsUpdate = true;
+        if (colorNeedsUpdate) geometry.attributes.color.needsUpdate = true;
+    }
+
+    // ------------------------------------------------------------------
+    // Animation loop
+    // ------------------------------------------------------------------
+    function animate() {
+        requestAnimationFrame(animate);
+        simulate();
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // ------------------------------------------------------------------
+    // Events
+    // ------------------------------------------------------------------
+    window.addEventListener('resize', () => {
+        camera.aspect = innerWidth/innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    });
+
+    document.getElementById('restart').addEventListener('click', init);
+    document.getElementById('startAudio').addEventListener('click', startAudioCapture);
+    document.getElementById('sampleInt').addEventListener('change', updateInterval);
+    document.getElementById('fullScreen').addEventListener('click', () => {
+        renderer.domElement.requestFullscreen();
+    });
+
+    // Toggle controls
+    const gui = document.getElementById('gui');
+    const toggleGui = document.getElementById('toggleGui');
+    toggleGui.addEventListener('click', () => {
+        if (gui.style.display === 'none') {
+            gui.style.display = 'block';
+            toggleGui.textContent = 'Hide';
+            toggleGui.style.left = '10px';
+        } else {
+            gui.style.display = 'none';
+            toggleGui.textContent = 'Show';
+            toggleGui.style.left = '10px';
+        }
+    });
+
+    // Start everything
+    init();
+    animate();
+
+}); // end of window.load
+</script>
+</body>
+</html>
