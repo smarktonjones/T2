@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 30SEP2025 mgh -->
+<!-- version as of 18DEC2025 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -15,22 +15,45 @@
             --warning-color: #fd7e14; --success-color: #28a745; --success-hover: #218838;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
-			  background-image: linear-gradient(to bottom, #f8f9fa, #e6f7ff); /* The gradient */
-			  color: var(--text-color); margin: 0; padding: 20px; }
-        h1 { text-align: center; margin-top: 0; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
-		h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
-		h5 { text-align: center; margin-top: 0; font-weight: light;}	    
+ background-image: linear-gradient(to bottom, #fafafa, #e8e8e8); /* The gradient */
+ color: var(--text-color); margin: 0; padding: 20px; }
+        h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
+h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h4 { text-align: center; margin-top: 0; color: var(--text-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h5 { text-align: center; margin-top: 0; font-weight: light;}    
         .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
         .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); }
-        .add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
+		.section-extra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); background-color: black;  }
+        .section-extra-container { margin: auto; width: 50%; background-image: linear-gradient(to bottom, #f9f9f9, #f0f2f5); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column;  transform: scale(0.75); opacity: 0.8;}
+		.add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
         
         .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
-        .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  }
+        .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  
+        
+
+
+  /* --- START ANIMATION CODE --- */
+
+  transition: box-shadow 0.5s ease-out;
+
+  /* 2. Nested hover state */
+  &:hover {
+    
+    animation: breathing-glow 2s infinite ease-in-out;
+    
+    /* Optional: keeps it on top of other elements while glowing */
+    z-index: 100;
+
+  /* --- END ANIMATION CODE --- */
+}
+        
+        
+        }
         body.layout-locked .draggable-element {cursor: default;}
-		
+
         /* Styles for Hidden Elements and highlighted */
-		.element-highlighted {border-color: var(--success-color) !important; }
+.element-highlighted {border-color: var(--success-color) !important; }
         .element-hidden { display: none; }
         body.show-hidden-elements .element-hidden { display: flex; border-style: dotted; border-color: var(--danger-color); }
         
@@ -40,7 +63,7 @@
         
         #context-menu { display: none; position: absolute; z-index: 2000; background-color: var(--main-bg); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 5px 0; min-width: 150px; }
         #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
-        .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
+        .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
         .copy-btn-prominent:hover { background-color: var(--success-hover); }
         #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
@@ -62,8 +85,8 @@
 .bp-stage2 { border-color: var(--danger-color) !important; } 
 .bp-crisis { border-color: #8b0000 !important; animation: pulse 1.5s infinite; }
 /* **** END OF MODIFIED CSS **** */
-	    
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--bp-crisis); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+   
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--danger-color); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
         .psr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-family: monospace; }
         .psr-sextant { text-align: center; } .psr-sextant label { font-size: 0.8em; color: #555; display: block; }
         .psr-grid input[type="text"] { width: 100%; box-sizing: border-box; text-align: center; }
@@ -119,7 +142,7 @@
 
         /* **** END OF NEW CSS **** */
 
-	            /* **** START OF NEW CODE for tx plan copy/paste **** */
+           /* **** START OF NEW CODE for tx plan copy/paste **** */
         #text-selection-menu .selection-menu-item {
             padding: 8px 16px;
             cursor: pointer;
@@ -133,28 +156,254 @@
         /* **** END OF NEW CODE **** */
 
 
-	    
+        /* **** logo CODE **** */
+    .logo {
+      position: relative;
+      width: 450px;
+      height: 300px;
+    }
+
+
+.logo-container {
+position: absolute;
+left: 0;
+transform: translateY(-55%) translateX(20%) scale(0.25, 0.3);
+transform-origin: left bottom;
+z-index: -1;
+opacity: 0.4;
+}
+
+    .quarter {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      border-top-left-radius: 210px 140px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .quarter::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.5), transparent 60%);
+      border-top-left-radius: 210px 140px;
+    }
+
+    .navy {
+      background: linear-gradient(135deg, lightgray, white);
+      top: 0;
+      left: 0;
+    }
+
+    .yellow {
+      background: linear-gradient(135deg, white, lightgray);
+      bottom: 0;
+      right: 0;
+      transform: rotate(180deg);
+    }
+
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60px;
+      height: 60px;
+      margin: -30px 0 0 -30px;
+      background: linear-gradient(145deg, white, lightgray);
+      border-radius: 50%;
+      box-shadow:
+        inset 0 5px 10px rgba(255, 255, 255, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .center::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.6), transparent 70%);
+      border-radius: 50%;
+    }
+
+    .text-top-right,
+    .text-bottom-left {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 60px;
+      padding: 10px;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6),
+                   -1px -1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Upper Right Text - Dental Note */
+    .text-top-right {
+      top: 0;
+      right: 0;
+      color: lightgray; /* blue */
+      font-weight: 700; /* bold */
+      justify-content: flex-end; /* right-align text within quadrant */
+      text-align: right;
+      line-height: .7;
+      padding-right: 40px;
+      padding-top: 30px;
+    }
+
+    /* Lower Left Text - Maker */
+    .text-bottom-left {
+      bottom: 0;
+      left: 0;
+      color: lightgray;
+      font-weight: 100; /* thin font */
+      font-style: normal;
+      justify-content: flex-start;
+      text-align: right;
+      line-height: .7;
+      padding-left: 20px;
+      padding-bottom: 20px;
+    }
+
+        /* **** END OF LOGO CODE **** */
+
+        /* **** style for charting CODE **** */
+        .container {
+            max-width: 850px; /* Wider to accommodate labels */
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chart-output {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            text-align: center;
+        }
+        /* SVG Styles */
+        svg {
+            border: 1px solid #eee;
+            background-color: #fcfcfc;
+            width: 100%;
+            max-width: 800px; /* Match container width for consistency */
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+        .tooth-outline {
+            fill: #e0e0e0;
+            stroke: #999;
+            stroke-width: 1;
+        }
+        .tooth-surface {
+            fill: #f0f0f0; /* Default surface color, slightly lighter */
+            stroke: #bbb;
+            stroke-width: 0.5;
+        }
+        .caries {
+            fill: red !important; /* Mark caries in red */
+        }
+        .tooth-label {
+            font-size: 7px; /* Labels for tooth numbers */
+            text-anchor: middle;
+            fill: #333;
+            font-weight: bold;
+        }
+        .arch-line {
+            stroke: #aaa;
+            stroke-width: 2;
+            fill: none;
+        }
+        .mouth-label {
+            font-size: 10px;
+            font-weight: bold;
+            fill: #555;
+            text-anchor: middle;
+        }
+        .label-line {
+            stroke: #ccc;
+            stroke-width: 1;
+            stroke-dasharray: 3 3;
+        }
+
+
+
+/* pulse with Base Style of the Object */
+
+@keyframes breathing-glow {
+  0% {
+    /* Soft, close shadow */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);  /*rgba(0, 0, 0, 0.1); */
+    /* If you want a colored glow, change rgba(0,0,0,0.1) to a color like rgba(0, 150, 255, 0.3) */
+  }
+  50% {
+    /* WIDER spread (4px) and SOFTER blur (15px) */
+    box-shadow: 0 0 20px 4px rgba(0, 191, 255, 0.5);
+  }
+  100% {
+    /* Back to start */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);
+  }
+}
+
+   
     </style>
 </head>
 <body>
-    <h1>ORAL EXAM</h1><h5>Dental Note - MAKER v1.85</h5>
-    <div style="text-align: center; margin-bottom: 20px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (Shift+ Enter)</button></div>
+
+
+
+
+
+<div class="logo-container" >
+  <div class="logo">
+    <!-- Stretched Shapes -->
+    <div class="quarter navy"></div>
+    <div class="quarter yellow"></div>
+
+    <!-- Center Circle -->
+    <div class="center"></div>
+
+    <!-- Text Labels -->
+    <div class="text-top-right">Dental Note</div>
+    <div class="text-bottom-left">Maker v2.15</div>
+  </div>
+
+</div>
+
+    <h1>ORAL EXAM</h1>
+
+    <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
+
     <div class="controls">
-        <button id="import-btn" class="control-btn">Import JSON File...</button>
+	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
+		<button id="import-btn" class="control-btn">Import JSON File...</button>
         <button id="export-btn" class="control-btn">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
-		<label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
+<label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values</button>
-		<button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
+<button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
-    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (Shift+ Enter)</button></div>
+
+
+
     <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
 
-	            <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
-	    
-	    <div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
+           <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
+   
+   <div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
     <div id="properties-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="properties-title">Edit Properties</h2><span class="close-btn" data-modal-id="properties-modal">&times;</span></div><div class="modal-body" id="properties-body"></div><div class="modal-footer"><button id="properties-save-btn" class="control-btn">Save Changes</button></div></div></div>
     <div id="context-menu"><div id="ctx-properties">Properties...</div><div id="ctx-delete">Delete Element</div></div>
 
@@ -163,22 +412,27 @@
     <!-- Feedback message toast -->
     <div id="action-feedback" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 12000; transition: opacity 0.5s;"></div>
     <!-- **** END OF NEW CODE **** -->
-	
+
     <div id="endo-testing-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Endo Testing Results</h2><span class="close-btn" data-modal-id="endo-testing-modal">&times;</span></div><div class="modal-body"><div id="endo-editor-controls"><input type="text" id="endo-range-input" placeholder="e.g., 3-6, 14, 18-19"><button id="endo-range-add-btn" class="control-btn">Add Teeth</button></div><div style="overflow-x:auto;"><table id="endo-table"><thead></thead><tbody></tbody></table></div></div><div class="modal-footer"><button id="endo-testing-save-btn" class="control-btn">Save & Close</button></div></div></div>
     <div id="anesthetic-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Set Anesthetic Amounts</h2><span class="close-btn" data-modal-id="anesthetic-editor-modal">&times;</span></div><div class="modal-body"><div style="padding-bottom:15px; border-bottom:1px solid #eee; margin-bottom:15px;"><label><input type="checkbox" id="anesthetic-topical-check"> Include Topical Anesthetic</label></div><div id="anesthetic-editor-list"></div></div><div class="modal-footer"><button id="anesthetic-editor-save-btn" class="control-btn">Save & Close</button></div></div></div>
     <div id="allergy-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Select Alerts</h2><span class="close-btn" data-modal-id="allergy-modal">&times;</span></div><div class="modal-body"><fieldset><legend>Common Alerts</legend><div id="allergy-list"></div></fieldset><hr><fieldset><legend>Custom Alert</legend><input type="text" id="custom-allergy-input" placeholder="e.g., Cats" style="width: 100%; box-sizing: border-box;"></fieldset></div><div class="modal-footer"><button id="allergy-save-btn" class="control-btn">Save Alerts</button></div></div></div>
     <div id="textbox-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Edit Text</h2><span class="close-btn" data-modal-id="textbox-editor-modal">&times;</span></div><div class="modal-body">
-	    
+   
 <!-- **** START OF MODIFIED HTML for class to tx plan **** -->
 <div id="textbox-editor-area">
     <textarea id="textbox-editor-textarea"></textarea>
 
     <!-- NEW container for action buttons that appear on text selection -->
     <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
-        <b>Send Selected Text To:</b><br>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 3">Op Class 3</button>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 2">Op Class 2</button>
-        <button class="control-btn selection-action-btn" data-target-class="CLASS 1">Op Class 1</button>
+        <b>Send Selected Text To Treatment Plan Block:</b><br>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 3">Oper Class 3</button>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 2">Oper Class 2</button> -
+		<!-- remove the hardcoded operative -->
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 3">OMS Class 3</button>
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 2">OMS Class 2</button> -
+		<button class="control-btn selection-action-btn" data-target-class="Endo-CLASS 3">Endo Class 3</button> -
+		<button class="control-btn selection-action-btn" data-target-class="Pros-CLASS 3">Pros Class 3</button>
+		<button class="control-btn selection-action-btn" data-target-class="Pros-CLASS 2">Pros Class 2</button>
     </div>
 
     <div id="textbox-editor-snippets">
@@ -191,7 +445,7 @@
 </div>
 <!-- **** END OF MODIFIED HTML **** -->
     
-    </div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (Shift+Enter)</button></div></div></div>
+    </div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (<i>shortcut: Shift + Enter</i>)</button></div></div></div>
 
         <!-- **** START OF NEW CODE for tx plan**** -->
     <div id="tx-plan-modal" class="modal">
@@ -208,10 +462,33 @@
         </div>
     </div>
     <!-- **** END OF NEW CODE **** -->
+<div id="extra-section" class="section-extra-container">
+    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
+
+        <div class="chart-output">
+            <h4>Caries Charting Check</h4> <h5>Derived from Treatment Plan element - (to duplicate in Dentrix treatment plan)</h5>
+            <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+
+
+<center><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></center></div>
+</div>
+<div>
+
+<center><h6>-NAVMED 6600/13 JSON default-<br>
+Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
+<br><br>links<br>
+<a href="https://www.perio.org/wp-content/uploads/2019/08/Staging-and-Grading-Periodontitis.pdf" target="_blank">Perio Staging & Grading</a><br>
+<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9826047/table/iej13816-tbl-0003/" target="_blank">Endo Pulpal & Periradicular Diagnoses</a>
+</h6></center>
+</div>
+
+
 
 <script type="application/json" id="default-json-data">
 
-	
+
 {
   "header": [
     {
@@ -224,11 +501,13 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "**PERIODIC ORAL EXAM (T-2)**",
         "**INITIAL ORAL EXAM (T-1)**",
-	"**RETIREMENT EXAM (T-2)**",
-        "**SEPARATION EXAM (T-2)**  "
+        "**RETIREMENT EXAM (T-2)**",
+        "**SEPARATION EXAM (T-2)**  ",
+        "**SICK CALL / LIMITED EXAM (T-3)**"
       ],
       "selected": "**PERIODIC ORAL EXAM (T-2)**"
     },
@@ -242,6 +521,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "alerts": [
         "None"
       ]
@@ -256,10 +536,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": " Reviewed. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -272,6 +553,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "LEARNING NEEDS:  Language: English. ",
         "LEARNING NEEDS:  Language: ESOL. ",
@@ -289,9 +571,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Learning Type: Written/Verbal. ",
         "Learning Type: Written. ",
+	    "Learning Type: Visual. ",
         "Learning Type: Verbal. "
       ],
       "selected": "Learning Type: Written/Verbal. "
@@ -306,6 +590,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Impairments: None. ",
         "Impairments: Hearing Aid. ",
@@ -323,6 +608,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Cultural: None.",
         "Cultural: Other."
@@ -340,13 +626,14 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "systolic": "120",
-      "diastolic": "80",
+      "fillColor": "#f0f0f0",
+      "systolic": "",
+      "diastolic": "",
       "isPriorTxChecked": false,
-      "discussSystolic": "135",
-      "discussDiastolic": "90",
-      "checkboxSystolic": "150",
-      "checkboxDiastolic": "95"
+      "discussSystolic": "150",
+      "discussDiastolic": "95",
+      "checkboxSystolic": "160",
+      "checkboxDiastolic": "100"
     }
   ],
   "subjective": [
@@ -360,10 +647,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "S:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -376,10 +664,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "content": "None",
-      "internalLabel": "CC:",
+      "internalLabel": "Chief Concern:",
       "prefixLabel": "PRESENTING COMPLAINT: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "None",
       "dropdownOptions": []
     },
     {
@@ -392,6 +681,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "value": "0"
     },
     {
@@ -404,17 +694,18 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "content": "None",
       "internalLabel": "Tobacco / Vaping",
       "prefixLabel": "TOBACCO/VAPING: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "None",
       "dropdownOptions": [
         "Vaping",
         "Cigarettes",
         "Smokeless Tobacco",
-        "Nicotene pouches",
-	"0.5 Pack Per Day",
-	"0.5 Can Per Day"
+        "Nicotine pouches",
+        "0.5 Pack Per Day",
+        "0.5 Can Per Day"
       ]
     }
   ],
@@ -429,10 +720,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "O:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -445,6 +737,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "options": [
         "BWX: TODAY",
         "BWX: REVIEWED",
@@ -463,6 +756,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "options": [
         "PANO: REVIEWED",
         "PANO: TODAY",
@@ -481,6 +775,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": " ",
       "internalLabel": "Radiographs Other",
       "prefixLabel": "",
@@ -499,6 +794,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "No Pathology Noted.",
       "internalLabel": "Radiographic Findings",
       "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
@@ -522,10 +818,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "100%",
+      "fillColor": "#d6eefb",
       "content": "None.",
       "internalLabel": "Caries / Defective",
       "prefixLabel": "CARIES/DEFECTIVE RESTORATIONS: ",
-      "defaultText": "None",
+      "defaultText": "None.",
       "dropdownOptions": [
         "#"
       ]
@@ -540,10 +837,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "100%",
-      "content": "None. ",
+      "fillColor": "#d6eefb",
+      "content": "None.",
       "internalLabel": "Incipient",
       "prefixLabel": "INCIPIENT CARIES: ",
-      "defaultText": "None",
+      "defaultText": "None.",
       "dropdownOptions": [
         "#",
         "Generalized Facial White Spot Lesions",
@@ -560,13 +858,16 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "WNL.",
       "internalLabel": "Soft Tissue / OCS",
       "prefixLabel": "SOFT TISSUE / OCS: ",
-      "defaultText": "None. ",
+      "defaultText": "WNL.",
       "dropdownOptions": [
         "Mandibular Tori",
         "Apthous Ulcer",
+   "Tobacco Keratosis",
+"Nicotine Keratosis",
         "Palatal Torus",
         "Fibroma",
         "Tonsillectomy",
@@ -584,10 +885,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Periodontal",
       "prefixLabel": "PERIO: ",
-      "defaultText": "None. ",
+      "defaultText": "WNL.",
       "dropdownOptions": [
         "Radiographic Calculus",
         "Heavy Calculus",
@@ -606,10 +908,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Endodontic",
       "prefixLabel": "ENDO: ",
-      "defaultText": "None.",
+      "defaultText": "WNL.",
       "dropdownOptions": []
     },
     {
@@ -622,6 +925,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "endoTests": [
         "Percussion",
         "Palpation",
@@ -678,7 +982,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "TMJ",
       "prefixLabel": "TMJ: ",
       "defaultText": "WNL.",
@@ -700,7 +1005,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Occlusion",
       "prefixLabel": "OCCLUSION: ",
       "defaultText": "WNL.",
@@ -709,7 +1015,7 @@
         "Bonded Retainer 6-11",
         "Crossbite ",
         "Anterior Open Bite",
-	"Crowding"
+        "Crowding"
       ]
     },
     {
@@ -722,7 +1028,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "40%",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Oral Surgery",
       "prefixLabel": "ORAL SURGERY: ",
       "defaultText": "WNL.",
@@ -744,7 +1051,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "40%",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Other Findings",
       "prefixLabel": "OTHER FINDINGS: ",
       "defaultText": "WNL.",
@@ -763,6 +1071,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "scores": [
         "",
         "",
@@ -793,10 +1102,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "A:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -809,10 +1119,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
-      "internalLabel": "Diagnosis of CC",
+      "internalLabel": "Diagnosis of Chief Concern",
       "prefixLabel": "DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT: ",
-      "defaultText": "None",
+      "defaultText": "None.",
       "dropdownOptions": []
     },
     {
@@ -825,10 +1136,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "Gingivitis Localized",
       "internalLabel": "Perio Diagnosis",
       "prefixLabel": "PERIO DIAGNOSIS: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "Gingivitis Localized",
       "dropdownOptions": [
         "Gingivitis Localized",
         "Gingivitis Generalized",
@@ -852,6 +1164,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
       "internalLabel": "Endo Diagnosis",
       "prefixLabel": "ENDO DIAGNOSIS",
@@ -881,6 +1194,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
       "internalLabel": "Oral Surgery Diagnosis",
       "prefixLabel": "ORAL SURGERY DIAGNOSIS: ",
@@ -901,6 +1215,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "CARIES RISK: Low",
         "CARIES RISK: Moderate",
@@ -918,6 +1233,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "PERIO RISK: Low",
         "PERIO RISK: Moderate",
@@ -935,8 +1251,10 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "CANCER RISK: Low",
+        "CANCER RISK: Moderate",
         "CANCER RISK: High"
       ],
       "selected": "CANCER RISK: Low"
@@ -951,10 +1269,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "Findings reviewed / Patient informed and consents to Treatment Plan.",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     }
   ],
@@ -969,10 +1288,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "P:   CHARTING OF TREATMENT PLAN IN DENTRIX",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -985,6 +1305,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f6ffed",
       "content": "",
       "internalLabel": "Caries Risk Management",
       "prefixLabel": "",
@@ -1005,10 +1326,11 @@
       "originalId": "4-2",
       "isHidden": false,
       "doNotReset": false,
-      "width": "",
+      "width": "66%",
+      "fillColor": "#d9f7be",
       "txRows": [
-        "Oral Hygiene",
         "Operative",
+        "Oral Hygiene",
         "Perio",
         "Oral Surgery",
         "Endo",
@@ -1024,8 +1346,7 @@
         "Oral Hygiene-CLASS 2": {
           "text": "RDH",
           "priority": 1
-        }
-      }
+        } }
     }
   ],
   "footer": [
@@ -1039,7 +1360,8 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
-      "content": "Default",
+      "fillColor": "#fffbe6",
+      "content": "",
       "internalLabel": "Dental Technician Name",
       "prefixLabel": "DENTAL TECHNICIAN: ",
       "defaultText": "",
@@ -1066,6 +1388,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "formatType": "newline",
       "customChars": ""
     },
@@ -1079,12 +1402,13 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
+      "fillColor": "#fffbe6",
       "content": "",
       "internalLabel": "Dentist Block",
       "prefixLabel": "DENTAL OFFICER: ",
       "defaultText": "",
       "dropdownOptions": [
-        "Dr. Brandt",
+        "Dr. Stanton",
         "Dr. Schaad",
         "LT Wilson",
         "CAPT Soden"
@@ -1100,6 +1424,7 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
+      "fillColor": "#fffbe6",
       "content": "",
       "internalLabel": "Signature Block",
       "prefixLabel": "",
@@ -1112,7 +1437,7 @@
 
 
 
-	
+
 </script>
 
 
@@ -1128,7 +1453,7 @@
         
         // --- Helper Functions ---
 
-		
+
 // **** START OF CODE: Session Persistence Logic ****
 
         // This function gathers the current state of ALL elements on the page and saves it to localStorage.
@@ -1146,7 +1471,7 @@
             localStorage.setItem('dentalNoteMakerSession', JSON.stringify(stateToSave));
         };
 
-		        // This is the "Reset Values" function.
+       // This is the "Reset Values" function.
         const resetValues = () => {
             console.log("Resetting values to template defaults...");
             if (!lastLoadedState) {
@@ -1190,8 +1515,12 @@
             }
             // **** END OF lock reset CODE
 
-			
-            alert(`Reset ${resetCount} element(s) to their template default values.`);
+            alert(`Reset ${resetCount} element(s) to their default values.`);
+
+
+
+
+
         };
 
 // **** START OF FULL RESET CODE ****
@@ -1211,22 +1540,262 @@
         };
         // **** END OF FULL RESET CODE ****
 
-		
+
 // **** END OF Session Persistence Logic ****
 
 
 
+        // **** START OF palette CODE ****
 
-		
-	    const updateTxPlanSummary = (element) => { 
+const COLOR_PALETTE = [
+    // Default & Blues
+    { name: 'Default Blue', value: '#e6f7ff' },
+    { name: 'Light Blue', value: '#d6eefb' },
+
+    // Greens
+    { name: 'Light Green', value: '#f6ffed' },
+    { name: 'Mint Green', value: '#d9f7be' },
+    
+    // Reds & Pinks
+    { name: 'Light Red', value: '#fff1f0' },
+    { name: 'Light Pink', value: '#ffefff' },
+    
+    // Yellows & Oranges
+    { name: 'Light Yellow', value: '#fffbe6' },
+    { name: 'Light Orange', value: '#fff7e6' },
+    { name: 'Gold', value: '#fff1b8' },
+
+    // Purples
+    { name: 'Light Purple', value: '#f9f0ff' },
+    { name: 'Lavender', value: '#efdbff' },
+
+    // Cyans & Teals
+    { name: 'Light Cyan', value: '#e6fffb' },
+    { name: 'Sky Blue', value: '#dcf4ff' },
+
+    // Grays & Neutrals
+    { name: 'White', value: '#ffffff' },
+    { name: 'Light Gray 1', value: '#fafafa' },
+    { name: 'Light Gray 2', value: '#f5f5f5' },
+    { name: 'Light Gray 3', value: '#f0f0f0' },
+    { name: 'Medium Gray', value: '#e8e8e8' },
+    
+    // Other
+    { name: 'Beige', value: '#fffaf0' },
+    { name: 'Aqua', value: '#e0ffff' }
+];
+
+
+        // **** END OF palette CODE ****
+
+
+
+
+// **** START OF CODE: Note Evaluation Logic ****
+
+       /**
+         * Analyzes PSR scores from text and returns a risk assessment.
+         * @param {string} psrText - The text containing PSR scores (can be multi-line).
+         * @returns {string|null} The risk assessment string or null if not enough scores are found.
+         */
+         function evaluatePsr(psrText) {
+            const matches = psrText.match(/[0-4]/g);
+            if (!matches || matches.length < 6) { return null; }
+
+            const scores = matches.map(m => parseInt(m, 10));
+            const countOf3s = scores.filter(s => s === 3).length;
+            const has4s = scores.some(s => s >= 4);
+
+            // This now returns only the risk level string
+            if (has4s || countOf3s >= 3) {
+                return "HIGH";
+            } else if (countOf3s >= 1 && countOf3s <= 2) {
+                return "MODERATE";
+            } else {
+                return "LOW";
+            }
+        }
+
+
+/**
+         * Checks if a documented presenting complaint has a corresponding diagnosis.
+         * @param {string[]} lines - An array of all lines in the note text.
+         * @returns {string|null} The warning string or null if the check passes.
+         */
+        function checkComplaintDiagnosis(lines) {
+            console.log("Evaluation: Checking Complaint/Diagnosis link...");
+            
+            // Find the relevant lines in the note.
+            const complaintLine = lines.find(line => line.trim().startsWith("PRESENTING COMPLAINT:"));
+            const diagnosisLine = lines.find(line => line.trim().startsWith("DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT:"));
+
+            // If either line is missing, we can't perform the check.
+            if (!complaintLine || !diagnosisLine) {
+                console.log("Evaluation: Complaint or Diagnosis line not found.");
+                return null;
+            }
+
+            // Extract the actual content after the label.
+            const complaintText = complaintLine.replace("PRESENTING COMPLAINT:", "").trim();
+            const diagnosisText = diagnosisLine.replace("DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT:", "").trim();
+
+            console.log(`Evaluation: Complaint='${complaintText}', Diagnosis='${diagnosisText}'`);
+            
+            // Apply the logic: If complaint is NOT "None" but the diagnosis IS "None".
+            // We use .toLowerCase() and .includes() to make the check robust against small variations like "none" or "None.".
+            if (!complaintText.toLowerCase().includes('none') && diagnosisText.toLowerCase().includes('none')) {
+                console.log("Evaluation: Mismatch FOUND!");
+                return "No Diagnosis for Presenting Complaint given";
+            }
+            
+            console.log("Evaluation: Complaint/Diagnosis check passed.");
+            return null; // Check passed.
+        }
+
+
+       /**
+         * Analyzes caries findings from the note to recommend a caries risk level.
+         * @param {string[]} lines - An array of all lines in the note text.
+         * @returns {string|null} The risk level string ("LOW", "MODERATE", "HIGH") or null.
+         */
+        function evaluateCariesRisk(lines) {
+            console.log("Evaluation: Checking Caries Risk...");
+
+            const defectiveLine = lines.find(line => line.trim().startsWith("CARIES/DEFECTIVE RESTORATIONS:"));
+            const incipientLine = lines.find(line => line.trim().startsWith("INCIPIENT CARIES:"));
+
+            // If we can't find the lines, we can't make a recommendation.
+            if (!defectiveLine || !incipientLine) {
+                console.log("Evaluation: Caries/Incipient lines not found.");
+                return null;
+            }
+
+            // Use a regex to find all sequences of digits (\d+) globally (g).
+            // The '|| []' ensures that if no numbers are found, we get an empty array instead of null.
+            const defectiveMatches = defectiveLine.match(/\d+/g) || [];
+            const incipientMatches = incipientLine.match(/\d+/g) || [];
+            
+            const defectiveCount = defectiveMatches.length;
+            const incipientCount = incipientMatches.length;
+
+            console.log(`Evaluation: Found ${defectiveCount} defective/carious teeth and ${incipientCount} incipient lesions.`);
+
+            // Apply the risk logic you defined.
+            if (defectiveCount > 2 || incipientCount > 4) {
+                console.log("Evaluation: Result -> HIGH risk");
+                return "HIGH";
+            } else if (defectiveCount >= 1 || incipientCount >= 3) {
+                console.log("Evaluation: Result -> MODERATE risk");
+                return "MODERATE";
+            } else {
+                console.log("Evaluation: Result -> LOW risk");
+                return "LOW";
+            }
+        }
+
+
+
+
+        /**
+         * Main evaluation router. It takes the full note text and runs all evaluation functions.
+         * @param {string} noteText - The complete text from the live output.
+         * @returns {string[]} An array of suggestion strings.
+         */
+        function evaluateNote(noteText) {
+            console.log("--- Running Note Evaluation ---");
+            const suggestions = [];
+            
+            const lines = noteText.split('\n');
+
+            // --- Complaint/Diagnosis Check (runs first) ---
+            const complaintSuggestion = checkComplaintDiagnosis(lines);
+			const FindTheCCElement = document.querySelector('[data-original-id="3-1"]'); //the CC element
+            if (complaintSuggestion) {
+                suggestions.push(complaintSuggestion); // Use push, we will sort later if needed.
+				//add a style to the missed suggestion Element
+				FindTheCCElement.classList.add('bp-crisis');
+            } else {
+				FindTheCCElement.classList.remove('bp-crisis');
+				}
+
+            // --- Caries Risk Evaluation and Cross-Check (NEW) ---
+            const recommendedCariesRisk = evaluateCariesRisk(lines);
+            if (recommendedCariesRisk) {
+                const userSelectedCariesLine = lines.find(line => line.trim().startsWith("CARIES RISK:"));
+                let userSelectedCariesRisk = null;
+                if (userSelectedCariesLine) {
+                    const riskMatch = userSelectedCariesLine.match(/Low|Moderate|High/i);
+                    if (riskMatch) {
+                        userSelectedCariesRisk = riskMatch[0].toUpperCase();
+                    }
+                }
+
+                let suggestionString = `Recommended Caries Risk: ${recommendedCariesRisk}`;
+                if (userSelectedCariesRisk) {
+                    if (recommendedCariesRisk === userSelectedCariesRisk) {
+                        suggestionString += " (Matched)";
+                    } else {
+                        suggestionString += " (MISMATCH)";
+                    }
+                } else {
+                    suggestionString += " (User selection not found)";
+                }
+                suggestions.push(suggestionString);
+            }
+
+            // --- Perio Risk Evaluation and Cross-Check ---
+            const psrStartIndex = lines.findIndex(line => line.trim().startsWith("PSR:"));
+            let recommendedPerioRisk = null;
+            if (psrStartIndex !== -1) {
+                const psrBlock = lines.slice(psrStartIndex, psrStartIndex + 3).join('\n');
+                recommendedPerioRisk = evaluatePsr(psrBlock); 
+            }
+            const userSelectedRiskLine = lines.find(line => line.trim().startsWith("PERIO RISK:"));
+            let userSelectedPerioRisk = null;
+            if (userSelectedRiskLine) {
+                const riskMatch = userSelectedRiskLine.match(/Low|Moderate|High/i);
+                if (riskMatch) {
+                    userSelectedPerioRisk = riskMatch[0].toUpperCase();
+                }
+            }
+            if (recommendedPerioRisk) {
+                let suggestionString = `Recommended Perio Risk: ${recommendedPerioRisk}`;
+                if (userSelectedPerioRisk) {
+                    if (recommendedPerioRisk === userSelectedPerioRisk) {
+                        suggestionString += " (Matched)";
+                    } else {
+                        suggestionString += " (MISMATCH)";
+                    }
+                } else {
+                    suggestionString += " (User selection not found)";
+                }
+                suggestions.push(suggestionString);
+            }
+            
+            console.log("Evaluation complete. Suggestions:", suggestions);
+            return suggestions;
+        }
+        // **** END OF CODE: Note Evaluation Logic ****
+
+
+
+
+
+
+
+
+
+
+
+   const updateTxPlanSummary = (element) => { 
     const state = getElementState(element);
     const summarySpan = element.querySelector('.tx-plan-summary');
     const entryCount = Object.values(state.txData).filter(d => d.text && d.text.trim() !== '').length;
     summarySpan.textContent = entryCount > 0 ? `Treatment Plan: ${entryCount} Entries` : 'Click to set Treatment Plan'; 
 };
-	    
-	    
-	    const getBPStatus = (s, d) => { if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 80) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal'; };
+   
+   
+   const getBPStatus = (s, d) => { if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 85) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal'; };
         const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
         const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
         const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
@@ -1249,7 +1818,7 @@
         };
         // **** END OF NEW CODE ****
 
-	    
+   
         const parseToothRange = (rangeStr) => { const teeth = new Set(); const parts = rangeStr.split(','); for (const part of parts) { if (part.includes('-')) { const [start, end] = part.split('-').map(Number); if (!isNaN(start) && !isNaN(end)) { for (let i = start; i <= end; i++) { teeth.add(String(i)); } } } else { const num = Number(part.trim()); if (!isNaN(num) && num > 0 && num < 33) { teeth.add(String(num)); } } } return Array.from(teeth).sort((a,b)=>a-b); };
 
         // --- Core: Element Creation & State ---
@@ -1261,42 +1830,54 @@
             if (data.originalId) draggable.dataset.originalId = data.originalId;
             if (data.required) draggable.dataset.required = 'true'; 
 
-		            // **** START OF NEW CODE for width****
+           // **** START OF CODE for width****
             // Check for and apply the custom width
             if (data.width) {
                 draggable.style.width = data.width;
                 draggable.dataset.width = data.width;
             }
-            // **** END OF NEW CODE ****
-		
-		if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
-            if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || "Click to edit..."; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
+            // **** END OF width CODE ****
+
+
+            // **** START OF color CODE ****
+            // Check for and apply the custom fill color
+            if (data.fillColor) {
+                draggable.style.backgroundColor = data.fillColor;
+                draggable.dataset.fillColor = data.fillColor;
+            }
+            // **** END OF color CODE ****
+
+
+
+
+if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
+            if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || ""; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
             else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
             else if (type === 'bloodpressure') { draggable.dataset.discussSystolic = data.discussSystolic || '130'; draggable.dataset.discussDiastolic = data.discussDiastolic || '80'; draggable.dataset.checkboxSystolic = data.checkboxSystolic || '140'; draggable.dataset.checkboxDiastolic = data.checkboxDiastolic || '90'; }   
-	    else if (type === 'anesthetic') { draggable.dataset.anestheticTypes = JSON.stringify(data.anestheticTypes || [ { name: '2% Lidocaine', mg: 34, epi: 17 }, { name: '4% Septocaine', mg: 68, epi: 17 }, { name: '0.5% Marcaine', mg: 9, epi: 9 } ]); draggable.dataset.anestheticValues = JSON.stringify(data.anestheticValues || {}); draggable.dataset.includeTopical = data.includeTopical === false ? 'false' : 'true';}
+   else if (type === 'anesthetic') { draggable.dataset.anestheticTypes = JSON.stringify(data.anestheticTypes || [ { name: '2% Lidocaine', mg: 34, epi: 17 }, { name: '4% Septocaine', mg: 68, epi: 17 }, { name: '0.5% Marcaine', mg: 9, epi: 9 } ]); draggable.dataset.anestheticValues = JSON.stringify(data.anestheticValues || {}); draggable.dataset.includeTopical = data.includeTopical === false ? 'false' : 'true';}
  
             else if (type === 'tx-plan') {
                 draggable.dataset.txRows = JSON.stringify(data.txRows || ["Oral Hygiene", "Operative", "Perio", "Oral Surgery", "Endo", "Pros", "Other"]);
-		draggable.dataset.txSnippets = JSON.stringify(data.txSnippets || []);
+draggable.dataset.txSnippets = JSON.stringify(data.txSnippets || []);
                 draggable.dataset.txData = JSON.stringify(data.txData || {});
-            }	    
-	    
-	    else if (type === 'endo-testing') { draggable.dataset.endoTests = JSON.stringify(data.endoTests || ["Percussion", "Palpation", "Endo Ice", "Tooth Slooth", "Periodontal", "Mobility", "Transillumination"]); draggable.dataset.endoData = JSON.stringify(data.endoData || { teeth: [''], results: {} }); }
+            }    
+   
+   else if (type === 'endo-testing') { draggable.dataset.endoTests = JSON.stringify(data.endoTests || ["Percussion", "Palpation", "Endo Ice", "Tooth Slooth", "Periodontal", "Mobility", "Transillumination"]); draggable.dataset.endoData = JSON.stringify(data.endoData || { teeth: [''], results: {} }); }
             draggable.draggable = true; draggable.id = `element-${Date.now()}-${Math.random()}`;
             draggable.addEventListener('dragstart', e => e.target.classList.add('dragging'));
             draggable.addEventListener('dragend', e => e.target.classList.remove('dragging'));
             draggable.addEventListener('contextmenu', e => { e.preventDefault(); activeElementForEditor = e.target.closest('.draggable-element'); const contextMenu = document.getElementById('context-menu'); 
-			
 
-			
-			
-			contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.left = `${e.clientX}px`; contextMenu.style.display = 'block'; });
-			
-			// **** START OF NEW CODE ****
+
+
+
+contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.left = `${e.clientX}px`; contextMenu.style.display = 'block'; });
+
+// **** START OF NEW CODE ****
     // Add a simple click listener to add the highlight class
     draggable.addEventListener('click', (e) => { draggable.classList.add('element-highlighted');});
     // **** END OF NEW CODE ****
-			
+
             return draggable;
         };
 
@@ -1309,17 +1890,18 @@
             else if (type === 'alert') { draggable.classList.add('alert-element'); draggable.innerHTML = `<span class="alert-display"></span>`; draggable.addEventListener('click', () => openAllergyModal(draggable)); updateAlertElementUI(draggable); }
             else if (type === 'anesthetic') { draggable.classList.add('anesthetic-element'); draggable.innerHTML = `<span class="anesthetic-summary"></span>`; updateAnestheticSummary(draggable); draggable.addEventListener('click', () => openAnestheticEditor(draggable)); }
 
-	     // **** START OF NEW CODE for tx plan ****
+    // **** START OF NEW CODE for tx plan ****
             else if (type === 'tx-plan') {
                 draggable.classList.add('tx-plan-element');
                 draggable.innerHTML = `<span class="tx-plan-summary"></span>`;
                 updateTxPlanSummary(draggable);
                 draggable.addEventListener('click', () => openTxPlanEditor(draggable));
+	
             }
             // **** END OF NEW CODE ****
-	    
-	    
-	    else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
+   
+   
+   else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
             else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
             else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-inputs"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
             else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; draggable.querySelectorAll('.psr-input').forEach(input => { input.addEventListener('input', () => { const index = parseInt(input.dataset.index, 10); const checkbox = draggable.querySelector(`.psr-asterisk[data-index="${index}"]`); if (input.value.includes('*')) { if (!checkbox.checked) checkbox.checked = true; } else { if (checkbox.checked) checkbox.checked = false; } const scorePart = input.value.replace(/\*/g, ''); if (scorePart.length > 1) input.value = scorePart.charAt(0) + (checkbox.checked ? '*' : ''); if (!scorePart.match(/^[0-4]?$/)) input.value = '' + (checkbox.checked ? '*' : ''); if (scorePart.length === 1 && scorePart.match(/[0-4]/)) { const nextIndex = PSR_AUTOFOCUS_MAP.get(index); if (nextIndex !== undefined) { const nextInput = draggable.querySelector(`.psr-input[data-index="${nextIndex}"]`); if (nextInput) { nextInput.focus(); nextInput.select(); } } } updatePSRElementUI(draggable); }); input.addEventListener('keydown', handlePSRTabbing); }); draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
@@ -1331,17 +1913,17 @@
         };
 
         const getElementState = (element) => {
-            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || ''};
+            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
             if (type === 'enhanced-textbox') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions); }
 
             // **** START OF NEW CODE for tx plan****
             else if (type === 'tx-plan') {
                 state.txRows = JSON.parse(element.dataset.txRows);
-		state.txSnippets = JSON.parse(element.dataset.txSnippets);
+state.txSnippets = JSON.parse(element.dataset.txSnippets);
                 state.txData = JSON.parse(element.dataset.txData);
             }
             // **** END OF NEW CODE ****
-		    
+   
             else if (type === 'alert') { state.alerts = JSON.parse(element.dataset.alerts || '[]'); }
             else if (type === 'painscale') { state.value = element.querySelector('.pain-slider').value; }
             else if (type === 'anesthetic') { state.anestheticTypes = JSON.parse(element.dataset.anestheticTypes); state.anestheticValues = JSON.parse(element.dataset.anestheticValues); state.includeTopical = element.dataset.includeTopical === 'true'; }
@@ -1370,7 +1952,7 @@
                         for (let priority = 1; priority <= 5; priority++) {
                             let priorityItems = [];
                             state.txRows.forEach(rowName => {
-		    const key = `${rowName}-${className}`;
+   const key = `${rowName}-${className}`;
                         if (state.txData[key] && state.txData[key].priority === priority && state.txData[key].text.trim() !== '') {
                             // **** START OF MODIFIED LINE ****
                             // Add the row name as a prefix to the treatment text
@@ -1389,10 +1971,10 @@
                     content = planParts.join('\n');
                 }
                 // **** END OF NEW CODE ****
-			
+
                 else if (state.type === 'anesthetic') { let an_parts = []; if (state.includeTopical) { an_parts.push('Topical Anesthetic.'); } for (const [name, carpules] of Object.entries(state.anestheticValues)) { if (carpules > 0) { const typeInfo = state.anestheticTypes.find(t => t.name === name); if (typeInfo) { const totalMg = parseFloat((typeInfo.mg * carpules).toPrecision(3)); const totalEpi = parseFloat((typeInfo.epi * carpules).toPrecision(3)); an_parts.push(`[${totalMg} MILLIGRAMS ${name} ${totalEpi} MICROGRAMS EPI.]`); } } } content = an_parts.join(' '); }
 
-			
+
         // **** START OF REPLACEMENT CODE BLOCK for tab delimited endo testing ****
 
         else if (state.type === 'endo-testing') {
@@ -1438,7 +2020,7 @@
 
         // **** END OF REPLACEMENT CODE BLOCK ****
 
-			
+
                 else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
                 else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
                 else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
@@ -1449,9 +2031,13 @@
                 if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
             });
             liveOutput.value = outputParts.join('');
-			
-			// Auto-save the entire state to the browser's local storage on every change.
+
+// Auto-save the entire state to the browser's local storage on every change.
             saveCurrentStateToLocalStorage();
+
+// Update Charting on every change.
+		generateChart();
+
         };
 
 
@@ -1476,7 +2062,7 @@
             }
 
             const state = getElementState(txPlanElement);
-            const key = `Operative-${targetClass}`; // Hardcoded to "Operative" row
+            const key = `${targetClass}`; // removed Hardcoded to "Operative" row with `Operative-${targetClass}`
 
             const existingEntry = state.txData[key] || { text: '', priority: 0 };
             const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
@@ -1502,20 +2088,25 @@
             const selection = window.getSelection();
             const isTextareaFocused = document.activeElement === textboxEditorTextarea;
             
-            // Show the action bar only if the textarea is focused and has selected text
+            // Show the action bar only if the textarea is focused and has selected text - 06NOV change the else from 'none' to 'block' to keep visible
             if (isTextareaFocused && selection.toString().trim().length > 0) {
                 selectionActionsDiv.style.display = 'block';
             } else {
-                selectionActionsDiv.style.display = 'none';
+                selectionActionsDiv.style.display = 'block';
             }
         });
         
         // **** END OF REPLACEMENT JAVASCRIPT ****
-	    
-	    
-	    
-	    const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
-		
+   
+   
+   
+   const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; 
+// this is where the textbox editor focus gets set
+   textboxEditorTextarea.focus();
+// this is where the default text gets highlighted for easier deletion - if there is a default text defined
+   if (textarea.value === activeElementForEditor.dataset.defaultText) { textboxEditorTextarea.select();};
+																													  }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
+
 
 
 document.getElementById('textbox-editor-replace-btn').onclick = () => {
@@ -1530,14 +2121,14 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
     textarea.value = selectedValue;
 };
 
-		
-		// **** START OF NEW CODE for double click**** 
-		// Add double-click functionality to the dropdown list 
-		document.getElementById('textbox-editor-select').addEventListener('dblclick', (e) => { 
-		// Trigger the same logic as the 'Add' --> replace button 
-		document.getElementById('textbox-editor-replace-btn').click(); }); 
-		// **** END OF NEW CODE ****
-	    
+
+// **** START OF NEW CODE for double click**** 
+// Add double-click functionality to the dropdown list 
+document.getElementById('textbox-editor-select').addEventListener('dblclick', (e) => { 
+// Trigger the same logic as the 'Add' --> replace button 
+document.getElementById('textbox-editor-replace-btn').click(); }); 
+// **** END OF NEW CODE ****
+   
 
 // **** START OF NEW CODE for tx plan ****
         // --- Treatment Plan Modal Logic ---
@@ -1616,6 +2207,7 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
             });
 
             txPlanModal.style.display = 'block';
+	
         };
 
         // **** END OF REPLACEMENT CODE ****
@@ -1637,6 +2229,7 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
             activeElementForEditor.dataset.txData = JSON.stringify(newData);
             updateTxPlanSummary(activeElementForEditor);
             updateLiveOutput();
+
             txPlanModal.style.display = 'none';
         };
 
@@ -1664,15 +2257,24 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
         // **** END OF NEW CODE ****
 
 
-	    
-		
-		document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; };
-		
+   
 
-		
-		
-		
-		
+document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; 
+
+//check the cc, etc with every Save
+const noteText = liveOutput.value;
+evaluateNote(noteText);
+
+
+
+
+};
+
+
+
+
+
+
         const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); activeElementForEditor.dataset.anestheticValues = JSON.stringify(newValues); activeElementForEditor.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(activeElementForEditor); updateLiveOutput(); anestheticEditorModal.style.display = 'none'; }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
         const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(); endoModal.style.display = 'none'; };
         const openPropertiesModal = (element) => {
@@ -1686,7 +2288,7 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
 
 
 
-		    
+   
             else if (state.type === 'endo-testing') { mainPropsHtml = `<fieldset><legend>Test Rows</legend><label>(one per line)</label><textarea id="prop-endo-tests" rows="8">${state.endoTests.join('\n')}</textarea></fieldset>`; }
             else if (state.type === 'bloodpressure') { mainPropsHtml = `<fieldset><legend>Discussion Threshold</legend><label>Systolic &ge;:</label><input type="number" id="prop-discuss-s" value="${state.discussSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-discuss-d" value="${state.discussDiastolic}"></fieldset><fieldset><legend>"Prior to Tx" Checkbox Trigger</legend><label>Systolic &ge;:</label><input type="number" id="prop-checkbox-s" value="${state.checkboxSystolic}"><label>Diastolic &ge;:</label><input type="number" id="prop-checkbox-d" value="${state.checkboxDiastolic}"></fieldset>`; }
             else if (state.type === 'dropdown') { mainPropsHtml = `<label><input type="checkbox" id="prop-required" ${state.required ? 'checked' : ''}> Required</label><hr><fieldset><legend>Dropdown Options</legend><label for="prop-options">(one per line)</label><textarea id="prop-options" rows="6">${state.options.join('\n')}</textarea></fieldset>`; }
@@ -1703,27 +2305,39 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
     }
 
 
-		
+
             generalPropsHtml = `<fieldset><legend>General Options</legend><label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label><label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element</label></fieldset>`;
 
 
 
-		
-            // **** START OF REPLACEMENT for width****
-            if (state.type !== 'formatter') { // Formatters don't need sizing
-                generalPropsHtml = `<fieldset><legend>Sizing & Display</legend>
-                    <label>Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
+
+            // **** START OF REPLACEMENT CODE for width and color ****
+            if (state.type !== 'formatter') {
+                // Build the color options for the dropdown
+                let colorOptions = COLOR_PALETTE.map(color => 
+                    `<option value="${color.value}" ${state.fillColor === color.value ? 'selected' : ''}>${color.name}</option>`
+                ).join('');
+
+                generalPropsHtml = `
+                <fieldset><legend>Sizing & Display</legend>
+                    <label>Fill Color: 
+                        <select id="prop-fill-color">
+                            ${colorOptions}
+                        </select>
+                    </label>
+                    <label style="margin-top: 10px;">Custom Width: <input type="text" id="prop-width" placeholder="e.g., 250px or 48%" value="${state.width || ''}"></label>
                     <hr style="margin:10px 0;">
                     <label><input type="checkbox" id="prop-hidden" ${state.isHidden ? 'checked' : ''}> Hidden by default</label>
                     <label><input type="checkbox" id="prop-no-reset" ${state.doNotReset ? 'checked' : ''}> Do not reset this element's value</label>
                 </fieldset>`;
             } else {
-                generalPropsHtml = ''; // No options for formatter
+                generalPropsHtml = '';
             }
-            // **** END OF REPLACEMENT ****
+            // **** END OF REPLACEMENT CODE for width and color ****
 
 
-		
+
+
             body.innerHTML = mainPropsHtml + formattingHtml + generalPropsHtml; if (state.type === 'anesthetic') { const container = document.getElementById('prop-anesthetic-types'); state.anestheticTypes.forEach(type => container.appendChild(createAnestheticTypeRow(type))); document.getElementById('prop-add-anesthetic-type').onclick = () => container.appendChild(createAnestheticTypeRow()); } document.getElementById('properties-modal').style.display = 'block'; document.getElementById('properties-save-btn').onclick = () => saveProperties(element);
         };
         const saveProperties = (element) => {
@@ -1734,21 +2348,33 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
             // **** START OF NEW CODE for tx plan****
             else if (newState.type === 'tx-plan') { saveTxPlanProperties(newState, element); }
             // **** END OF NEW CODE ****
-		    
+   
             else if (newState.type === 'endo-testing') { newState.endoTests = document.getElementById('prop-endo-tests').value.split('\n').filter(line => line.trim() !== ''); const currentData = JSON.parse(element.dataset.endoData); newState.endoData = { teeth: currentData.teeth, results: {} }; }
             else if (newState.type === 'bloodpressure') { newState.discussSystolic = document.getElementById('prop-discuss-s').value; newState.discussDiastolic = document.getElementById('prop-discuss-d').value; newState.checkboxSystolic = document.getElementById('prop-checkbox-s').value; newState.checkboxDiastolic = document.getElementById('prop-checkbox-d').value; }
             else if (newState.type === 'dropdown') { newState.required = document.getElementById('prop-required').checked; newState.options = document.getElementById('prop-options').value.split('\n').filter(Boolean); newState.selected = newState.options[0] || ''; }
             else if(newState.type === 'painscale' || newState.type === 'alert' || newState.type === 'checkbox') { newState.required = document.getElementById('prop-required').checked; }
             newState.isHidden = document.getElementById('prop-hidden').checked; newState.doNotReset = document.getElementById('prop-no-reset').checked;
 
-            // **** START OF NEW CODE for width****
+            // **** START OF CODE for width****
             const widthInput = document.getElementById('prop-width');
             if (widthInput) {
                 newState.width = widthInput.value.trim();
             }
-            // **** END OF NEW CODE ****
+            // **** END OF width CODE ****
 
-		
+
+            // **** START OF color CODE ****
+            const colorSelect = document.getElementById('prop-fill-color');
+            if (colorSelect) {
+                // If the selected color is the default, save an empty string to keep the JSON clean.
+                // Otherwise, save the selected color value.
+                newState.fillColor = colorSelect.value === COLOR_PALETTE[0].value ? '' : colorSelect.value;
+            }
+            // **** END OF color CODE ****
+
+
+
+
             if (newState.type !== 'formatter' && !newState.type.startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
             const newElement = createElement(newState.type, newState); element.replaceWith(newElement); updateLiveOutput(); document.getElementById('properties-modal').style.display = 'none';
         };
@@ -1809,11 +2435,12 @@ document.addEventListener('keydown', (event) => {
    else {
        event.preventDefault();
        document.getElementById('copy-btn-top').click();
+
    }
 });
 
-	    
-		// New, smarter logic for closing modals by clicking the backdrop
+   
+// New, smarter logic for closing modals by clicking the backdrop
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('mousedown', (e) => {
         // Close the modal ONLY if the mousedown event is on the backdrop itself
@@ -1832,29 +2459,64 @@ document.querySelectorAll('.modal').forEach(modal => {
             if (!e.target.closest('#context-menu') && !e.target.closest('.draggable-element')) {
                 contextMenu.style.display = 'none';
             }
-            if (!e.target.closest('#text-selection-menu')) {
-                selectionMenu.style.display = 'none';
-            }
+
+        // ****this code is erroring with style in console            if (!e.target.closest('#text-selection-menu')) {
+         // ****               selectionMenu.style.display = 'none';
+          // ****          }
+
         });
         // **** END OF MODIFIED CODE ****
-		
-		
+
+
         document.getElementById('ctx-delete').onclick = () => { if (activeElementForEditor) { activeElementForEditor.remove(); updateLiveOutput(); } };
         document.getElementById('ctx-properties').onclick = () => { if (activeElementForEditor) openPropertiesModal(activeElementForEditor); };
         document.querySelectorAll('.add-element-btn').forEach(btn => btn.onclick = e => { currentSectionToAdd = e.target.dataset.section; document.getElementById('add-element-modal').style.display = 'block'; });
         document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = e => document.getElementById(e.target.dataset.modalId).style.display = 'none');
         document.querySelectorAll('.element-type').forEach(el => el.onclick = e => { const type = e.currentTarget.dataset.type; const dropzone = document.querySelector(`#${currentSectionToAdd} .dropzone`); if(dropzone) { dropzone.appendChild(createElement(type)); } updateLiveOutput(); document.getElementById('add-element-modal').style.display = 'none'; });
         document.querySelectorAll('.dropzone').forEach(zone => zone.addEventListener('dragover', e => { e.preventDefault(); const draggingEl = document.querySelector('.draggable-element.dragging'); if (!draggingEl) return; const afterElement = [...zone.querySelectorAll('.draggable-element:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = e.clientY - box.top - box.height / 2; return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element; if (afterElement == null) zone.appendChild(draggingEl); else zone.insertBefore(draggingEl, afterElement); }));
-        const copyAction = () => { liveOutput.select(); navigator.clipboard.writeText(liveOutput.value).then(() => alert('Note copied!')); }; document.getElementById('copy-btn-top').addEventListener('click', copyAction); document.getElementById('copy-btn-bottom').addEventListener('click', copyAction);
+ 
+
+
+// **** START OF CODE for copyAction with evaluation****
+
+        const copyAction = () => {
+            const noteText = liveOutput.value;
+            
+            // 1. Run the evaluation on the current note text.
+            const suggestions = evaluateNote(noteText);
+
+            // 2. Build the confirmation message.
+            let alertMessage = "Note Copied!";
+            if (suggestions.length > 0) {
+                // If there are suggestions, add them to the message on new lines.
+                alertMessage += "\n\n--- Suggestions ---\n" + suggestions.join('\n');
+            }
+
+            // 3. Copy the text to the clipboard and show the confirmation message.
+            navigator.clipboard.writeText(noteText).then(() => {
+                alert(alertMessage);
+            });
+        };
+
+        // **** END OF  CODE for copyAction with evaluation ****
+
+
+
+document.getElementById('copy-btn-top').addEventListener('click', copyAction); document.getElementById('copy-btn-bottom').addEventListener('click', copyAction);
+
+
+
+
+
         const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.json'; fileInput.style.display = 'none'; document.body.appendChild(fileInput);
         document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (re) => { loadJsonData(re.target.result); }; reader.readAsText(file); e.target.value = ''; });
         document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dental-note-template.json'; a.click(); URL.revokeObjectURL(a.href); };
         document.getElementById('reset-btn').addEventListener('click', resetValues);
-		document.getElementById('full-reset-btn').addEventListener('click', fullReset);
+document.getElementById('full-reset-btn').addEventListener('click', fullReset);
         document.getElementById('view-hidden-toggle').addEventListener('change', (e) => { if (e.target.checked) { document.body.classList.add('show-hidden-elements'); } else { document.body.classList.remove('show-hidden-elements'); }});
         
-		// **** START OF NEW CODE for lock toggle****
+// **** START OF NEW CODE for lock toggle****
 document.getElementById('lock-layout-toggle').addEventListener('change', (e) => {
     if (e.target.checked) {
         document.body.classList.add('layout-locked');
@@ -1867,9 +2529,9 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
     }
 });
 // **** END OF NEW CODE ****
-		
-		
-		
+
+
+
         // --- Initial Setup ---
         const loadJsonData = (jsonString, isStartup = false, isFromFileImport = false) => {
             try {
@@ -1965,14 +2627,14 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
             loadDefaults();
         }
  
-	    
+   
     });
     </script>
 
 
 
--NAVMED 6600/13 JSON default-<br>
-<h6>Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a></h6>
+
+
 <script>
 // ===================================================================================
 //
@@ -1990,8 +2652,14 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
     // ============================= CONFIGURATION ===================================
     //  !!! IMPORTANT !!! 
     //  Change 'myNotesTextbox' to the actual ID of your textbox element.
-    const targetTextboxId = 'textbox-editor-textarea'; 
+
+	const targetTextboxId = 'textbox-editor-textarea';
+	const targetTextboxId2 = 'tx-plan-table'; 
     // ===============================================================================
+
+
+
+
 
 
     // ===================================================================================
@@ -2003,6 +2671,97 @@ const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Per
     //   --- APPLICATION LOGIC (v2.0) mgh ---
     // ===================================================================================
 
+
+
+
+    // **** START OF  CODE: Auto-Correct Function with handleinput and attacheventlisteners****
+   
+
+// This is the new, combined function that handles BOTH suggestions and auto-correct.
+// **** START OF REPLACEMENT for handleCombinedInput ****
+
+const handleCombinedInput = (event) => {
+    const textarea = event.target;
+    const fullText = textarea.value;
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = fullText.substring(0, cursorPos);
+    const lastChar = textBeforeCursor.slice(-1);
+
+    // --- 1. Auto-Correct Logic ---
+    if (lastChar === ' ' || lastChar === '.' || lastChar === ',') {
+        const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ', cursorPos - 2);
+        const lastWord = textBeforeCursor.substring(lastSpaceIndex + 1).trim();
+
+		 // --- auto corrects if starts with # or number then dash or number then letter but not mm for millimeter ---
+        const match = lastWord.match(/^#?(?!.*\)$)(\d+)-?\(?(?![mM]{2}\)?$)([a-zA-Z]+)\)?$/);
+        
+        if (match) {
+            const toothNumber = match[1];
+            const surfaceLetters = match[2];
+
+            console.log(`Auto-Correct: Detected tooth shorthand "${lastWord}"`);
+
+            const correctedShorthand = `(${surfaceLetters.toUpperCase()})`;
+            const replacement = `#${toothNumber}${correctedShorthand},`;
+
+            console.log(`Auto-Correct: Formatting to "${replacement}"`);
+            
+            const textAfterCursor = fullText.substring(cursorPos);
+            const newText = textBeforeCursor.substring(0, lastSpaceIndex + 1) + replacement + fullText.substring(cursorPos - 1);
+
+            textarea.value = newText;
+            
+            const newCursorPos = lastSpaceIndex + 1 + replacement.length + 1;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            
+            hideSuggestions();
+            return; 
+        }
+    }
+
+    // --- 2. Auto-Suggester Logic (runs if auto-correct did not) ---
+    const lastSpaceIndexForSuggest = textBeforeCursor.lastIndexOf(' ');
+    const currentWordForSuggest = textBeforeCursor.substring(lastSpaceIndexForSuggest + 1).toLowerCase();
+
+    if (!currentWordForSuggest) {
+        hideSuggestions();
+        return;
+    }
+    
+    // **** THIS IS THE FIX ****
+    // The 'dictionary' constant is already available in this script's scope.
+    // We don't need to look for it on the window object.
+    const filteredTerms = dictionary.filter(term => term.toLowerCase().startsWith(currentWordForSuggest));
+    displaySuggestions(filteredTerms, currentWordForSuggest);
+};
+
+// **** END OF REPLACEMENT for handleCombinedInput ****
+
+function attachEventListeners() {
+    // We now attach ONLY our single, combined handler to the input event.
+    textInput.addEventListener('input', handleCombinedInput); 
+    
+    // The other listeners remain the same.
+    textInput.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('click', handleGlobalClick);
+    window.addEventListener('scroll', hideSuggestions, true);
+    window.addEventListener('resize', hideSuggestions);
+}
+
+// (The handleAutoCorrect function is no longer needed as a separate function)
+// const handleInput = () => { ... }; // The old handleInput is also no longer needed
+
+
+
+
+
+    // **** END OF AUTOCORRECT CODE ****
+
+
+
+
+
+
     let textInput = null;
     let suggestionsContainer = null;
     const suggestionsId = 'dental-suggester-list-999';
@@ -2013,10 +2772,26 @@ const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Per
             console.error(`Dental Suggester Error: Textbox with ID "${targetTextboxId}" not found.`);
             return;
         }
+
         injectStyles();
         createSuggestionsContainer();
         attachEventListeners();
         console.log(`Dental Suggester initialized successfully on #${targetTextboxId}.`);
+		init2();
+    }
+	//this then gets the autocorrect in the tx-plan module
+	function init2() {
+        textInput = document.getElementById(targetTextboxId2);
+        if (!textInput) {
+            console.error(`Dental Suggester Error: Textbox with ID "${targetTextboxId2}" not found.`);
+            return;
+        }
+
+        injectStyles();
+        createSuggestionsContainer();
+        attachEventListeners();
+        console.log(`Dental Suggester initialized successfully on #${targetTextboxId2}.`);
+		textInput = document.getElementById(targetTextboxId);
     }
 
     function injectStyles() {
@@ -2057,14 +2832,7 @@ const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Per
         suggestionsContainer = container;
     }
 
-    function attachEventListeners() {
-        textInput.addEventListener('input', handleInput);
-        textInput.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('click', handleGlobalClick);
-        // --- NEW --- Reposition on scroll or resize
-        window.addEventListener('scroll', hideSuggestions, true); // Use capture phase
-        window.addEventListener('resize', hideSuggestions);
-    }
+
 
     function displaySuggestions(suggestions, query) {
         if (suggestions.length === 0) {
@@ -2099,7 +2867,7 @@ const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Per
     }
 
     // Unchanged functions (handleInput, handleKeyDown, etc.) are below
-    const handleInput = () => { /* ... same as before ... */ const fullText = textInput.value; const cursorPos = textInput.selectionStart; const textBeforeCursor = fullText.substring(0, cursorPos); const lastSpaceIndex = textBeforeCursor.lastIndexOf(' '); const currentWord = textBeforeCursor.substring(lastSpaceIndex + 1).toLowerCase(); if (!currentWord) { hideSuggestions(); return; } const filteredTerms = dictionary.filter(term => term.toLowerCase().startsWith(currentWord)); displaySuggestions(filteredTerms, currentWord); };
+
     const handleKeyDown = (e) => { /* ... same as before ... */ if (suggestionsContainer.style.display === 'none') return; const suggestions = suggestionsContainer.querySelectorAll('li'); if (suggestions.length === 0) return; let activeIndex = -1; suggestions.forEach((s, index) => { if (s.classList.contains('active')) activeIndex = index; }); if (e.key === 'ArrowDown') { e.preventDefault(); if (activeIndex < suggestions.length - 1) { if (activeIndex > -1) suggestions[activeIndex].classList.remove('active'); suggestions[activeIndex + 1].classList.add('active'); } } else if (e.key === 'ArrowUp') { e.preventDefault(); if (activeIndex > 0) { suggestions[activeIndex].classList.remove('active'); suggestions[activeIndex - 1].classList.add('active'); } } else if (e.key === 'Enter' && activeIndex > -1) { e.preventDefault(); selectTerm(suggestions[activeIndex].getAttribute('data-term')); } else if (e.key === 'Escape' || e.key === 'Tab') { hideSuggestions(); } };
     const handleGlobalClick = (event) => { /* ... same as before ... */ if (!textInput.contains(event.target) && !suggestionsContainer.contains(event.target)) { hideSuggestions(); } };
     function selectTerm(term) { /* ... same as before ... */ const fullText = textInput.value; const cursorPos = textInput.selectionStart; const textBeforeCursor = fullText.substring(0, cursorPos); const textAfterCursor = fullText.substring(cursorPos); const lastSpaceIndex = textBeforeCursor.lastIndexOf(' '); const baseText = textBeforeCursor.substring(0, lastSpaceIndex + 1); textInput.value = baseText + term + ' ' + textAfterCursor; hideSuggestions(); textInput.focus(); const newCursorPos = (baseText + term + ' ').length; textInput.setSelectionRange(newCursorPos, newCursorPos); }
@@ -2107,6 +2875,318 @@ const dictionary = ["Abrasion", "Abscess", "Abscess (Periapical)", "Abscess (Per
     
     document.addEventListener('DOMContentLoaded', init);
 })();
+
+
+
+
+    // **** CHARTING CODE ****
+
+
+
+        const dentalChartSVG = document.getElementById('dentalChart');
+        const teethData = {}; // Stores references to SVG path elements for each tooth's surfaces
+
+        // Tooth positions (Universal Numbering System)
+        const toothPositions = {
+            // Upper Right (1-8)
+            1: { x: 50, y: 100, isUpper: true, quadrant: 1 },
+            2: { x: 100, y: 100, isUpper: true, quadrant: 1 },
+            3: { x: 150, y: 100, isUpper: true, quadrant: 1 },
+            4: { x: 200, y: 100, isUpper: true, quadrant: 1 },
+            5: { x: 250, y: 100, isUpper: true, quadrant: 1 },
+            6: { x: 300, y: 100, isUpper: true, quadrant: 1 },
+            7: { x: 350, y: 100, isUpper: true, quadrant: 1 },
+            8: { x: 400, y: 100, isUpper: true, quadrant: 1 }, // Midline between 8 and 9
+
+            // Upper Left (9-16)
+            9: { x: 450, y: 100, isUpper: true, quadrant: 2 },
+            10: { x: 500, y: 100, isUpper: true, quadrant: 2 },
+            11: { x: 550, y: 100, isUpper: true, quadrant: 2 },
+            12: { x: 600, y: 100, isUpper: true, quadrant: 2 },
+            13: { x: 650, y: 100, isUpper: true, quadrant: 2 },
+            14: { x: 700, y: 100, isUpper: true, quadrant: 2 },
+            15: { x: 750, y: 100, isUpper: true, quadrant: 2 },
+            16: { x: 800, y: 100, isUpper: true, quadrant: 2 },
+
+            // Lower Right (25-32)
+            32: { x: 50, y: 300, isUpper: false, quadrant: 4 },
+            31: { x: 100, y: 300, isUpper: false, quadrant: 4 },
+            30: { x: 150, y: 300, isUpper: false, quadrant: 4 },
+            29: { x: 200, y: 300, isUpper: false, quadrant: 4 },
+            28: { x: 250, y: 300, isUpper: false, quadrant: 4 },
+            27: { x: 300, y: 300, isUpper: false, quadrant: 4 },
+            26: { x: 350, y: 300, isUpper: false, quadrant: 4 },
+            25: { x: 400, y: 300, isUpper: false, quadrant: 4 }, // Midline between 25 and 24
+
+            // Lower Left (17-24)
+            24: { x: 450, y: 300, isUpper: false, quadrant: 3 },
+            23: { x: 500, y: 300, isUpper: false, quadrant: 3 },
+            22: { x: 550, y: 300, isUpper: false, quadrant: 3 },
+            21: { x: 600, y: 300, isUpper: false, quadrant: 3 },
+            20: { x: 650, y: 300, isUpper: false, quadrant: 3 },
+            19: { x: 700, y: 300, isUpper: false, quadrant: 3 },
+            18: { x: 750, y: 300, isUpper: false, quadrant: 3 },
+            17: { x: 800, y: 300, isUpper: false, quadrant: 3 },
+        };
+
+        // --- Drawing the initial blank chart ---
+        function createTooth(toothNum, x, y, size = 18, isUpper = true, quadrant) {
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group.setAttribute("id", `tooth-group-${toothNum}`);
+
+            // Outer circle (overall tooth shape)
+            const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            outerCircle.setAttribute("cx", x);
+            outerCircle.setAttribute("cy", y);
+            outerCircle.setAttribute("r", size);
+            outerCircle.setAttribute("class", "tooth-outline");
+            group.appendChild(outerCircle);
+
+            teethData[toothNum] = {}; // Initialize store for this tooth's surfaces
+
+            const smallSize = size * 0.7; // Size of individual surface rects
+            const offset = size * 0.6;    // Offset from center for surface rects
+
+            // Determine if on right side (1 or 4) or left side (2 or 3) for M/D orientation
+            const isRightQuadrant = (quadrant === 1 || quadrant === 4);
+
+            // FLIPPED SIGNS FOR VISUAL 180 DEGREE ROTATION (relative to previous version)
+            const mesialXOffset = isRightQuadrant ? offset : -offset;
+            const distalXOffset = isRightQuadrant ? -offset : offset;
+
+            const buccalFacialYOffset = isUpper ? -offset : offset;
+            const lingualYOffset = isUpper ? offset : -offset;
+
+
+
+            // M (Mesial)
+            const M_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            M_path.setAttribute("x", x + mesialXOffset - smallSize / 2);
+            M_path.setAttribute("y", y - smallSize / 2);
+            M_path.setAttribute("width", smallSize);
+            M_path.setAttribute("height", smallSize);
+            M_path.setAttribute("class", "tooth-surface");
+            M_path.setAttribute("id", `tooth-${toothNum}-M`);
+            M_path.setAttribute("data-surface", "M");
+            group.appendChild(M_path);
+            teethData[toothNum]['M'] = M_path;
+
+            // D (Distal)
+            const D_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            D_path.setAttribute("x", x + distalXOffset - smallSize / 2);
+            D_path.setAttribute("y", y - smallSize / 2);
+            D_path.setAttribute("width", smallSize);
+            D_path.setAttribute("height", smallSize);
+            D_path.setAttribute("class", "tooth-surface");
+            D_path.setAttribute("id", `tooth-${toothNum}-D`);
+            D_path.setAttribute("data-surface", "D");
+            group.appendChild(D_path);
+            teethData[toothNum]['D'] = D_path;
+
+            // B/F (Buccal/Facial - outer side, towards cheek/lip)
+            const BF_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            BF_path.setAttribute("x", x - smallSize / 2);
+            BF_path.setAttribute("y", y + buccalFacialYOffset - smallSize / 2);
+            BF_path.setAttribute("width", smallSize);
+            BF_path.setAttribute("height", smallSize);
+            BF_path.setAttribute("class", "tooth-surface");
+            BF_path.setAttribute("id", `tooth-${toothNum}-BF`);
+            BF_path.setAttribute("data-surface", "B"); // Store as B, also acts as F
+            group.appendChild(BF_path);
+            teethData[toothNum]['B'] = BF_path;
+            teethData[toothNum]['F'] = BF_path;
+
+            // L (Lingual - inner side, towards tongue)
+            const L_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            L_path.setAttribute("x", x - smallSize / 2);
+            L_path.setAttribute("y", y + lingualYOffset - smallSize / 2);
+            L_path.setAttribute("width", smallSize);
+            L_path.setAttribute("height", smallSize);
+            L_path.setAttribute("class", "tooth-surface");
+            L_path.setAttribute("id", `tooth-${toothNum}-L`);
+            L_path.setAttribute("data-surface", "L");
+            group.appendChild(L_path);
+            teethData[toothNum]['L'] = L_path;
+
+
+			// O/I (Occlusal/Incisal - center)
+            const OI_path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            OI_path.setAttribute("x", x - smallSize / 2);
+            OI_path.setAttribute("y", y - smallSize / 2);
+            OI_path.setAttribute("width", smallSize);
+            OI_path.setAttribute("height", smallSize);
+            OI_path.setAttribute("class", "tooth-surface");
+            OI_path.setAttribute("id", `tooth-${toothNum}-O`);
+            OI_path.setAttribute("data-surface", "O");
+            group.appendChild(OI_path);
+            teethData[toothNum]['O'] = OI_path;
+            teethData[toothNum]['I'] = OI_path; // Incisal for anterior teeth shares this path
+			
+
+            // Tooth number label
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("x", x);
+            label.setAttribute("y", isUpper ? y + size + 8 : y - size - 4);
+            label.setAttribute("class", "tooth-label");
+            label.textContent = toothNum;
+            group.appendChild(label);
+
+            return group;
+        }
+
+        function initializeChart() {
+            dentalChartSVG.innerHTML = ''; // Clear previous chart
+
+            // --- Mouth Labels and Lines ---
+            // Facial Label (Upper)
+            dentalChartSVG.appendChild(createLabel("Facial", 425, 30, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 40, 780, 40, "label-line"));
+
+            // Lingual Label (Upper)
+            dentalChartSVG.appendChild(createLabel("Lingual", 425, 170, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 180, 780, 180, "label-line"));
+
+
+            // Lingual Label (Lower)
+            dentalChartSVG.appendChild(createLabel("Lingual", 425, 230, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 240, 780, 240, "label-line"));
+
+            // Facial Label (Lower)
+            dentalChartSVG.appendChild(createLabel("Facial", 425, 370, "mouth-label"));
+            dentalChartSVG.appendChild(createLine(20, 380, 780, 380, "label-line"));
+
+
+            // --- Arch Lines (simplified path) ---
+            const upperArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            upperArchLine.setAttribute("d", "M 20 120 C 200 60, 600 60, 830 120");
+            upperArchLine.setAttribute("class", "arch-line");
+            dentalChartSVG.appendChild(upperArchLine);
+
+            const lowerArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            lowerArchLine.setAttribute("d", "M 20 280 C 200 340, 600 340, 830 280");
+            lowerArchLine.setAttribute("class", "arch-line");
+            dentalChartSVG.appendChild(lowerArchLine);
+
+            // --- Tooth Elements ---
+            // Upper teeth (1-16)
+            for (let i = 1; i <= 16; i++) {
+                const pos = toothPositions[i];
+                if (pos) {
+                    dentalChartSVG.appendChild(createTooth(i, pos.x, pos.y, 18, pos.isUpper, pos.quadrant));
+                }
+            }
+
+            // Lower teeth (17-32) - drawing 32 down to 17 for left-to-right display
+            for (let i = 32; i >= 17; i--) {
+                const pos = toothPositions[i];
+                if (pos) {
+                    dentalChartSVG.appendChild(createTooth(i, pos.x, pos.y, 18, pos.isUpper, pos.quadrant));
+                }
+            }
+
+            // Reset all surfaces to default color before marking
+            document.querySelectorAll('.tooth-surface').forEach(path => {
+                path.classList.remove('caries');
+            });
+        }
+
+        function createLabel(text, x, y, className) {
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("x", x);
+            label.setAttribute("y", y);
+            label.setAttribute("class", className);
+            label.textContent = text;
+            return label;
+        }
+
+        function createLine(x1, y1, x2, y2, className) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("class", className);
+            return line;
+        }
+
+
+        // --- Parsing and Charting Logic ---
+        const OPERATIVE_KEYWORD = "CHARTING OF TREATMENT PLAN IN DENTRIX";
+
+        function parsePrompt(fullPrompt) {
+            let relevantPrompt = fullPrompt.trim();
+            const keywordIndex = relevantPrompt.toUpperCase().indexOf(OPERATIVE_KEYWORD);
+
+            if (keywordIndex !== -1) {
+                // Take text after the keyword
+                relevantPrompt = relevantPrompt.substring(keywordIndex + OPERATIVE_KEYWORD.length).trim();
+            }
+            // If keyword not found, the fullPrompt (trimmed) is used.
+
+            const cariesData = [];
+            const regex = /(\d+)\s*\(([^)]+)\)/g;
+            let match;
+            while ((match = regex.exec(relevantPrompt)) !== null) { // Use relevantPrompt here
+                const toothNum = parseInt(match[1]);
+                const surfaceStr = match[2].toUpperCase();
+
+                const surfaces = new Set();
+
+                // First, check for common compound abbreviations
+                if (surfaceStr.includes('MOD')) {
+                    surfaces.add('M'); surfaces.add('O'); surfaces.add('D');
+                } else if (surfaceStr.includes('MO')) {
+                    surfaces.add('M'); surfaces.add('O');
+                } else if (surfaceStr.includes('DO')) {
+                    surfaces.add('D'); surfaces.add('O');
+                } else if (surfaceStr.includes('MI')) {
+                    surfaces.add('M'); surfaces.add('I');
+                } else if (surfaceStr.includes('DI')) {
+                    surfaces.add('D'); surfaces.add('I');
+                }
+
+                // Then, iterate through the string to catch individual surfaces,
+                // including those that might be part of or combined with compounds (e.g., MODFL)
+                for (let i = 0; i < surfaceStr.length; i++) {
+                    const s = surfaceStr[i];
+                    if (['M', 'O', 'D', 'I', 'B', 'F', 'L'].includes(s)) {
+                        surfaces.add(s);
+                    }
+                }
+                cariesData.push({ toothNum, surfaces: Array.from(surfaces) });
+            }
+            return cariesData;
+        }
+
+        function markCaries(cariesInfo) {
+            cariesInfo.forEach(item => {
+                const toothNum = item.toothNum;
+                item.surfaces.forEach(surface => {
+                    const surfacePath = teethData[toothNum] && teethData[toothNum][surface];
+                    if (surfacePath) {
+                        surfacePath.classList.add('caries');
+                    } else {
+                        console.warn(`Could not find SVG element for tooth ${toothNum}, surface ${surface}. This might be an invalid surface or a drawing error.`);
+                        const centralSurface = teethData[toothNum] && (teethData[toothNum]['O'] || teethData[toothNum]['I']);
+                        if (centralSurface) {
+                            centralSurface.classList.add('caries');
+                        }
+                    }
+                });
+            });
+        }
+
+        function generateChart() {
+            initializeChart();
+            const prompt = document.getElementById('live-output').value;
+            const cariesToMark = parsePrompt(prompt);
+            markCaries(cariesToMark);
+        }
+
+
+
+
+
 </script>
 
 
