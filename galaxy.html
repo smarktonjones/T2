@@ -9,6 +9,11 @@
         position:absolute; top:10px; left:50px; z-index:100;
         background:rgba(0,0,0,0.7); padding:15px; border-radius:8px; color:#fff;
         user-select:none;
+        /* --- MODIFICATIONS START --- */
+        max-height: 80vh; /* Set a max height relative to the viewport height */
+        overflow-y: auto;   /* Add a vertical scrollbar only when needed */
+        overflow-x: hidden; /* Prevent horizontal scrollbar */
+        /* --- MODIFICATIONS END --- */
     }
     #gui label { display:block; margin:8px 0; }
     #gui input, #gui select, #gui button { width:100%; padding:6px; margin-top:4px; box-sizing:border-box; }
