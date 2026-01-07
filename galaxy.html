@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>3D GPU Galaxy Simulator – With Audio-Modulated Gravity</title>
+<title>3D GPU Galaxy Simulator – With Audio-Modulated Gravity & Acoustic Visuals</title>
 <style>
     body { margin:0; overflow:hidden; background:#000; font-family:Arial, sans-serif; }
     #gui {
@@ -20,31 +20,41 @@
 <button id="toggleGui" style="position:absolute; top:10px; left:10px; z-index:101; background:rgba(0,0,0,0.7); color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Hide</button>
 
 <div id="gui">
-    <label>Particles <input type="number" id="num" value="200000" min="1000" max="300000" step="10000"></label>
-    <label>Base Gravity <input type="number" id="grav" value="2" step="0.01"></label>
-    <label>Velocity   <input type="number" id="vel" value="3" step="1"></label>
+    <label>Particles <input type="number" id="num" value="100000" min="1000" max="300000" step="10000"></label>
+    <label>Base Gravity <input type="number" id="grav" value="1" step="0.01"></label>
+    <label>Velocity   <input type="number" id="vel" value=".1" step="1"></label>
     <label>Size       <input type="number" id="size" value="3" step="0.1"></label>
     <label>Disk Radius<input type="number" id="radius" value="320" step="20"></label>
     <label>Thickness  <input type="number" id="thick" value="14" step="1"></label>
     <label>Sim Speed  <input type="number" id="speed" value="20" step="5"></label>
-    <label>Reset Radius (0=off) <input type="number" id="resetR" value="10000" step="50"></label>
-    <label>Num Central Attractors <input type="number" id="numAttract" value="1" min="1" step="1"></label>
-    <label>Attractor Distance <input type="number" id="attractDist" value="100" step="10"></label>
-    <label>Audio Strength <input type="number" id="audioS" value="300" step="0.1"></label>
-    <label>Sample Interval (ms) <input type="number" id="sampleInt" value="50" step="10" min="10"></label>
+    <label>Reset Radius (0=off) <input type="number" id="resetR" value="400" step="50"></label>
+    <label>Num Central Attractors <input type="number" id="numAttract" value="4" min="0" step="1"></label>
+    <label>Attractor Distance <input type="number" id="attractDist" value="500" step="10"></label>
+    <label>Audio Strength <input type="number" id="audioS" value="50" step="0.1"></label>
+    <label>Sample Interval (ms) <input type="number" id="sampleInt" value="5" step="10" min="10"></label>
     <label>Audio Effect <select id="audioMode"><option value="multiply">Multiply</option><option value="add">Add</option></select></label>
+    <label>Colorize <input type="checkbox" id="colorize" checked></label>
+    <label>Color Radius <input type="number" id="colorRad" value="50" step="10"></label>
+    <label>Acoustic Waves <input type="checkbox" id="acoustic" checked></label>
+    <label>Wave Strength <input type="number" id="waveS" value="100" step="0.01"></label>
+    <label>Wave Speed <input type="number" id="waveSpeed" value="100000" step="10"></label>
+    <label>Acoustic Visual <input type="checkbox" id="acousticVis" checked></label>
+    <label>Visual Amount <input type="number" id="visAmt" value="5" step="1"></label>
+    <label>Flicker Effect <input type="checkbox" id="flicker" checked></label>
+    <label>Flicker Interval (s) <input type="number" id="flickFreq" value="10000" step="10" min="1"></label>
+    <label>Flicker Duration (s) <input type="number" id="flickSpeed" value="200" step="0.1"></label>
+    <label>Flicker Magnitude <input type="number" id="flickMag" value="1.5" step="0.5"></label>
     <button id="startAudio">Start Audio Capture</button>
     <button id="restart">Restart Simulation</button>
     <button id="fullScreen">Full Screen</button>
 </div>
 
-<!-- Use the sources you provided for compatibility -->
+<!-- Three.js and OrbitControls -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-<!-- All our code runs only AFTER both scripts are loaded -->
 <script>
-// Wait for the page (and the two scripts above) to be fully loaded
+// Wait for the page and scripts to load
 window.addEventListener('load', function() {
 
     // ------------------------------------------------------------------
@@ -81,12 +91,87 @@ window.addEventListener('load', function() {
     const tex = glowTexture();
 
     // ------------------------------------------------------------------
-    // Particle system
+    // Global variables
     // ------------------------------------------------------------------
     let points, geometry, material;
     let positions, velocities, colorArray;
-    let num; // Store num globally for simulate
-    let attractorPositions = []; // Array of [x,y,z] for attractors
+    let num; // global for simulate
+    let attractorPositions = [];
+    let attractorColors = [];
+    let uniforms;
+    let sim_time = 0;
+
+    let analyzer;
+    let current_amplitudes = [];
+    let current_amp = 0;
+    let current_freq = 440;
+    let intervalId;
+    let audioContext;
+
+    let flickerPhases; // per-particle phase (-1 stable, 0-1 flickering)
+
+    // ------------------------------------------------------------------
+    // Helper functions
+    // ------------------------------------------------------------------
+    function wavelengthToRGB(wl) {
+        let r = 0, g = 0, b = 0;
+        if (wl >= 380 && wl < 440) {
+            r = (440 - wl) / (440 - 380);
+            g = 0;
+            b = 1;
+        } else if (wl >= 440 && wl < 490) {
+            r = 0;
+            g = (wl - 440) / (490 - 440);
+            b = 1;
+        } else if (wl >= 490 && wl < 510) {
+            r = 0;
+            g = 1;
+            b = (510 - wl) / (510 - 490);
+        } else if (wl >= 510 && wl < 580) {
+            r = (wl - 510) / (580 - 510);
+            g = 1;
+            b = 0;
+        } else if (wl >= 580 && wl < 645) {
+            r = 1;
+            g = (645 - wl) / (645 - 580);
+            b = 0;
+        } else if (wl >= 645 && wl <= 780) {
+            r = 1;
+            g = 0;
+            b = 0;
+        }
+        let factor = 1;
+        if (wl > 700) factor = (780 - wl) / (780 - 700) * 0.3 + 0.7;
+        else if (wl < 420) factor = (wl - 380) / (420 - 380) * 0.3 + 0.7;
+        r = Math.pow(r * factor, 0.8);
+        g = Math.pow(g * factor, 0.8);
+        b = Math.pow(b * factor, 0.8);
+        return [r, g, b];
+    }
+
+    function initAttractors() {
+        const numAttract = +document.getElementById('numAttract').value;
+        const attractDist = +document.getElementById('attractDist').value;
+        attractorPositions = [];
+        attractorColors = [];
+
+        if (numAttract === 1) {
+            attractorPositions.push([0, 0, 0]);
+        } else {
+            const offset = (numAttract - 1) * attractDist / 2;
+            for (let i = 0; i < numAttract; i++) {
+                const x = i * attractDist - offset;
+                attractorPositions.push([x, 0, 0]);
+            }
+        }
+
+        const minWL = 400, maxWL = 700;
+        for (let i = 0; i < numAttract; i++) {
+            const wl = minWL + (i + 0.5) / numAttract * (maxWL - minWL);
+            const rgb = wavelengthToRGB(wl);
+            attractorColors.push(rgb);
+        }
+    }
 
     function initParticle(i) {
         const G     = +document.getElementById('grav').value;
@@ -94,7 +179,6 @@ window.addEventListener('load', function() {
         const R     = +document.getElementById('radius').value;
         const thick = +document.getElementById('thick').value;
 
-        // Choose random attractor
         const attractIdx = Math.floor(Math.random() * attractorPositions.length);
         const attract = attractorPositions[attractIdx];
 
@@ -108,38 +192,21 @@ window.addEventListener('load', function() {
         positions[i*3+1] = attract[1] + relY;
         positions[i*3+2] = attract[2] + relZ;
 
-        const dist = r; // Since relative to attractor
+        const dist = r;
         const v0   = Math.sqrt(G / dist) * velM;
 
         velocities[i*3]   = -v0 * Math.sin(phi) * (0.9 + Math.random()*0.2);
         velocities[i*3+1] =  v0 * Math.cos(phi) * (0.9 + Math.random()*0.2);
         velocities[i*3+2] = (Math.random()-0.5)*0.02;
 
-        const hue = Math.random()*0.15;
-        colorArray[i*3]   = 1.0;
-        colorArray[i*3+1] = 0.9 - hue;
-        colorArray[i*3+2] = 0.7 - hue*1.5;
-    }
-
-    function initAttractors() {
-        const numAttract = +document.getElementById('numAttract').value;
-        const attractDist = +document.getElementById('attractDist').value;
-        attractorPositions = [];
-
-        if (numAttract === 1) {
-            attractorPositions.push([0, 0, 0]);
-        } else {
-            const offset = (numAttract - 1) * attractDist / 2;
-            for (let i = 0; i < numAttract; i++) {
-                const x = i * attractDist - offset;
-                attractorPositions.push([x, 0, 0]); // Along x-axis, centered
-            }
-        }
+        const rgb = attractorColors[attractIdx];
+        colorArray[i*3]   = rgb[0];
+        colorArray[i*3+1] = rgb[1];
+        colorArray[i*3+2] = rgb[2];
     }
 
     function init() {
         num   = +document.getElementById('num').value;
-        const size  = +document.getElementById('size').value;
 
         initAttractors();
 
@@ -150,6 +217,7 @@ window.addEventListener('load', function() {
         positions  = new Float32Array(num * 3);
         velocities = new Float32Array(num * 3);
         colorArray = new Float32Array(num * 3);
+        flickerPhases = new Float32Array(num).fill(-1);
 
         for (let i = 0; i < num; i++) {
             initParticle(i);
@@ -157,17 +225,101 @@ window.addEventListener('load', function() {
 
         geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color',    new THREE.BufferAttribute(colorArray, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+        geometry.setAttribute('flickerPhase', new THREE.BufferAttribute(flickerPhases, 1));
 
-        material = new THREE.PointsMaterial({
-            size: size,
-            map: tex,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-            transparent: true,
-            sizeAttenuation: true
-        });
+        updateMaterial();
+    }
+
+    function updateMaterial() {
+        if (points) scene.remove(points);
+        if (material) material.dispose();
+
+        const size = +document.getElementById('size').value;
+        const acousticVis = document.getElementById('acousticVis').checked;
+        const flicker_on = document.getElementById('flicker').checked;
+
+        if (!acousticVis && !flicker_on) {
+            material = new THREE.PointsMaterial({
+                size: size,
+                map: tex,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true,
+                sizeAttenuation: true
+            });
+        } else {
+            uniforms = {
+                pointSize: { value: size },
+                time: { value: 0 },
+                waveSpeed: { value: +document.getElementById('waveSpeed').value },
+                freq: { value: 440 },
+                amp: { value: 0 },
+                visAmt: { value: acousticVis ? +document.getElementById('visAmt').value : 0 },
+                flickMag: { value: flicker_on ? +document.getElementById('flickMag').value : 0 },
+                pointTexture: { value: tex }
+            };
+
+            material = new THREE.ShaderMaterial({
+                uniforms: uniforms,
+                vertexShader: `
+                    attribute vec3 color;
+                    attribute float flickerPhase;
+                    varying vec3 vColor;
+                    varying float vAlpha;
+                    uniform float pointSize;
+                    uniform float time;
+                    uniform float waveSpeed;
+                    uniform float freq;
+                    uniform float amp;
+                    uniform float visAmt;
+                    uniform float flickMag;
+
+                    void main() {
+                        vColor = color;
+                        vec3 p = position;
+                        float r = length(p);
+                        float phase = 0.0;
+                        float disp = 0.0;
+                        float alpha = 1.0;
+                        float sizeMod = 1.0;
+                        float flicker = 0.0;
+
+                        if (r > 0.1) {
+                            float k = 6.283185307 / (waveSpeed / freq);
+                            float omega = 6.283185307 * freq;
+                            phase = omega * time - k * r;
+                            disp = amp * sin(phase) * visAmt;
+                            p += normalize(p) * disp;
+                            alpha = 1.0 - abs(sin(phase)) * 0.3;
+                        }
+
+                        if (flickerPhase >= 0.0) {
+                            flicker = sin(flickerPhase * 3.1415926535);
+                            vColor = mix(vColor, vec3(1.0), flicker * flickMag);
+                            sizeMod += flicker * flickMag * 0.5;
+                        }
+
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+                        gl_PointSize = pointSize * sizeMod;
+                        vAlpha = alpha;
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D pointTexture;
+                    varying vec3 vColor;
+                    varying float vAlpha;
+
+                    void main() {
+                        gl_FragColor = texture2D(pointTexture, gl_PointCoord) * vec4(vColor, vAlpha);
+                    }
+                `,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true
+            });
+        }
 
         points = new THREE.Points(geometry, material);
         scene.add(points);
@@ -176,15 +328,10 @@ window.addEventListener('load', function() {
     // ------------------------------------------------------------------
     // Audio setup
     // ------------------------------------------------------------------
-    let analyzer;
-    let current_amplitude = 0;
-    let intervalId;
-    let audioContext;
-
     async function startAudioCapture() {
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            stream.getVideoTracks().forEach(track => track.stop()); // Stop video track immediately
+            stream.getVideoTracks().forEach(track => track.stop());
 
             audioContext = new AudioContext();
             const source = audioContext.createMediaStreamSource(stream);
@@ -198,22 +345,48 @@ window.addEventListener('load', function() {
         }
     }
 
-    function updateAmplitude() {
+    function updateFrequencies() {
         if (!analyzer) return;
-        const data = new Uint8Array(analyzer.fftSize);
-        analyzer.getByteTimeDomainData(data);
-        let sumSq = 0;
-        for (let val of data) {
-            const amp = (val - 128) / 128;
-            sumSq += amp * amp;
+        const data = new Uint8Array(analyzer.frequencyBinCount);
+        analyzer.getByteFrequencyData(data);
+
+        const n = attractorPositions.length;
+        const bins_per_band = Math.floor(data.length / n);
+        let amps = [];
+
+        for (let band = 0; band < n; band++) {
+            let start = band * bins_per_band;
+            let end = (band + 1) * bins_per_band;
+            if (band === n - 1) end = data.length;
+            let sumSq = 0;
+            const bin_count = end - start;
+            for (let k = start; k < end; k++) {
+                const val = data[k] / 255;
+                sumSq += val * val;
+            }
+            amps.push(Math.sqrt(sumSq / bin_count));
         }
-        current_amplitude = Math.sqrt(sumSq / data.length);
+
+        current_amplitudes = amps;
+
+        // Global amplitude and frequency
+        let sum_mag = 0;
+        let weighted_f = 0;
+        const nyquist = audioContext.sampleRate / 2;
+        for (let k = 0; k < data.length; k++) {
+            const mag = data[k] / 255;
+            const f = (k / data.length) * nyquist;
+            sum_mag += mag;
+            weighted_f += mag * f;
+        }
+        current_amp = sum_mag / data.length;
+        current_freq = (sum_mag > 0 ? weighted_f / sum_mag : 440);
     }
 
     function updateInterval() {
         if (intervalId) clearInterval(intervalId);
         const sampleInt = +document.getElementById('sampleInt').value;
-        intervalId = setInterval(updateAmplitude, sampleInt);
+        intervalId = setInterval(updateFrequencies, sampleInt);
     }
 
     // ------------------------------------------------------------------
@@ -225,36 +398,47 @@ window.addEventListener('load', function() {
         let G = +document.getElementById('grav').value;
         const timeScale = +document.getElementById('speed').value;
         const resetR = +document.getElementById('resetR').value;
+        const colorize_on = document.getElementById('colorize').checked;
+        const colorRad = +document.getElementById('colorRad').value;
+        const colorRad2 = colorRad * colorRad;
+        const acoustic_on = document.getElementById('acoustic').checked;
+        const flicker_on = document.getElementById('flicker').checked;
 
         const eff_dt = base_dt * timeScale;
+        sim_time += eff_dt;
         const pos = geometry.attributes.position.array;
         const vel = velocities;
 
-        // Apply audio modulation to gravity
-        let effective_G = G;
+        // Compute effective Gs per attractor
+        let effective_Gs;
         if (analyzer) {
             const audioS = +document.getElementById('audioS').value;
             const audioMode = document.getElementById('audioMode').value;
-            if (audioMode === 'multiply') {
-                effective_G = G * (1 + current_amplitude * audioS);
-            } else {
-                effective_G = G + current_amplitude * audioS;
-            }
+            effective_Gs = current_amplitudes.map(amp => {
+                if (audioMode === 'multiply') {
+                    return G * (1 + amp * audioS);
+                } else {
+                    return G + amp * audioS;
+                }
+            });
+        } else {
+            effective_Gs = new Array(attractorPositions.length).fill(G);
         }
 
         const accels = new Float32Array(num * 3).fill(0);
 
-        // Central gravity from multiple attractors
+        // Central gravity
         for (let i = 0; i < num; i++) {
             const px = pos[i*3], py = pos[i*3+1], pz = pos[i*3+2];
-            for (let attract of attractorPositions) {
+            for (let attract_idx = 0; attract_idx < attractorPositions.length; attract_idx++) {
+                const attract = attractorPositions[attract_idx];
                 const dx = attract[0] - px;
                 const dy = attract[1] - py;
                 const dz = attract[2] - pz;
                 const r2 = dx*dx + dy*dy + dz*dz;
                 if (r2 > 0.1) {
                     const r = Math.sqrt(r2);
-                    const a = effective_G / (r2 * r);
+                    const a = effective_Gs[attract_idx] / (r2 * r);
                     accels[i*3] += a * dx;
                     accels[i*3+1] += a * dy;
                     accels[i*3+2] += a * dz;
@@ -262,7 +446,33 @@ window.addEventListener('load', function() {
             }
         }
 
-        // Apply accelerations to velocities
+        // Acoustic waves from center (0,0,0)
+        if (acoustic_on && analyzer) {
+            const waveS = +document.getElementById('waveS').value;
+            const waveSpeed = +document.getElementById('waveSpeed').value;
+            const lambda = waveSpeed / current_freq;
+            const k = 2 * Math.PI / lambda;
+            const omega = 2 * Math.PI * current_freq;
+            for (let i = 0; i < num; i++) {
+                const px = pos[i*3], py = pos[i*3+1], pz = pos[i*3+2];
+                const dx = px, dy = py, dz = pz;
+                const r2 = dx*dx + dy*dy + dz*dz;
+                if (r2 > 0.1) {
+                    const r = Math.sqrt(r2);
+                    const phase = omega * sim_time - k * r;
+                    const sin_phase = Math.sin(phase);
+                    const force_mag = waveS * current_amp * sin_phase / r;
+                    const unit_x = dx / r;
+                    const unit_y = dy / r;
+                    const unit_z = dz / r;
+                    accels[i*3] += force_mag * unit_x;
+                    accels[i*3+1] += force_mag * unit_y;
+                    accels[i*3+2] += force_mag * unit_z;
+                }
+            }
+        }
+
+        // Apply accelerations
         for (let i = 0; i < num; i++) {
             vel[i*3] += accels[i*3] * eff_dt;
             vel[i*3+1] += accels[i*3+1] * eff_dt;
@@ -276,8 +486,8 @@ window.addEventListener('load', function() {
             pos[i*3+2] += vel[i*3+2] * eff_dt;
         }
 
-        // Reset particles if beyond radius from closest attractor
-        let colorNeedsUpdate = false;
+        // Reset particles if beyond radius
+        let resetColorNeedsUpdate = false;
         if (resetR > 0) {
             const resetR2 = resetR * resetR;
             for (let i = 0; i < num; i++) {
@@ -292,13 +502,66 @@ window.addEventListener('load', function() {
                 }
                 if (minR2 > resetR2) {
                     initParticle(i);
-                    colorNeedsUpdate = true;
+                    resetColorNeedsUpdate = true;
                 }
             }
         }
 
+        // Color modulation
+        let modulateColorNeedsUpdate = false;
+        if (colorize_on) {
+            for (let i = 0; i < num; i++) {
+                const x = pos[i*3], y = pos[i*3+1], z = pos[i*3+2];
+                let minDist2 = Infinity, minIdx = -1;
+                for (let a = 0; a < attractorPositions.length; a++) {
+                    const attract = attractorPositions[a];
+                    const dx = attract[0] - x;
+                    const dy = attract[1] - y;
+                    const dz = attract[2] - z;
+                    const d2 = dx*dx + dy*dy + dz*dz;
+                    if (d2 < minDist2) {
+                        minDist2 = d2;
+                        minIdx = a;
+                    }
+                }
+                if (minDist2 < colorRad2) {
+                    const rgb = attractorColors[minIdx];
+                    if (colorArray[i*3] !== rgb[0] || colorArray[i*3+1] !== rgb[1] || colorArray[i*3+2] !== rgb[2]) {
+                        colorArray[i*3] = rgb[0];
+                        colorArray[i*3+1] = rgb[1];
+                        colorArray[i*3+2] = rgb[2];
+                        modulateColorNeedsUpdate = true;
+                    }
+                }
+            }
+        }
+
+        // Flicker phase update (CPU side)
+        if (flicker_on) {
+            const meanStable = +document.getElementById('flickFreq').value;
+            const prob = eff_dt / meanStable;
+            const duration = +document.getElementById('flickSpeed').value;
+            const phaseInc = eff_dt / duration;
+
+            for (let i = 0; i < num; i++) {
+                let phase = flickerPhases[i];
+                if (phase < 0) {
+                    if (Math.random() < prob) {
+                        phase = 0;
+                    }
+                } else {
+                    phase += phaseInc;
+                    if (phase > 1) {
+                        phase = -1;
+                    }
+                }
+                flickerPhases[i] = phase;
+            }
+            geometry.attributes.flickerPhase.needsUpdate = true;
+        }
+
         geometry.attributes.position.needsUpdate = true;
-        if (colorNeedsUpdate) geometry.attributes.color.needsUpdate = true;
+        if (resetColorNeedsUpdate || modulateColorNeedsUpdate) geometry.attributes.color.needsUpdate = true;
     }
 
     // ------------------------------------------------------------------
@@ -306,6 +569,16 @@ window.addEventListener('load', function() {
     // ------------------------------------------------------------------
     function animate() {
         requestAnimationFrame(animate);
+
+        const acousticVis = document.getElementById('acousticVis').checked;
+        if (acousticVis && uniforms) {
+            uniforms.time.value = sim_time;
+            uniforms.freq.value = current_freq;
+            uniforms.amp.value = current_amp;
+            uniforms.waveSpeed.value = +document.getElementById('waveSpeed').value;
+            uniforms.visAmt.value = +document.getElementById('visAmt').value;
+        }
+
         simulate();
         controls.update();
         renderer.render(scene, camera);
@@ -326,6 +599,15 @@ window.addEventListener('load', function() {
     document.getElementById('fullScreen').addEventListener('click', () => {
         renderer.domElement.requestFullscreen();
     });
+
+    document.getElementById('acousticVis').addEventListener('click', updateMaterial);
+    document.getElementById('visAmt').addEventListener('change', () => {
+        if (uniforms) uniforms.visAmt.value = +document.getElementById('visAmt').value;
+    });
+
+    document.getElementById('flicker').addEventListener('click', updateMaterial);
+    document.getElementById('flickSpeed').addEventListener('change', updateMaterial);
+    document.getElementById('flickMag').addEventListener('change', updateMaterial);
 
     // Toggle controls
     const gui = document.getElementById('gui');
