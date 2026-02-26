@@ -457,7 +457,19 @@ opacity: 0.4;
 /* ================================================================= */
 
 
-
+.history-item {
+    background: #eee;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    transition: background 0.2s;
+}
+.history-item:hover {
+    background: var(--element-bg);
+    border-color: var(--button-bg);
+}
 
    
     </style>
@@ -479,7 +491,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.5</div>
+    <div class="text-bottom-left">Maker v3.0</div>
   </div>
 
 </div>
@@ -499,7 +511,7 @@ opacity: 0.4;
         <button id="export-btn" class="control-btn">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
-        <button id="reset-btn" class="control-btn">Reset Values</button>
+        <button id="reset-btn" class="control-btn">Reset Values (and save to history below)</button>
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
 
@@ -578,7 +590,7 @@ opacity: 0.4;
 
 
 
-<center><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></center></div>
+</div>
 </div>
 <div>
 
@@ -1597,6 +1609,50 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         
         // --- Helper Functions ---
 
+	// --- History Management Logic ---
+
+const saveNoteToHistory = () => {
+    const currentState = {};
+    // Reuse your logic to gather the current state
+    SECTIONS.forEach(id => {
+        currentState[id] = [];
+        document.querySelector(`.dropzone[data-section-id="${id}"]`)
+            .querySelectorAll('.draggable-element').forEach(el => currentState[id].push(getElementState(el)));
+    });
+
+    const history = JSON.parse(localStorage.getItem('dentalNoteHistory') || "[]");
+    const newEntry = {
+        timestamp: new Date().toLocaleString(),
+        data: currentState
+    };
+
+    // Add new entry to the start of the list
+    history.unshift(newEntry);
+
+    // Optional: Keep only the last 100 notes to stay very safe on storage
+    if (history.length > 100) history.pop();
+
+    localStorage.setItem('dentalNoteHistory', JSON.stringify(history));
+    renderHistoryUI();
+};
+
+const renderHistoryUI = () => {
+    const history = JSON.parse(localStorage.getItem('dentalNoteHistory') || "[]");
+    const container = document.getElementById('history-list');
+    container.innerHTML = history.length ? '' : '<i style="color: #999;">No history yet. Click "Reset Values" to archive a note.</i>';
+
+    history.forEach((entry, index) => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.textContent = entry.timestamp;
+        item.onclick = () => {
+            if(confirm(`Load note from ${entry.timestamp}? Current unsaved changes will be lost.`)) {
+                renderState(entry.data);
+            }
+        };
+        container.appendChild(item);
+    });
+};
 
 // **** START OF CODE: Session Persistence Logic ****
 
@@ -1617,6 +1673,10 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 
        // This is the "Reset Values" function.
         const resetValues = () => {
+		
+		    // Archive the current work before we reset it
+    saveNoteToHistory();
+		
             console.log("Resetting values to template defaults...");
             if (!lastLoadedState) {
                 alert("No default template has been loaded to reset to.");
@@ -1675,7 +1735,11 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
                 
                 // 1. Clear the saved session from localStorage.
                 localStorage.removeItem('dentalNoteMakerSession');
-                
+				
+                // 1. Clear the history from localStorage.
+				localStorage.removeItem('dentalNoteHistory');
+				
+				
                 // 2. Immediately reload the page.
                 // This is the cleanest way to trigger the startup cascade, which will now
                 // fail to find a localStorage session and will load the embedded JSON instead.
@@ -2701,6 +2765,9 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
             }
         };
 
+ // Add a call to display the history when the page first loads.
+   renderHistoryUI();
+
         const renderState = (state, isNewTemplate = false) => {
             document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
             
@@ -2771,7 +2838,7 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
             loadDefaults();
         }
  
-   
+
    
    
    
@@ -2970,6 +3037,9 @@ importFromModalButton.addEventListener('click', () => {
    
     });
 	
+	
+	
+
 	
 
 
@@ -3541,7 +3611,7 @@ function attachEventListeners() {
 
 <!-- ================================================================= -->
 <!-- START: HTML FOR IMPORT NOTE MODAL                               -->
-<!-- Paste this block just before the closing </body> tag.           -->
+
 <!-- ================================================================= -->
 <div id="modal-backdrop" class="modal-hidden">
     <div id="import-note-modal">
@@ -3566,7 +3636,12 @@ function attachEventListeners() {
 <!-- ================================================================= -->
 
 
-
+<div class="section-container" style="margin-top: 30px; border-style: solid;">
+    <h2 style="color: #555;">Note History</h2>
+    <div id="history-list" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px;">
+        <!-- Clickable timestamps will appear here -->
+    </div>
+</div>
 
 
 </body>
