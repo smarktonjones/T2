@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 02DEC2025 mgh -->
+<!-- version as of 26FEB26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -15,7 +15,7 @@
             --warning-color: #fd7e14; --success-color: #28a745; --success-hover: #218838;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
- background-image: linear-gradient(to bottom, #fafafa, #e8e8e8); /* The gradient */
+ background-image: linear-gradient(to left, #fafafa, #e8e8e8); /* The gradient */
  color: var(--text-color); margin: 0; padding: 20px; }
         h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
 h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
@@ -65,6 +65,8 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
         .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
         .copy-btn-prominent:hover { background-color: var(--success-hover); }
+		        .import-btn-prominent { background-color: blue; color: white; font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
+				.import-btn-prominent:hover { background-color: lightblue; }
         #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
         /* All other element-specific styles are here */
@@ -356,6 +358,107 @@ opacity: 0.4;
   }
 }
 
+
+
+/* ================================================================= */
+/* START: CSS FOR IMPORT NOTE MODAL                                  */
+/* ================================================================= */
+.modal-hidden {
+    display: none;
+}
+
+#modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal-backdrop.modal-visible {
+    display: flex;
+}
+
+#import-note-modal {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close-button {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: #333;
+}
+
+.modal-content {
+    padding: 20px;
+    line-height: 1.5;
+}
+
+#paste-note-textarea {
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't add to width */
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 20px;
+    border-top: 1px solid #eee;
+}
+
+.modal-footer .primary-button {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.modal-footer .secondary-button {
+    background-color: orange;
+    color: white;
+    border-color: orange;
+}
+
+/* ================================================================= */
+/* END: CSS FOR IMPORT NOTE MODAL                                    */
+/* ================================================================= */
+
+
+
+
    
     </style>
 </head>
@@ -376,20 +479,23 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.15</div>
+    <div class="text-bottom-left">Maker v2.5</div>
   </div>
 
 </div>
 
     <h1>ORAL EXAM</h1>
 
-    <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
+    <div style="text-align: center; margin-bottom: 10px;"><button id="import-note-button" class="import-btn-prominent">Import Previous Note...</button><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
 
     <div class="controls">
 	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
 		<button id="import-btn" class="control-btn">Import JSON File...</button>
+		
+
+		
         <button id="export-btn" class="control-btn">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
@@ -1478,6 +1584,9 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 
 
     <script>
+	
+
+	
     document.addEventListener('DOMContentLoaded', () => {
         // --- State and Constants ---
         let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null;
@@ -2663,7 +2772,209 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
         }
  
    
+   
+   
+   
+// =================================================================
+// START: Import Old Note
+// =================================================================
+
+// =================================================================
+// START: FINAL CODE WITH MODAL SUPPORT
+// Delete all previous import feature code and use this final block.
+// =================================================================
+
+// --- Core Logic for "Import Previous Note" Feature ---
+
+/**
+ * This is the central import logic. It takes raw text, processes it,
+ * and updates the application state. It is now independent of any specific
+ * button or event.
+ * @param {string} noteText The raw text to be imported.
+ */
+const runImportLogic = (noteText) => {
+    console.log("DEBUG: runImportLogic started.");
+    
+    // 1. The parsing function remains the same.
+    const parseNoteContent = (content) => {
+        const sections = [
+            "RADIOGRAPHIC FINDINGS:", "CARIES/DEFECTIVE RESTORATIONS:", "INCIPIENT CARIES:",
+            "SOFT TISSUE / OCS:", "PERIO:", "ENDO:", "TMJ:", "OCCLUSION:", "ORAL SURGERY:", "OTHER FINDINGS:"
+        ];
+        const parsed = {};
+        const regex = new RegExp(`(${sections.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+        const parts = content.split(regex);
+        if (parts.length < 3) return {};
+
+        for (let i = 1; i < parts.length; i += 2) {
+            const header = parts[i].trim();
+            let valueChunk = (parts[i + 1] || '');
+            const valueLines = valueChunk.split(/\r?\n/);
+            let finalValue = [];
+            for (const line of valueLines) {
+                if (finalValue.length > 0 && /^\s*[A-Z][A-Z\s]+:/.test(line)) break;
+                finalValue.push(line);
+            }
+            const trimmedFinalValue = finalValue.join('\n').trim();
+            if (sections.includes(header) && trimmedFinalValue) {
+                parsed[header] = trimmedFinalValue;
+            }
+        }
+        return parsed;
+    };
+
+    // 2. Process the text.
+    const parsedData = parseNoteContent(noteText);
+    if (Object.keys(parsedData).length === 0) {
+        alert("Could not find any of the specific section headers in the pasted text. Nothing was changed.");
+        return;
+    }
+    console.log("DEBUG: Parsed note data:", parsedData);
+
+    const labelToOriginalIdMap = {
+        "RADIOGRAPHIC FINDINGS:": "2-4", "CARIES/DEFECTIVE RESTORATIONS:": "2-5", "INCIPIENT CARIES:": "2-6",
+        "SOFT TISSUE / OCS:": "2-7", "PERIO:": "2-8", "ENDO:": "2-9", "TMJ:": "2-11", "OCCLUSION:": "2-12",
+        "ORAL SURGERY:": "2-13", "OTHER FINDINGS:": "2-14"
+    };
+
+    // 3. Get the live state from the DOM.
+    const liveState = {};
+    SECTIONS.forEach(id => {
+        liveState[id] = [];
+        const dropzone = document.querySelector(`.dropzone[data-section-id="${id}"]`);
+        if (dropzone) {
+            dropzone.querySelectorAll('.draggable-element').forEach(el => {
+                liveState[id].push(getElementState(el));
+            });
+        }
     });
+
+    // 4. Apply updates.
+    let updatesMade = false;
+    for (const sectionId in liveState) {
+        if (Array.isArray(liveState[sectionId])) {
+            liveState[sectionId].forEach(element => {
+                const matchingLabel = Object.keys(labelToOriginalIdMap).find(label => labelToOriginalIdMap[label] === element.originalId);
+                if (matchingLabel && parsedData[matchingLabel]) {
+                    console.log(`%cSUCCESS: Match found for originalId: "${element.originalId}". Applying update.`, 'color: lightgreen; font-weight: bold;');
+                    element.content = parsedData[matchingLabel];
+                    updatesMade = true;
+                }
+            });
+        }
+    }
+
+    if (!updatesMade) {
+        console.warn("DEBUG: The import ran, but no matching elements were found in the current form state.");
+    }
+
+    // 5. Render the new state.
+    renderState(liveState, false);
+    console.log("--- IMPORT PROCESS COMPLETE ---");
+};
+
+// --- MODAL EVENT LISTENERS ---
+// This block controls the new modal's behavior.
+
+// Get all the modal elements from the page.
+const modalBackdrop = document.getElementById('modal-backdrop');
+const pasteTextarea = document.getElementById('paste-note-textarea');
+const mainImportButton = document.getElementById('import-note-button');
+const closeModalButton = document.getElementById('close-modal-button');
+const cancelModalButton = document.getElementById('cancel-modal-button');
+const pasteFromClipboardButton = document.getElementById('paste-from-clipboard-button');
+const importFromModalButton = document.getElementById('import-from-modal-button');
+const clearModalButton = document.getElementById('clear-modal-button');
+
+// Function to open the modal
+const openImportModal = () => {
+    modalBackdrop.classList.add('modal-visible');
+};
+
+// Function to close the modal
+const closeImportModal = () => {
+    modalBackdrop.classList.remove('modal-visible');
+};
+
+
+// Add a listener to the modal's background.
+modalBackdrop.addEventListener('click', (event) => {
+    // The 'target' of the event is the specific element that was clicked.
+    // We check if the clicked element's ID is 'modal-backdrop'.
+    // This ensures that clicks on the modal content (the white box) do NOT close the modal.
+    if (event.target.id === 'modal-backdrop') {
+        console.log("Clicked outside the modal. Closing.");
+        closeImportModal();
+    }
+});
+
+
+
+// --- Wire up the buttons ---
+
+// The main "Import Previous Note..." button now opens the modal.
+mainImportButton.addEventListener('click', openImportModal);
+
+// The 'X' and 'Cancel' buttons close the modal.
+closeModalButton.addEventListener('click', closeImportModal);
+cancelModalButton.addEventListener('click', closeImportModal);
+
+// The "Paste from Clipboard" button
+pasteFromClipboardButton.addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        pasteTextarea.value = text;
+        console.log("Pasted text from clipboard.");
+    } catch (err) {
+        console.error('Failed to read clipboard contents: ', err);
+        alert('Could not paste from clipboard. This may be due to browser permissions. Please paste manually (Ctrl+V or Cmd+V).');
+    }
+});
+
+// Clear button
+clearModalButton.addEventListener('click', () => {
+    pasteTextarea.value = ''; // Set the textarea's value to an empty string
+    console.log("Cleared the import textarea.");
+});
+
+
+// The final "Import Text" button runs our logic.
+importFromModalButton.addEventListener('click', () => {
+    console.log("DEBUG: 'Import Text' button clicked.");
+    const textToImport = pasteTextarea.value;
+    if (textToImport && textToImport.trim() !== '') {
+        runImportLogic(textToImport);
+        closeImportModal(); // Close the modal on success
+    } else {
+        alert("The textbox is empty. Please paste your note first.");
+    }
+});
+
+
+// =================================================================
+// END: FINAL CODE WITH MODAL SUPPORT
+// =================================================================
+
+
+// =================================================================
+// END: IMPORT CODE
+// =================================================================
+
+
+
+
+
+
+   
+   
+   
+    });
+	
+	
+
+
+	
+	
     </script>
 
 
@@ -3228,6 +3539,31 @@ function attachEventListeners() {
 
 
 
+<!-- ================================================================= -->
+<!-- START: HTML FOR IMPORT NOTE MODAL                               -->
+<!-- Paste this block just before the closing </body> tag.           -->
+<!-- ================================================================= -->
+<div id="modal-backdrop" class="modal-hidden">
+    <div id="import-note-modal">
+        <div class="modal-header">
+            <h3>Import Note by Pasting Text</h3>
+            <span id="close-modal-button" class="close-button">&times;</span>
+        </div>
+        <div class="modal-content">
+            <p>Paste the full text of your previously generated note into the box below.<br>Applicable fields will populate into Objective Section of your new note.</p>
+            <textarea id="paste-note-textarea" rows="15" placeholder="Paste your note here..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button id="paste-from-clipboard-button">Paste from Clipboard</button>
+			<button id="clear-modal-button" class="secondary-button">Clear</button>
+            <button id="cancel-modal-button">Cancel</button>
+            <button id="import-from-modal-button" class="primary-button">Import Text</button>
+        </div>
+    </div>
+</div>
+<!-- ================================================================= -->
+<!-- END: HTML FOR IMPORT NOTE MODAL                                 -->
+<!-- ================================================================= -->
 
 
 
