@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 23FEB26 mgh -->
+<!-- version as of 26FEB26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -15,7 +15,7 @@
             --warning-color: #fd7e14; --success-color: #28a745; --success-hover: #218838;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
- background-image: linear-gradient(to bottom, #fafafa, #e8e8e8); /* The gradient */
+ background-image: linear-gradient(to left, #fafafa, #e8e8e8); /* The gradient */
  color: var(--text-color); margin: 0; padding: 20px; }
         h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
 h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
@@ -65,6 +65,8 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
         .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
         .copy-btn-prominent:hover { background-color: var(--success-hover); }
+		        .import-btn-prominent { background-color: blue; color: white; font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
+				.import-btn-prominent:hover { background-color: lightblue; }
         #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
         /* All other element-specific styles are here */
@@ -86,7 +88,7 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
 .bp-crisis { border-color: #8b0000 !important; animation: pulse 1.5s infinite; }
 /* **** END OF MODIFIED CSS **** */
    
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--bp-crisis); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--danger-color); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
         .psr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-family: monospace; }
         .psr-sextant { text-align: center; } .psr-sextant label { font-size: 0.8em; color: #555; display: block; }
         .psr-grid input[type="text"] { width: 100%; box-sizing: border-box; text-align: center; }
@@ -356,6 +358,119 @@ opacity: 0.4;
   }
 }
 
+
+
+/* ================================================================= */
+/* START: CSS FOR IMPORT NOTE MODAL                                  */
+/* ================================================================= */
+.modal-hidden {
+    display: none;
+}
+
+#modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal-backdrop.modal-visible {
+    display: flex;
+}
+
+#import-note-modal {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close-button {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: #333;
+}
+
+.modal-content {
+    padding: 20px;
+    line-height: 1.5;
+}
+
+#paste-note-textarea {
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't add to width */
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 20px;
+    border-top: 1px solid #eee;
+}
+
+.modal-footer .primary-button {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.modal-footer .secondary-button {
+    background-color: orange;
+    color: white;
+    border-color: orange;
+}
+
+/* ================================================================= */
+/* END: CSS FOR IMPORT NOTE MODAL                                    */
+/* ================================================================= */
+
+
+.history-item {
+    background: #eee;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    transition: background 0.2s;
+}
+.history-item:hover {
+    background: var(--element-bg);
+    border-color: var(--button-bg);
+}
+
    
     </style>
 </head>
@@ -376,24 +491,27 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v2.15n</div>
+    <div class="text-bottom-left">Maker v3.0</div>
   </div>
 
 </div>
 
     <h1>ORAL EXAM</h1>
 
-    <div style="text-align: center; margin-bottom: 10px;"><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
+    <div style="text-align: center; margin-bottom: 10px;"><button id="import-note-button" class="import-btn-prominent">Import Previous Note...</button><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
 
     <div class="controls">
 	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
 		<button id="import-btn" class="control-btn">Import JSON File...</button>
+		
+
+		
         <button id="export-btn" class="control-btn">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
-        <button id="reset-btn" class="control-btn">Reset Values</button>
+        <button id="reset-btn" class="control-btn">Reset Values (and save to history below)</button>
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
     </div>
 
@@ -472,7 +590,7 @@ opacity: 0.4;
 
 
 
-<center><button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></center></div>
+</div>
 </div>
 <div>
 
@@ -487,6 +605,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 
 
 <script type="application/json" id="default-json-data">
+
 
 {
   "header": [
@@ -882,11 +1001,18 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 }
 
 
+
+
+
+
 </script>
 
 
 
     <script>
+	
+
+	
     document.addEventListener('DOMContentLoaded', () => {
         // --- State and Constants ---
         let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null;
@@ -897,6 +1023,50 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         
         // --- Helper Functions ---
 
+	// --- History Management Logic ---
+
+const saveNoteToHistory = () => {
+    const currentState = {};
+    // Reuse your logic to gather the current state
+    SECTIONS.forEach(id => {
+        currentState[id] = [];
+        document.querySelector(`.dropzone[data-section-id="${id}"]`)
+            .querySelectorAll('.draggable-element').forEach(el => currentState[id].push(getElementState(el)));
+    });
+
+    const history = JSON.parse(localStorage.getItem('dentalNoteHistory') || "[]");
+    const newEntry = {
+        timestamp: new Date().toLocaleString(),
+        data: currentState
+    };
+
+    // Add new entry to the start of the list
+    history.unshift(newEntry);
+
+    // Optional: Keep only the last 100 notes to stay very safe on storage
+    if (history.length > 100) history.pop();
+
+    localStorage.setItem('dentalNoteHistory', JSON.stringify(history));
+    renderHistoryUI();
+};
+
+const renderHistoryUI = () => {
+    const history = JSON.parse(localStorage.getItem('dentalNoteHistory') || "[]");
+    const container = document.getElementById('history-list');
+    container.innerHTML = history.length ? '' : '<i style="color: #999;">No history yet. Click "Reset Values" to archive a note.</i>';
+
+    history.forEach((entry, index) => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.textContent = entry.timestamp;
+        item.onclick = () => {
+            if(confirm(`Load note from ${entry.timestamp}? Current unsaved changes will be lost.`)) {
+                renderState(entry.data);
+            }
+        };
+        container.appendChild(item);
+    });
+};
 
 // **** START OF CODE: Session Persistence Logic ****
 
@@ -917,6 +1087,10 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 
        // This is the "Reset Values" function.
         const resetValues = () => {
+		
+		    // Archive the current work before we reset it
+    saveNoteToHistory();
+		
             console.log("Resetting values to template defaults...");
             if (!lastLoadedState) {
                 alert("No default template has been loaded to reset to.");
@@ -975,7 +1149,11 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
                 
                 // 1. Clear the saved session from localStorage.
                 localStorage.removeItem('dentalNoteMakerSession');
-                
+				
+                // 1. Clear the history from localStorage.
+				localStorage.removeItem('dentalNoteHistory');
+				
+				
                 // 2. Immediately reload the page.
                 // This is the cleanest way to trigger the startup cascade, which will now
                 // fail to find a localStorage session and will load the embedded JSON instead.
@@ -1153,9 +1331,14 @@ const COLOR_PALETTE = [
 
             // --- Complaint/Diagnosis Check (runs first) ---
             const complaintSuggestion = checkComplaintDiagnosis(lines);
+			const FindTheCCElement = document.querySelector('[data-original-id="3-1"]'); //the CC element
             if (complaintSuggestion) {
                 suggestions.push(complaintSuggestion); // Use push, we will sort later if needed.
-            }
+				//add a style to the missed suggestion Element
+				FindTheCCElement.classList.add('bp-crisis');
+            } else {
+				FindTheCCElement.classList.remove('bp-crisis');
+				}
 
             // --- Caries Risk Evaluation and Cross-Check (NEW) ---
             const recommendedCariesRisk = evaluateCariesRisk(lines);
@@ -1239,7 +1422,7 @@ const COLOR_PALETTE = [
         const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
         const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
         const padBox = (score) => `[${(score || '').padEnd(2)}]`;
-        const updateAlertElementUI = (element) => { const state = getElementState(element); const display = element.querySelector('.alert-display'); element.classList.remove('alert-blank', 'alert-none', 'alert-active'); if (state.alerts.length === 0) { display.textContent = "ALERT (Click to set)"; element.classList.add('alert-blank'); } else if (state.alerts.length === 1 && state.alerts[0] === 'None') { display.textContent = "No Known Drug Allergies"; element.classList.add('alert-none'); } else { display.textContent = `ALERT: ${state.alerts.length} active`; element.classList.add('alert-active'); } };
+        const updateAlertElementUI = (element) => { const state = getElementState(element); const display = element.querySelector('.alert-display'); element.classList.remove('alert-blank', 'alert-none', 'alert-active'); if (state.alerts.length === 0) { display.textContent = "ALERT (Click to set)"; element.classList.add('alert-blank'); } else if (state.alerts.length === 1 && state.alerts[0] === 'None') { display.textContent = "No Known Allergies"; element.classList.add('alert-none'); } else { display.textContent = `ALERT: ${state.alerts.length} active`; element.classList.add('alert-active'); } };
         const updateAnestheticSummary = (element) => { const state = getElementState(element); const summarySpan = element.querySelector('.anesthetic-summary'); const usedCount = Object.values(state.anestheticValues).filter(v => v > 0).length; summarySpan.textContent = usedCount > 0 ? `Anesthetic: ${usedCount} Type(s) Used` : 'Click to set anesthetic'; };
         const updateEndoTestingSummary = (element) => { const state = getElementState(element); const summarySpan = element.querySelector('.endo-summary'); const teethCount = state.endoData.teeth.filter(t => t && t.trim() !== '').length; summarySpan.textContent = teethCount > 0 ? `Endo Testing: ${teethCount} Teeth` : 'Click to set Endo Tests'; };
 
@@ -1668,6 +1851,7 @@ document.getElementById('textbox-editor-replace-btn').click(); });
             activeElementForEditor.dataset.txData = JSON.stringify(newData);
             updateTxPlanSummary(activeElementForEditor);
             updateLiveOutput();
+
             txPlanModal.style.display = 'none';
         };
 
@@ -1697,7 +1881,16 @@ document.getElementById('textbox-editor-replace-btn').click(); });
 
    
 
-document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; };
+document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; 
+
+//check the cc, etc with every Save
+const noteText = liveOutput.value;
+// disable for not exam     delete -->     evaluateNote(noteText);
+
+
+
+
+};
 
 
 
@@ -1912,14 +2105,15 @@ document.querySelectorAll('.modal').forEach(modal => {
             const noteText = liveOutput.value;
             
             // 1. Run the evaluation on the current note text.
-            const suggestions = evaluateNote(noteText);
+            // delete for not exam.   -->      
+			//const suggestions = noteText();
 
             // 2. Build the confirmation message.
             let alertMessage = "Note Copied!";
-            if (suggestions.length > 0) {
+           // if (suggestions.length > 0) {
                 // If there are suggestions, add them to the message on new lines.
-                alertMessage += "\n\n--- Suggestions ---\n" + suggestions.join('\n');
-            }
+            //    alertMessage += "\n\n--- Suggestions ---\n" + suggestions.join('\n');
+           // }
 
             // 3. Copy the text to the clipboard and show the confirmation message.
             navigator.clipboard.writeText(noteText).then(() => {
@@ -1985,6 +2179,9 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
                 return false;
             }
         };
+
+ // Add a call to display the history when the page first loads.
+   renderHistoryUI();
 
         const renderState = (state, isNewTemplate = false) => {
             document.querySelectorAll('.dropzone').forEach(zone => zone.innerHTML = '');
@@ -2056,8 +2253,210 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
             loadDefaults();
         }
  
+
+   
+   
+   
+// =================================================================
+// START: Import Old Note
+// =================================================================
+
+// =================================================================
+// START: FINAL CODE WITH MODAL SUPPORT
+// Delete all previous import feature code and use this final block.
+// =================================================================
+
+// --- Core Logic for "Import Previous Note" Feature ---
+
+/**
+ * This is the central import logic. It takes raw text, processes it,
+ * and updates the application state. It is now independent of any specific
+ * button or event.
+ * @param {string} noteText The raw text to be imported.
+ */
+const runImportLogic = (noteText) => {
+    console.log("DEBUG: runImportLogic started.");
+    
+    // 1. The parsing function remains the same.
+    const parseNoteContent = (content) => {
+        const sections = [
+            "PRESENTING CONCERN:", "O/A:", "P:"
+        ];
+        const parsed = {};
+        const regex = new RegExp(`(${sections.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+        const parts = content.split(regex);
+        if (parts.length < 3) return {};
+
+        for (let i = 1; i < parts.length; i += 2) {
+            const header = parts[i].trim();
+            let valueChunk = (parts[i + 1] || '');
+            const valueLines = valueChunk.split(/\r?\n/);
+            let finalValue = [];
+            for (const line of valueLines) {
+                if (finalValue.length > 0 && /^\s*[A-Z][A-Z\s]+:/.test(line)) break;
+                finalValue.push(line);
+            }
+            const trimmedFinalValue = finalValue.join('\n').trim();
+            if (sections.includes(header) && trimmedFinalValue) {
+                parsed[header] = trimmedFinalValue;
+            }
+        }
+        return parsed;
+    };
+
+    // 2. Process the text.
+    const parsedData = parseNoteContent(noteText);
+    if (Object.keys(parsedData).length === 0) {
+        alert("Could not find any of the specific section headers in the pasted text. Nothing was changed.");
+        return;
+    }
+    console.log("DEBUG: Parsed note data:", parsedData);
+
+    const labelToOriginalIdMap = {
+        "PRESENTING CONCERN:": "1-0", "O/A:": "2-1", "P:": "4-3"
+    };
+
+    // 3. Get the live state from the DOM.
+    const liveState = {};
+    SECTIONS.forEach(id => {
+        liveState[id] = [];
+        const dropzone = document.querySelector(`.dropzone[data-section-id="${id}"]`);
+        if (dropzone) {
+            dropzone.querySelectorAll('.draggable-element').forEach(el => {
+                liveState[id].push(getElementState(el));
+            });
+        }
+    });
+
+    // 4. Apply updates.
+    let updatesMade = false;
+    for (const sectionId in liveState) {
+        if (Array.isArray(liveState[sectionId])) {
+            liveState[sectionId].forEach(element => {
+                const matchingLabel = Object.keys(labelToOriginalIdMap).find(label => labelToOriginalIdMap[label] === element.originalId);
+                if (matchingLabel && parsedData[matchingLabel]) {
+                    console.log(`%cSUCCESS: Match found for originalId: "${element.originalId}". Applying update.`, 'color: lightgreen; font-weight: bold;');
+                    element.content = parsedData[matchingLabel];
+                    updatesMade = true;
+                }
+            });
+        }
+    }
+
+    if (!updatesMade) {
+        console.warn("DEBUG: The import ran, but no matching elements were found in the current form state.");
+    }
+
+    // 5. Render the new state.
+    renderState(liveState, false);
+    console.log("--- IMPORT PROCESS COMPLETE ---");
+};
+
+// --- MODAL EVENT LISTENERS ---
+// This block controls the new modal's behavior.
+
+// Get all the modal elements from the page.
+const modalBackdrop = document.getElementById('modal-backdrop');
+const pasteTextarea = document.getElementById('paste-note-textarea');
+const mainImportButton = document.getElementById('import-note-button');
+const closeModalButton = document.getElementById('close-modal-button');
+const cancelModalButton = document.getElementById('cancel-modal-button');
+const pasteFromClipboardButton = document.getElementById('paste-from-clipboard-button');
+const importFromModalButton = document.getElementById('import-from-modal-button');
+const clearModalButton = document.getElementById('clear-modal-button');
+
+// Function to open the modal
+const openImportModal = () => {
+    modalBackdrop.classList.add('modal-visible');
+};
+
+// Function to close the modal
+const closeImportModal = () => {
+    modalBackdrop.classList.remove('modal-visible');
+};
+
+
+// Add a listener to the modal's background.
+modalBackdrop.addEventListener('click', (event) => {
+    // The 'target' of the event is the specific element that was clicked.
+    // We check if the clicked element's ID is 'modal-backdrop'.
+    // This ensures that clicks on the modal content (the white box) do NOT close the modal.
+    if (event.target.id === 'modal-backdrop') {
+        console.log("Clicked outside the modal. Closing.");
+        closeImportModal();
+    }
+});
+
+
+
+// --- Wire up the buttons ---
+
+// The main "Import Previous Note..." button now opens the modal.
+mainImportButton.addEventListener('click', openImportModal);
+
+// The 'X' and 'Cancel' buttons close the modal.
+closeModalButton.addEventListener('click', closeImportModal);
+cancelModalButton.addEventListener('click', closeImportModal);
+
+// The "Paste from Clipboard" button
+pasteFromClipboardButton.addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        pasteTextarea.value = text;
+        console.log("Pasted text from clipboard.");
+    } catch (err) {
+        console.error('Failed to read clipboard contents: ', err);
+        alert('Could not paste from clipboard. This may be due to browser permissions. Please paste manually (Ctrl+V or Cmd+V).');
+    }
+});
+
+// Clear button
+clearModalButton.addEventListener('click', () => {
+    pasteTextarea.value = ''; // Set the textarea's value to an empty string
+    console.log("Cleared the import textarea.");
+});
+
+
+// The final "Import Text" button runs our logic.
+importFromModalButton.addEventListener('click', () => {
+    console.log("DEBUG: 'Import Text' button clicked.");
+    const textToImport = pasteTextarea.value;
+    if (textToImport && textToImport.trim() !== '') {
+        runImportLogic(textToImport);
+        closeImportModal(); // Close the modal on success
+    } else {
+        alert("The textbox is empty. Please paste your note first.");
+    }
+});
+
+
+// =================================================================
+// END: FINAL CODE WITH MODAL SUPPORT
+// =================================================================
+
+
+// =================================================================
+// END: IMPORT CODE
+// =================================================================
+
+
+
+
+
+
+   
+   
    
     });
+	
+	
+	
+
+	
+
+
+	
+	
     </script>
 
 
@@ -2220,6 +2619,7 @@ function attachEventListeners() {
         createSuggestionsContainer();
         attachEventListeners();
         console.log(`Dental Suggester initialized successfully on #${targetTextboxId2}.`);
+		textInput = document.getElementById(targetTextboxId);
     }
 
     function injectStyles() {
@@ -2621,9 +3021,39 @@ function attachEventListeners() {
 
 
 
+<!-- ================================================================= -->
+<!-- START: HTML FOR IMPORT NOTE MODAL                               -->
+
+<!-- ================================================================= -->
+<div id="modal-backdrop" class="modal-hidden">
+    <div id="import-note-modal">
+        <div class="modal-header">
+            <h3>Import Note by Pasting Text</h3>
+            <span id="close-modal-button" class="close-button">&times;</span>
+        </div>
+        <div class="modal-content">
+            <p>Paste the full text of your previously generated note into the box below.<br>Applicable fields will populate into Objective Section of your new note.</p>
+            <textarea id="paste-note-textarea" rows="15" placeholder="Paste your note here..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button id="paste-from-clipboard-button">Paste from Clipboard</button>
+			<button id="clear-modal-button" class="secondary-button">Clear</button>
+            <button id="cancel-modal-button">Cancel</button>
+            <button id="import-from-modal-button" class="primary-button">Import Text</button>
+        </div>
+    </div>
+</div>
+<!-- ================================================================= -->
+<!-- END: HTML FOR IMPORT NOTE MODAL                                 -->
+<!-- ================================================================= -->
 
 
-
+<div class="section-container" style="margin-top: 30px; border-style: solid;">
+    <h2 style="color: #555;">Note History</h2>
+    <div id="history-list" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px;">
+        <!-- Clickable timestamps will appear here -->
+    </div>
+</div>
 
 
 </body>
