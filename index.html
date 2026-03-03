@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 03MAR26 mgh -->
+<!-- version as of 26FEB26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -491,7 +491,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v3.1</div>
+    <div class="text-bottom-left">Maker v3.0</div>
   </div>
 
 </div>
@@ -2846,102 +2846,101 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 // START: Import Old Note
 // =================================================================
 
+// =================================================================
+// START:  CODE WITH PSR SCORE REVERSAL
+// Please replace your entire 'runImportLogic' function with this one.
+// =================================================================
+
 /**
- * This is the central import logic, with a robust parser.
- * It takes raw text, processes it, and updates the application state.
+ * This is the central import logic, now with PSR score reversal.
  * @param {string} noteText The raw text to be imported.
  */
 const runImportLogic = (noteText) => {
-    console.log("DEBUG: runImportLogic started with final parser.");
+    console.log("DEBUG: runImportLogic started with PSR score reversal logic.");
 
-    // **THE IMPROVED PARSER**
-    const parseNoteContent_FINAL = (content) => {
-        console.log("DEBUG: Final parser started.");
+    // --- Parser 1: For standard "Header: Value" fields ---
+    const parseNoteContent = (content) => {
+        const sections = [
+            "RADIOGRAPHIC FINDINGS:", "CARIES/DEFECTIVE RESTORATIONS:", "INCIPIENT CARIES:",
+            "SOFT TISSUE / OCS:", "OCS/SOFT TISSUE:", "PERIO:", "ENDO:", "TMJ:", 
+            "OCCLUSION:", "ORAL SURGERY:", "OTHER FINDINGS:", "PSR:"
+        ];
         const parsed = {};
-        
-        const headerMap = {
-            "RADIOGRAPHIC FINDINGS:": "2-4",
-            "CARIES/DEFECTIVE RESTORATIONS:": "2-5",
-            "INCIPIENT CARIES:": "2-6",
-            "SOFT TISSUE / OCS:": "2-7",
-            "OCS/SOFT TISSUE:": "2-7", // Alias
-            "PERIO:": "2-8",
-            "ENDO:": "2-9",
-            "TMJ:": "2-11",
-            "OCCLUSION:": "2-12",
-            "ORAL SURGERY:": "2-13",
-            "OTHER FINDINGS:": "2-14"
-        };
-
-        const allHeaders = Object.keys(headerMap);
-
-        // For each header, find its location and the location of the next terminating character.
-        for (const header of allHeaders) {
+        for (const header of sections) {
+            if (header === "PSR:") continue;
             const startIndex = content.indexOf(header);
-            
-            if (startIndex === -1) {
-                continue; // This header isn't in the note, skip it.
-            }
-
+            if (startIndex === -1) continue;
             const searchStart = startIndex + header.length;
-
-            // 1. Find the start of the NEXT closest header.
-            let nextHeaderPos = content.length; // Default to the end of the file.
-            for (const nextH of allHeaders) {
-                // Don't match the same header again.
+            let nextHeaderPos = content.length;
+            for (const nextH of sections) {
                 if (nextH === header) continue;
-                
                 const pos = content.indexOf(nextH, searchStart);
-                if (pos > -1 && pos < nextHeaderPos) {
-                    nextHeaderPos = pos;
-                }
+                if (pos > -1 && pos < nextHeaderPos) nextHeaderPos = pos;
             }
-
-            // **THE FIX:** As you suggested, also find the next single line break.
-            // A  newline is a strong indicator of a new, unrelated paragraph.
-            const doubleNewlinePos = content.indexOf('\n', searchStart);
-            
-            // 2. Determine the true end position. It is the EARLIEST of either
-            // the next header, the next  newline, or the end of the file.
+            const singleNewlinePos = content.indexOf('\n', searchStart);
             let endIndex = nextHeaderPos;
-            if (doubleNewlinePos > -1 && doubleNewlinePos < endIndex) {
-                console.log(`DEBUG: For header "${header}", found a newline that comes before the next header. Capping text here.`);
-                endIndex = doubleNewlinePos;
-            }
+            if (singleNewlinePos > -1 && singleNewlinePos < endIndex) endIndex = singleNewlinePos;
             
-            // 3. Extract the value based on the calculated start and end.
             const value = content.substring(searchStart, endIndex).trim();
             if (value) {
-                // Always use the primary header from the map for consistency.
                 const primaryHeader = header.includes("OCS") ? "SOFT TISSUE / OCS:" : header;
-                console.log(`DEBUG: Found value for "${primaryHeader}" -> "${value}"`);
                 parsed[primaryHeader] = value;
             }
         }
-        
-        console.log("DEBUG: Final parsing complete. Parsed Data:", parsed);
         return parsed;
     };
 
-    // --- The rest of the function remains the same ---
+    // --- Parser 2: Dedicated parser for the PSR block with reversal logic ---
+    const parsePsrScores = (content) => {
+        const psrHeader = "PSR:";
+        const startIndex = content.indexOf(psrHeader);
+        if (startIndex === -1) return null;
+        
+        const searchStart = startIndex + psrHeader.length;
+        const blockEndIndex = content.indexOf('\n\n', searchStart);
+        const psrBlock = content.substring(searchStart, blockEndIndex > -1 ? blockEndIndex : undefined).trim();
+        
+        if (!psrBlock) return null;
 
-    const parsedData = parseNoteContent_FINAL(noteText);
-    if (Object.keys(parsedData).length === 0) {
-        alert("Could not find any of the specific section headers in the pasted text. Nothing was changed.");
+        const matches = [...psrBlock.matchAll(/\[(.*?)\]/g)];
+        
+        // --- THIS IS THE MODIFIED SECTION ---
+        
+        // First, get all available scores, and pad with blanks if needed.
+        let rawScores = matches.map(match => match[1].trim());
+        if (rawScores.length < 6) {
+            console.warn(`DEBUG: Found PSR block but only found ${rawScores.length} scores. Padding with blanks.`);
+            while(rawScores.length < 6) rawScores.push("");
+        } else if (rawScores.length > 6) {
+            rawScores = rawScores.slice(0, 6); // Ensure we only ever have 6 scores.
+        }
+
+        // Now, perform the reversal on the second line.
+        const topLine = rawScores.slice(0, 3);    // Scores at index 0, 1, 2
+        const bottomLine = rawScores.slice(3, 6); // Scores at index 3, 4, 5
+        
+        bottomLine.reverse(); // Reverse the second line of scores.
+        
+        const finalScores = topLine.concat(bottomLine); // Combine them back.
+
+        console.log(`DEBUG: Parsed raw scores: [${rawScores.join(', ')}]. Final reordered scores: [${finalScores.join(', ')}]`);
+        return finalScores;
+    };
+
+    // --- Main Logic (remains the same) ---
+
+    const standardData = parseNoteContent(noteText);
+    const psrData = parsePsrScores(noteText);
+    
+    if (Object.keys(standardData).length === 0 && !psrData) {
+        alert("Could not find any of the specific section headers or a PSR block in the pasted text. Nothing was changed.");
         return;
     }
 
     const labelToOriginalIdMap = {
-        "RADIOGRAPHIC FINDINGS:": "2-4",
-        "CARIES/DEFECTIVE RESTORATIONS:": "2-5",
-        "INCIPIENT CARIES:": "2-6",
-        "SOFT TISSUE / OCS:": "2-7", // Only need the primary header here
-        "PERIO:": "2-8",
-        "ENDO:": "2-9",
-        "TMJ:": "2-11",
-        "OCCLUSION:": "2-12",
-        "ORAL SURGERY:": "2-13",
-        "OTHER FINDINGS:": "2-14"
+        "RADIOGRAPHIC FINDINGS:": "2-4", "CARIES/DEFECTIVE RESTORATIONS:": "2-5", "INCIPIENT CARIES:": "2-6",
+        "SOFT TISSUE / OCS:": "2-7", "PERIO:": "2-8", "ENDO:": "2-9", "TMJ:": "2-11",
+        "OCCLUSION:": "2-12", "ORAL SURGERY:": "2-13", "OTHER FINDINGS:": "2-14"
     };
 
     const liveState = {};
@@ -2957,8 +2956,11 @@ const runImportLogic = (noteText) => {
         if (Array.isArray(liveState[sectionId])) {
             liveState[sectionId].forEach(element => {
                 const matchingLabel = Object.keys(labelToOriginalIdMap).find(label => labelToOriginalIdMap[label] === element.originalId);
-                if (matchingLabel && parsedData[matchingLabel]) {
-                    element.content = parsedData[matchingLabel];
+                if (matchingLabel && standardData[matchingLabel]) {
+                    element.content = standardData[matchingLabel];
+                }
+                if (element.type === 'psr' && element.originalId === '2-15' && psrData) {
+                    element.scores = psrData;
                 }
             });
         }
@@ -2967,6 +2969,13 @@ const runImportLogic = (noteText) => {
     renderState(liveState, false);
     console.log("--- IMPORT PROCESS COMPLETE ---");
 };
+
+
+// =================================================================
+// END:  CODE WITH CORRECTED PARSER AWARENESS
+// =================================================================
+
+
 
 // --- MODAL EVENT LISTENERS ---
 // This block controls the new modal's behavior.
