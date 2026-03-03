@@ -12,7 +12,7 @@
             --element-shadow: 0 2px 4px rgba(0,0,0,0.1); --button-bg: #1890ff;
             --button-text: #ffffff; --button-hover-bg: #40a9ff; --text-color: #333;
             --modal-bg: rgba(0,0,0,0.5); --danger-color: #d93025;
-            --warning-color: #fd7e14; --success-color: #28a745; --success-hover: #218838;
+            --warning-color: #fd7e14; --success-color: #28a745; --success-color2: yellow; --success-hover: #218838;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
  background-image: linear-gradient(to left, #fafafa, #e8e8e8); /* The gradient */
@@ -53,7 +53,8 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         body.layout-locked .draggable-element {cursor: default;}
 
         /* Styles for Hidden Elements and highlighted */
-.element-highlighted {border-color: var(--success-color) !important; }
+.element-highlighted.element-highlighted {border-color: var(--success-color) !important; }
+.element-highlighted2 {border-color: var(--success-color2) !important; }
         .element-hidden { display: none; }
         body.show-hidden-elements .element-hidden { display: flex; border-style: dotted; border-color: var(--danger-color); }
         
@@ -65,8 +66,8 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
         .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
         .copy-btn-prominent:hover { background-color: var(--success-hover); }
-		        .import-btn-prominent { background-color: blue; color: white; font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
-				.import-btn-prominent:hover { background-color: lightblue; }
+		        .import-btn-prominent { background-color: lightyellow; color: black; font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
+				.import-btn-prominent:hover { background-color: yellow; }
         #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
         .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
         /* All other element-specific styles are here */
@@ -2842,132 +2843,146 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
    
    
    
-// =================================================================
-// START: Import Old Note
-// =================================================================
+
 
 // =================================================================
-// START:  CODE WITH PSR SCORE REVERSAL
-// Please replace your entire 'runImportLogic' function with this one.
+// START: IMPORT CODE WITH HIGHLIGHTING
+// P.
 // =================================================================
 
 /**
- * This is the central import logic, now with PSR score reversal.
+ * This is the central import logic, now with highlighting.
+ * It takes raw text, processes it, and updates the application state.
  * @param {string} noteText The raw text to be imported.
  */
+
+
 const runImportLogic = (noteText) => {
-    console.log("DEBUG: runImportLogic started with PSR score reversal logic.");
+    console.log("DEBUG: runImportLogic started with final highlighting logic.");
 
-    // --- Parser 1: For standard "Header: Value" fields ---
-    const parseNoteContent = (content) => {
-        const sections = [
-            "RADIOGRAPHIC FINDINGS:", "CARIES/DEFECTIVE RESTORATIONS:", "INCIPIENT CARIES:",
-            "SOFT TISSUE / OCS:", "OCS/SOFT TISSUE:", "PERIO:", "ENDO:", "TMJ:", 
-            "OCCLUSION:", "ORAL SURGERY:", "OTHER FINDINGS:", "PSR:"
-        ];
-        const parsed = {};
-        for (const header of sections) {
-            if (header === "PSR:") continue;
-            const startIndex = content.indexOf(header);
-            if (startIndex === -1) continue;
-            const searchStart = startIndex + header.length;
-            let nextHeaderPos = content.length;
-            for (const nextH of sections) {
-                if (nextH === header) continue;
-                const pos = content.indexOf(nextH, searchStart);
-                if (pos > -1 && pos < nextHeaderPos) nextHeaderPos = pos;
-            }
-            const singleNewlinePos = content.indexOf('\n', searchStart);
-            let endIndex = nextHeaderPos;
-            if (singleNewlinePos > -1 && singleNewlinePos < endIndex) endIndex = singleNewlinePos;
-            
-            const value = content.substring(searchStart, endIndex).trim();
-            if (value) {
-                const primaryHeader = header.includes("OCS") ? "SOFT TISSUE / OCS:" : header;
-                parsed[primaryHeader] = value;
-            }
-        }
-        return parsed;
-    };
-
-    // --- Parser 2: Dedicated parser for the PSR block with reversal logic ---
-    const parsePsrScores = (content) => {
-        const psrHeader = "PSR:";
-        const startIndex = content.indexOf(psrHeader);
-        if (startIndex === -1) return null;
-        
-        const searchStart = startIndex + psrHeader.length;
-        const blockEndIndex = content.indexOf('\n\n', searchStart);
-        const psrBlock = content.substring(searchStart, blockEndIndex > -1 ? blockEndIndex : undefined).trim();
-        
-        if (!psrBlock) return null;
-
-        const matches = [...psrBlock.matchAll(/\[(.*?)\]/g)];
-        
-        // --- THIS IS THE MODIFIED SECTION ---
-        
-        // First, get all available scores, and pad with blanks if needed.
-        let rawScores = matches.map(match => match[1].trim());
-        if (rawScores.length < 6) {
-            console.warn(`DEBUG: Found PSR block but only found ${rawScores.length} scores. Padding with blanks.`);
-            while(rawScores.length < 6) rawScores.push("");
-        } else if (rawScores.length > 6) {
-            rawScores = rawScores.slice(0, 6); // Ensure we only ever have 6 scores.
-        }
-
-        // Now, perform the reversal on the second line.
-        const topLine = rawScores.slice(0, 3);    // Scores at index 0, 1, 2
-        const bottomLine = rawScores.slice(3, 6); // Scores at index 3, 4, 5
-        
-        bottomLine.reverse(); // Reverse the second line of scores.
-        
-        const finalScores = topLine.concat(bottomLine); // Combine them back.
-
-        console.log(`DEBUG: Parsed raw scores: [${rawScores.join(', ')}]. Final reordered scores: [${finalScores.join(', ')}]`);
-        return finalScores;
-    };
-
-    // --- Main Logic (remains the same) ---
-
-    const standardData = parseNoteContent(noteText);
-    const psrData = parsePsrScores(noteText);
-    
-    if (Object.keys(standardData).length === 0 && !psrData) {
-        alert("Could not find any of the specific section headers or a PSR block in the pasted text. Nothing was changed.");
-        return;
-    }
-
-    const labelToOriginalIdMap = {
-        "RADIOGRAPHIC FINDINGS:": "2-4", "CARIES/DEFECTIVE RESTORATIONS:": "2-5", "INCIPIENT CARIES:": "2-6",
-        "SOFT TISSUE / OCS:": "2-7", "PERIO:": "2-8", "ENDO:": "2-9", "TMJ:": "2-11",
-        "OCCLUSION:": "2-12", "ORAL SURGERY:": "2-13", "OTHER FINDINGS:": "2-14"
-    };
-
-    const liveState = {};
-    SECTIONS.forEach(id => {
-        liveState[id] = [];
-        const dropzone = document.querySelector(`.dropzone[data-section-id="${id}"]`);
-        if (dropzone) {
-            dropzone.querySelectorAll('.draggable-element').forEach(el => liveState[id].push(getElementState(el)));
-        }
-    });
-
-    for (const sectionId in liveState) {
-        if (Array.isArray(liveState[sectionId])) {
-            liveState[sectionId].forEach(element => {
-                const matchingLabel = Object.keys(labelToOriginalIdMap).find(label => labelToOriginalIdMap[label] === element.originalId);
-                if (matchingLabel && standardData[matchingLabel]) {
-                    element.content = standardData[matchingLabel];
+    try {
+        // --- All the parsing and data mapping logic from before (this part is correct) ---
+        const parseNoteContent = (content) => {
+            const sections = [
+                "RADIOGRAPHIC FINDINGS:", "CARIES/DEFECTIVE RESTORATIONS:", "INCIPIENT CARIES:",
+                "SOFT TISSUE / OCS:", "OCS/SOFT TISSUE:", "PERIO:", "ENDO:", "TMJ:", 
+                "OCCLUSION:", "ORAL SURGERY:", "OTHER FINDINGS:", "PSR:"
+            ];
+            const parsed = {};
+            for (const header of sections) {
+                if (header === "PSR:") continue;
+                const startIndex = content.indexOf(header);
+                if (startIndex === -1) continue;
+                const searchStart = startIndex + header.length;
+                let nextHeaderPos = content.length;
+                for (const nextH of sections) {
+                    if (nextH === header) continue;
+                    const pos = content.indexOf(nextH, searchStart);
+                    if (pos > -1 && pos < nextHeaderPos) nextHeaderPos = pos;
                 }
-                if (element.type === 'psr' && element.originalId === '2-15' && psrData) {
-                    element.scores = psrData;
+                const singleNewlinePos = content.indexOf('\n', searchStart);
+                let endIndex = nextHeaderPos;
+                if (singleNewlinePos > -1 && singleNewlinePos < endIndex) endIndex = singleNewlinePos;
+                const value = content.substring(searchStart, endIndex).trim();
+                if (value) {
+                    const primaryHeader = header.includes("OCS") ? "SOFT TISSUE / OCS:" : header;
+                    parsed[primaryHeader] = value;
+                }
+            }
+            return parsed;
+        };
+
+        const parsePsrScores = (content) => {
+            const psrHeader = "PSR:";
+            const startIndex = content.indexOf(psrHeader);
+            if (startIndex === -1) return null;
+            const searchStart = startIndex + psrHeader.length;
+            const blockEndIndex = content.indexOf('\n\n', searchStart);
+            const psrBlock = content.substring(searchStart, blockEndIndex > -1 ? blockEndIndex : undefined).trim();
+            if (!psrBlock) return null;
+            const matches = [...psrBlock.matchAll(/\[(.*?)\]/g)];
+            let rawScores = matches.map(match => match[1].trim());
+            if (rawScores.length < 6) {
+                while(rawScores.length < 6) rawScores.push("");
+            } else if (rawScores.length > 6) {
+                rawScores = rawScores.slice(0, 6);
+            }
+            const topLine = rawScores.slice(0, 3);
+            const bottomLine = rawScores.slice(3, 6);
+            bottomLine.reverse();
+            return topLine.concat(bottomLine);
+        };
+
+        const standardData = parseNoteContent(noteText);
+        const psrData = parsePsrScores(noteText);
+        
+        if (Object.keys(standardData).length === 0 && !psrData) {
+            alert("Could not find any specific headers or a PSR block in the pasted text. Nothing was changed.");
+            return;
+        }
+
+        const labelToOriginalIdMap = {
+            "RADIOGRAPHIC FINDINGS:": "2-4", "CARIES/DEFECTIVE RESTORATIONS:": "2-5", "INCIPIENT CARIES:": "2-6",
+            "SOFT TISSUE / OCS:": "2-7", "PERIO:": "2-8", "ENDO:": "2-9", "TMJ:": "2-11",
+            "OCCLUSION:": "2-12", "ORAL SURGERY:": "2-13", "OTHER FINDINGS:": "2-14"
+        };
+
+        const liveState = {};
+        SECTIONS.forEach(id => {
+            liveState[id] = [];
+            const dropzone = document.querySelector(`.dropzone[data-section-id="${id}"]`);
+            if (dropzone) {
+                dropzone.querySelectorAll('.draggable-element').forEach(el => liveState[id].push(getElementState(el)));
+            }
+        });
+
+        // --- FINAL HIGHLIGHTING LOGIC ---
+
+        // 1. Create a list to store the ORIGINAL IDs of elements that will be updated.
+        const originalIdsToHighlight = [];
+
+        for (const sectionId in liveState) {
+            if (Array.isArray(liveState[sectionId])) {
+                liveState[sectionId].forEach(element => {
+                    const matchingLabel = Object.keys(labelToOriginalIdMap).find(label => labelToOriginalIdMap[label] === element.originalId);
+                    if (matchingLabel && standardData[matchingLabel]) {
+                        element.content = standardData[matchingLabel];
+                        originalIdsToHighlight.push(element.originalId); // Store the originalId
+                    }
+                    if (element.type === 'psr' && element.originalId === '2-15' && psrData) {
+                        element.scores = psrData;
+                        originalIdsToHighlight.push(element.originalId); // Store the PSR originalId
+                    }
+                });
+            }
+        }
+        
+        console.log("DEBUG: The following original IDs will be highlighted:", originalIdsToHighlight);
+
+        // 2. Render the state first.
+        renderState(liveState, false);
+
+        // 3. NOW, apply the highlight to the NEW elements on the page by finding them via their data attribute.
+        console.log("DEBUG: Applying '.element-highlighted' class by finding new elements via data-original-id...");
+        if (originalIdsToHighlight.length > 0) {
+            originalIdsToHighlight.forEach(oId => {
+                // Find the newly rendered element on the page that has the matching data-original-id attribute.
+                const elementToHighlight = document.querySelector(`.draggable-element[data-original-id="${oId}"]`);
+                if (elementToHighlight) {
+                    console.log(`%cSUCCESS: Found new element with originalId "${oId}". Applying highlight.`, 'color: lightgreen; font-weight: bold;');
+                    elementToHighlight.classList.add('element-highlighted2');
+                } else {
+                    console.error(`DEBUG: FAILED to find element with data-original-id: ${oId} on the page after rendering.`);
                 }
             });
         }
-    }
 
-    renderState(liveState, false);
-    console.log("--- IMPORT PROCESS COMPLETE ---");
+        console.log("--- IMPORT PROCESS COMPLETE ---");
+
+    } catch (error) {
+        console.error("An error occurred during the import process:", error);
+        alert("A critical error occurred. See console for details.");
+    }
 };
 
 
@@ -2993,6 +3008,7 @@ const clearModalButton = document.getElementById('clear-modal-button');
 // Function to open the modal
 const openImportModal = () => {
     modalBackdrop.classList.add('modal-visible');
+	    pasteTextarea.value = ''; // Set the textarea's value to an empty string when opening (clear)
 };
 
 // Function to close the modal
