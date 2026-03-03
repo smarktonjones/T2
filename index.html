@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 26FEB26 mgh -->
+<!-- version as of 03MAR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -491,7 +491,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v3.0</div>
+    <div class="text-bottom-left">Maker v3.1</div>
   </div>
 
 </div>
@@ -2846,96 +2846,124 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 // START: Import Old Note
 // =================================================================
 
-// =================================================================
-// START: FINAL CODE WITH MODAL SUPPORT
-// Delete all previous import feature code and use this final block.
-// =================================================================
-
-// --- Core Logic for "Import Previous Note" Feature ---
-
 /**
- * This is the central import logic. It takes raw text, processes it,
- * and updates the application state. It is now independent of any specific
- * button or event.
+ * This is the central import logic, with a robust parser.
+ * It takes raw text, processes it, and updates the application state.
  * @param {string} noteText The raw text to be imported.
  */
 const runImportLogic = (noteText) => {
-    console.log("DEBUG: runImportLogic started.");
-    
-    // 1. The parsing function remains the same.
-    const parseNoteContent = (content) => {
-        const sections = [
-            "RADIOGRAPHIC FINDINGS:", "CARIES/DEFECTIVE RESTORATIONS:", "INCIPIENT CARIES:",
-            "SOFT TISSUE / OCS:", "PERIO:", "ENDO:", "TMJ:", "OCCLUSION:", "ORAL SURGERY:", "OTHER FINDINGS:"
-        ];
-        const parsed = {};
-        const regex = new RegExp(`(${sections.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
-        const parts = content.split(regex);
-        if (parts.length < 3) return {};
+    console.log("DEBUG: runImportLogic started with final parser.");
 
-        for (let i = 1; i < parts.length; i += 2) {
-            const header = parts[i].trim();
-            let valueChunk = (parts[i + 1] || '');
-            const valueLines = valueChunk.split(/\r?\n/);
-            let finalValue = [];
-            for (const line of valueLines) {
-                if (finalValue.length > 0 && /^\s*[A-Z][A-Z\s]+:/.test(line)) break;
-                finalValue.push(line);
+    // **THE IMPROVED PARSER**
+    const parseNoteContent_FINAL = (content) => {
+        console.log("DEBUG: Final parser started.");
+        const parsed = {};
+        
+        const headerMap = {
+            "RADIOGRAPHIC FINDINGS:": "2-4",
+            "CARIES/DEFECTIVE RESTORATIONS:": "2-5",
+            "INCIPIENT CARIES:": "2-6",
+            "SOFT TISSUE / OCS:": "2-7",
+            "OCS/SOFT TISSUE:": "2-7", // Alias
+            "PERIO:": "2-8",
+            "ENDO:": "2-9",
+            "TMJ:": "2-11",
+            "OCCLUSION:": "2-12",
+            "ORAL SURGERY:": "2-13",
+            "OTHER FINDINGS:": "2-14"
+        };
+
+        const allHeaders = Object.keys(headerMap);
+
+        // For each header, find its location and the location of the next terminating character.
+        for (const header of allHeaders) {
+            const startIndex = content.indexOf(header);
+            
+            if (startIndex === -1) {
+                continue; // This header isn't in the note, skip it.
             }
-            const trimmedFinalValue = finalValue.join('\n').trim();
-            if (sections.includes(header) && trimmedFinalValue) {
-                parsed[header] = trimmedFinalValue;
+
+            const searchStart = startIndex + header.length;
+
+            // 1. Find the start of the NEXT closest header.
+            let nextHeaderPos = content.length; // Default to the end of the file.
+            for (const nextH of allHeaders) {
+                // Don't match the same header again.
+                if (nextH === header) continue;
+                
+                const pos = content.indexOf(nextH, searchStart);
+                if (pos > -1 && pos < nextHeaderPos) {
+                    nextHeaderPos = pos;
+                }
+            }
+
+            // **THE FIX:** As you suggested, also find the next single line break.
+            // A  newline is a strong indicator of a new, unrelated paragraph.
+            const doubleNewlinePos = content.indexOf('\n', searchStart);
+            
+            // 2. Determine the true end position. It is the EARLIEST of either
+            // the next header, the next  newline, or the end of the file.
+            let endIndex = nextHeaderPos;
+            if (doubleNewlinePos > -1 && doubleNewlinePos < endIndex) {
+                console.log(`DEBUG: For header "${header}", found a newline that comes before the next header. Capping text here.`);
+                endIndex = doubleNewlinePos;
+            }
+            
+            // 3. Extract the value based on the calculated start and end.
+            const value = content.substring(searchStart, endIndex).trim();
+            if (value) {
+                // Always use the primary header from the map for consistency.
+                const primaryHeader = header.includes("OCS") ? "SOFT TISSUE / OCS:" : header;
+                console.log(`DEBUG: Found value for "${primaryHeader}" -> "${value}"`);
+                parsed[primaryHeader] = value;
             }
         }
+        
+        console.log("DEBUG: Final parsing complete. Parsed Data:", parsed);
         return parsed;
     };
 
-    // 2. Process the text.
-    const parsedData = parseNoteContent(noteText);
+    // --- The rest of the function remains the same ---
+
+    const parsedData = parseNoteContent_FINAL(noteText);
     if (Object.keys(parsedData).length === 0) {
         alert("Could not find any of the specific section headers in the pasted text. Nothing was changed.");
         return;
     }
-    console.log("DEBUG: Parsed note data:", parsedData);
 
     const labelToOriginalIdMap = {
-        "RADIOGRAPHIC FINDINGS:": "2-4", "CARIES/DEFECTIVE RESTORATIONS:": "2-5", "INCIPIENT CARIES:": "2-6",
-        "SOFT TISSUE / OCS:": "2-7", "PERIO:": "2-8", "ENDO:": "2-9", "TMJ:": "2-11", "OCCLUSION:": "2-12",
-        "ORAL SURGERY:": "2-13", "OTHER FINDINGS:": "2-14"
+        "RADIOGRAPHIC FINDINGS:": "2-4",
+        "CARIES/DEFECTIVE RESTORATIONS:": "2-5",
+        "INCIPIENT CARIES:": "2-6",
+        "SOFT TISSUE / OCS:": "2-7", // Only need the primary header here
+        "PERIO:": "2-8",
+        "ENDO:": "2-9",
+        "TMJ:": "2-11",
+        "OCCLUSION:": "2-12",
+        "ORAL SURGERY:": "2-13",
+        "OTHER FINDINGS:": "2-14"
     };
 
-    // 3. Get the live state from the DOM.
     const liveState = {};
     SECTIONS.forEach(id => {
         liveState[id] = [];
         const dropzone = document.querySelector(`.dropzone[data-section-id="${id}"]`);
         if (dropzone) {
-            dropzone.querySelectorAll('.draggable-element').forEach(el => {
-                liveState[id].push(getElementState(el));
-            });
+            dropzone.querySelectorAll('.draggable-element').forEach(el => liveState[id].push(getElementState(el)));
         }
     });
 
-    // 4. Apply updates.
-    let updatesMade = false;
     for (const sectionId in liveState) {
         if (Array.isArray(liveState[sectionId])) {
             liveState[sectionId].forEach(element => {
                 const matchingLabel = Object.keys(labelToOriginalIdMap).find(label => labelToOriginalIdMap[label] === element.originalId);
                 if (matchingLabel && parsedData[matchingLabel]) {
-                    console.log(`%cSUCCESS: Match found for originalId: "${element.originalId}". Applying update.`, 'color: lightgreen; font-weight: bold;');
                     element.content = parsedData[matchingLabel];
-                    updatesMade = true;
                 }
             });
         }
     }
 
-    if (!updatesMade) {
-        console.warn("DEBUG: The import ran, but no matching elements were found in the current form state.");
-    }
-
-    // 5. Render the new state.
     renderState(liveState, false);
     console.log("--- IMPORT PROCESS COMPLETE ---");
 };
