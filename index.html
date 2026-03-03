@@ -1942,9 +1942,9 @@ const COLOR_PALETTE = [
                 let suggestionString = `Recommended Caries Risk: ${recommendedCariesRisk}`;
                 if (userSelectedCariesRisk) {
                     if (recommendedCariesRisk === userSelectedCariesRisk) {
-                        suggestionString += " (Matched)";
+                        suggestionString += " (Matched with Recommendation)";
                     } else {
-                        suggestionString += " (MISMATCH)";
+                        suggestionString += " (Does NOT match recommendation)";
                     }
                 } else {
                     suggestionString += " (User selection not found)";
@@ -1971,9 +1971,9 @@ const COLOR_PALETTE = [
                 let suggestionString = `Recommended Perio Risk: ${recommendedPerioRisk}`;
                 if (userSelectedPerioRisk) {
                     if (recommendedPerioRisk === userSelectedPerioRisk) {
-                        suggestionString += " (Matched)";
+                        suggestionString += " (Matched with Recommendation)";
                     } else {
-                        suggestionString += " (MISMATCH)";
+                        suggestionString += " (Does NOT match recommendation)";
                     }
                 } else {
                     suggestionString += " (User selection not found)";
