@@ -10,11 +10,13 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "**PERIODIC ORAL EXAM (T-2)**",
         "**INITIAL ORAL EXAM (T-1)**",
         "**RETIREMENT EXAM (T-2)**",
-        "**SEPARATION EXAM (T-2)**  "
+        "**SEPARATION EXAM (T-2)**  ",
+        "**SICK CALL / LIMITED EXAM (T-3)**"
       ],
       "selected": "**PERIODIC ORAL EXAM (T-2)**"
     },
@@ -28,6 +30,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "alerts": [
         "None"
       ]
@@ -42,10 +45,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": " Reviewed. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -58,6 +62,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "LEARNING NEEDS:  Language: English. ",
         "LEARNING NEEDS:  Language: ESOL. ",
@@ -75,9 +80,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Learning Type: Written/Verbal. ",
         "Learning Type: Written. ",
+	    "Learning Type: Visual. ",
         "Learning Type: Verbal. "
       ],
       "selected": "Learning Type: Written/Verbal. "
@@ -92,6 +99,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Impairments: None. ",
         "Impairments: Hearing Aid. ",
@@ -109,6 +117,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "Cultural: None.",
         "Cultural: Other."
@@ -125,6 +134,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f0f0f0",
       "options": [
         "FLIGHT STATUS: N/A",
         "FLIGHT STATUS: AVIATOR",
@@ -143,13 +153,14 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "systolic": "120",
-      "diastolic": "80",
+      "fillColor": "#f0f0f0",
+      "systolic": "",
+      "diastolic": "",
       "isPriorTxChecked": false,
-      "discussSystolic": "135",
-      "discussDiastolic": "90",
-      "checkboxSystolic": "150",
-      "checkboxDiastolic": "95"
+      "discussSystolic": "150",
+      "discussDiastolic": "95",
+      "checkboxSystolic": "160",
+      "checkboxDiastolic": "100"
     }
   ],
   "subjective": [
@@ -163,10 +174,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "S:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -179,10 +191,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "content": "None",
-      "internalLabel": "CC:",
+      "internalLabel": "Chief Concern:",
       "prefixLabel": "PRESENTING COMPLAINT: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "None",
       "dropdownOptions": []
     },
     {
@@ -195,6 +208,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "value": "0"
     },
     {
@@ -207,15 +221,16 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f9f0ff",
       "content": "None",
       "internalLabel": "Tobacco / Vaping",
       "prefixLabel": "TOBACCO/VAPING: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "None",
       "dropdownOptions": [
         "Vaping",
         "Cigarettes",
         "Smokeless Tobacco",
-        "Nicotene pouches",
+        "Nicotine pouches",
         "0.5 Pack Per Day",
         "0.5 Can Per Day"
       ]
@@ -232,10 +247,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "O:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -248,6 +264,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "options": [
         "BWX: TODAY",
         "BWX: REVIEWED",
@@ -266,6 +283,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "options": [
         "PANO: REVIEWED",
         "PANO: TODAY",
@@ -284,6 +302,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": " ",
       "internalLabel": "Radiographs Other",
       "prefixLabel": "",
@@ -302,6 +321,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "No Pathology Noted.",
       "internalLabel": "Radiographic Findings",
       "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
@@ -325,10 +345,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "100%",
+      "fillColor": "#d6eefb",
       "content": "None.",
       "internalLabel": "Caries / Defective",
       "prefixLabel": "CARIES/DEFECTIVE RESTORATIONS: ",
-      "defaultText": "None",
+      "defaultText": "None.",
       "dropdownOptions": [
         "#"
       ]
@@ -343,10 +364,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "100%",
-      "content": "None. ",
+      "fillColor": "#d6eefb",
+      "content": "None.",
       "internalLabel": "Incipient",
       "prefixLabel": "INCIPIENT CARIES: ",
-      "defaultText": "None",
+      "defaultText": "None.",
       "dropdownOptions": [
         "#",
         "Generalized Facial White Spot Lesions",
@@ -363,13 +385,16 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "WNL.",
       "internalLabel": "Soft Tissue / OCS",
       "prefixLabel": "SOFT TISSUE / OCS: ",
-      "defaultText": "None. ",
+      "defaultText": "WNL.",
       "dropdownOptions": [
         "Mandibular Tori",
         "Apthous Ulcer",
+   "Tobacco Keratosis",
+"Nicotine Keratosis",
         "Palatal Torus",
         "Fibroma",
         "Tonsillectomy",
@@ -387,10 +412,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Periodontal",
       "prefixLabel": "PERIO: ",
-      "defaultText": "None. ",
+      "defaultText": "WNL.",
       "dropdownOptions": [
         "Radiographic Calculus",
         "Heavy Calculus",
@@ -409,11 +435,17 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Endodontic",
       "prefixLabel": "ENDO: ",
-      "defaultText": "None.",
-      "dropdownOptions": []
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "NSRCT# ",
+        "Asymptomatic",
+        "SRCT# ",
+        "Draining sinus tract area #"
+	  ]
     },
     {
       "type": "endo-testing",
@@ -425,6 +457,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "endoTests": [
         "Percussion",
         "Palpation",
@@ -481,7 +514,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "TMJ",
       "prefixLabel": "TMJ: ",
       "defaultText": "WNL.",
@@ -503,7 +537,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Occlusion",
       "prefixLabel": "OCCLUSION: ",
       "defaultText": "WNL.",
@@ -525,7 +560,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "40%",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Oral Surgery",
       "prefixLabel": "ORAL SURGERY: ",
       "defaultText": "WNL.",
@@ -533,6 +569,7 @@
         "Missing: 1,16,17,32",
         "1,16,17,32 Present",
         "Unerupted - ",
+        "Partially erupted - ",
         "Communicating - "
       ]
     },
@@ -546,7 +583,8 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "40%",
-      "content": "WNL. ",
+      "fillColor": "",
+      "content": "WNL.",
       "internalLabel": "Other Findings",
       "prefixLabel": "OTHER FINDINGS: ",
       "defaultText": "WNL.",
@@ -565,6 +603,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "scores": [
         "",
         "",
@@ -595,10 +634,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "A:",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -611,10 +651,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
-      "internalLabel": "Diagnosis of CC",
+      "internalLabel": "Diagnosis of Chief Concern",
       "prefixLabel": "DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT: ",
-      "defaultText": "None",
+      "defaultText": "None.",
       "dropdownOptions": []
     },
     {
@@ -627,10 +668,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "Gingivitis Localized",
       "internalLabel": "Perio Diagnosis",
       "prefixLabel": "PERIO DIAGNOSIS: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "Gingivitis Localized",
       "dropdownOptions": [
         "Gingivitis Localized",
         "Gingivitis Generalized",
@@ -654,6 +696,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
       "internalLabel": "Endo Diagnosis",
       "prefixLabel": "ENDO DIAGNOSIS",
@@ -683,6 +726,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#fafafa",
       "content": "None.",
       "internalLabel": "Oral Surgery Diagnosis",
       "prefixLabel": "ORAL SURGERY DIAGNOSIS: ",
@@ -703,6 +747,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "CARIES RISK: Low",
         "CARIES RISK: Moderate",
@@ -720,6 +765,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "PERIO RISK: Low",
         "PERIO RISK: Moderate",
@@ -737,6 +783,7 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#e8e8e8",
       "options": [
         "CANCER RISK: Low",
         "CANCER RISK: Moderate",
@@ -754,10 +801,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "Findings reviewed / Patient informed and consents to Treatment Plan.",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     }
   ],
@@ -772,10 +820,11 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "content": "P:   CHARTING OF TREATMENT PLAN IN DENTRIX",
       "internalLabel": "",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": []
     },
     {
@@ -788,10 +837,11 @@
       "isHidden": false,
       "doNotReset": false,
       "width": "",
+      "fillColor": "#f6ffed",
       "content": "",
       "internalLabel": "Caries Risk Management",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "Caries Risk Management: OHI",
         "Caries Risk Management: Fluoride Treatments x 4",
@@ -808,10 +858,11 @@
       "originalId": "4-2",
       "isHidden": false,
       "doNotReset": false,
-      "width": "",
+      "width": "66%",
+      "fillColor": "#d9f7be",
       "txRows": [
-        "Oral Hygiene",
         "Operative",
+        "Oral Hygiene",
         "Perio",
         "Oral Surgery",
         "Endo",
@@ -827,8 +878,7 @@
         "Oral Hygiene-CLASS 2": {
           "text": "RDH",
           "priority": 1
-        }
-      }
+        } }
     }
   ],
   "footer": [
@@ -842,10 +892,11 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
-      "content": "Default",
+      "fillColor": "#fffbe6",
+      "content": "",
       "internalLabel": "Dental Technician Name",
       "prefixLabel": "DENTAL TECHNICIAN: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
         "SANDERSON",
         "LEONARDSON",
@@ -856,7 +907,11 @@
         "STEWART",
         "MORRIS",
         "BABCOCK",
-        "TURNER"
+        "VILLANUEVA",
+        "TURNER",
+        "HARDEN",
+        "FERGUSON",
+        "CISSE"
       ]
     },
     {
@@ -869,6 +924,7 @@
       "isHidden": true,
       "doNotReset": false,
       "width": "",
+      "fillColor": "",
       "formatType": "newline",
       "customChars": ""
     },
@@ -882,17 +938,20 @@
       "isHidden": false,
       "doNotReset": true,
       "width": "",
+      "fillColor": "#fffbe6",
       "content": "",
       "internalLabel": "Dentist Block",
       "prefixLabel": "DENTAL OFFICER: ",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
-        "MG HORNING DDS  1912969445",
+        "TP FLEMING",
         "JA HOGAN",
         "RJ ALOVA",
-        "BW HANES",
+        "MG HORNING DDS  1912969445",
         "CL ROBERTS",
-        "RA NARDELLA"
+        "RA NARDELLA",
+        "FC BERGER",
+	    "CJ COBB"
       ]
     },
     {
@@ -902,15 +961,18 @@
       "prefixNewline": true,
       "suffixNewline": false,
       "originalId": "5-3",
-      "isHidden": false,
+      "isHidden": true,
       "doNotReset": true,
       "width": "",
-      "content": "",
+      "fillColor": "#fffbe6",
+      "content": "    .  . .   . ____ .  .    _   _    _    _  .  .  _   \n   /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n  / | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      ",
       "internalLabel": "Signature Block",
       "prefixLabel": "",
-      "defaultText": "Click to edit...",
+      "defaultText": "",
       "dropdownOptions": [
-        "  .  . .   . ____ .  .    _   _    _    _  .  .  _    \n /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "
+        "  .  . .   . ____ .  .    _   _    _    _  .  .  _    ",
+        " /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  ",
+        "/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "
       ]
     }
   ]
