@@ -14,7 +14,7 @@
       "options": [
         "**PERIODIC ORAL EXAM (T-2)**",
         "**INITIAL ORAL EXAM (T-1)**",
-        "**RETIREMENT EXAM (T-2)**",
+        "**RETIREMENT EXAM (T-2)r**",
         "**SEPARATION EXAM (T-2)s**  ",
         "**SICK CALL / LIMITED EXAM (T-3)**"
       ],
@@ -672,7 +672,7 @@
       "content": "Gingivitis Generalized",
       "internalLabel": "Perio Diagnosis",
       "prefixLabel": "PERIO DIAGNOSIS: ",
-      "defaultText": "Gingivitis Localized",
+      "defaultText": "Gingivitis Generalized",
       "dropdownOptions": [
         "Gingivitis Localized",
         "Gingivitis Generalized",
