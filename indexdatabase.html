@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 31MAR26 mgh -->
+<!-- version as of 01APR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2710,20 +2710,7 @@ unsubscribeFromNote = noteDocRef.onSnapshot(doc => {
     console.log(`DEBUG: Real-time data received for note "${currentNoteId}".`);
 
     if (doc.exists) {
-        const cloudState = doc.data();
-
-        // --- THIS IS THE FINAL PIECE OF THE FIX ---
-        // 1. Set the flag to true BEFORE rendering.
-        isRenderingFromCloud = true;
-        
-        // 2. Render the UI. This will call updateLiveOutput, which will now be blocked by our flag.
-        console.log("DEBUG: Rendering new data from cloud...");
-        renderState(cloudState, false); 
-        
-        // 3. IMPORTANT: Set the flag back to false immediately after.
-        isRenderingFromCloud = false;
-        console.log("DEBUG: Cloud render complete. Sync is re-enabled.");
-        // --- END OF FIX ---
+        reconcileState(doc.data());
         
     } else {
         // This 'else' block remains the same.
@@ -2759,66 +2746,134 @@ const syncStateToFirestore = () => {
         });
         stateToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
         db.collection('live_notes').doc(currentNoteId).set(stateToSave, { merge: true });
-    }, 750);
+    }, 5000);
 };
 
 
+
 // =================================================================
-// SNIPPET TO REPLACE THE ORIGINAL resetValues FUNCTION
+// UPDATED `resetValues` Function
 // =================================================================
+
 const resetValues = () => {
-    // Keep the original history-saving functionality.
+    // 1. Keep the history saving feature.
     saveNoteToHistory();
 
-    // The NEW cloud-aware logic.
+    // 2. The single confirmation dialog.
     if (currentNoteId && confirm("Are you sure you want to reset this note for the next patient?")) {
-        console.log(`DEBUG: Resetting note in Firestore for "${currentNoteId}"`);
+        console.log(`DEBUG: Resetting note in Firestore for "${currentNoteId}", preserving 'doNotReset' fields...`);
         
         if (!lastLoadedState) {
-            alert("Error: The default template state (lastLoadedState) is not available. Cannot perform reset.");
+            alert("Error: Default template not available. Cannot reset.");
             return;
         }
 
-        // Create a clean copy of the original template.
-        const templateState = JSON.parse(JSON.stringify(lastLoadedState));
-        
-        // Add the timestamp for real-time ordering.
-        templateState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
-        
-        // Overwrite the document in the cloud with the clean template.
-        // The `onSnapshot` listener will automatically see this change and re-render the UI.
-        db.collection('live_notes').doc(currentNoteId).set(templateState).then(() => {
-            alert("Note has been reset for the next patient.");
+        // Get a reference to the document.
+        const noteDocRef = db.collection('live_notes').doc(currentNoteId);
+
+        // **THE NEW LOGIC STARTS HERE**
+        // First, get the most recent version of the document from the server.
+        noteDocRef.get().then(doc => {
+            if (!doc.exists) {
+                console.error("Cannot reset a document that doesn't exist.");
+                return;
+            }
+
+            const currentState = doc.data();
+            // Create a clean copy of the original template.
+            const templateState = JSON.parse(JSON.stringify(lastLoadedState));
+
+            console.log("DEBUG: Checking for 'doNotReset' elements to preserve...");
+
+            // Loop through every section in the current state.
+            for (const sectionId in currentState) {
+                if (Array.isArray(currentState[sectionId])) {
+                    // For each element in the section...
+                    currentState[sectionId].forEach((currentElement, index) => {
+                        // ...check if it has the doNotReset flag.
+                        if (currentElement.doNotReset === true) {
+                            console.log(`%cPreserving data for element with originalId: ${currentElement.originalId}`, 'color: yellow;');
+                            // If it does, overwrite the element in our clean template
+                            // with the version from the current state.
+                            if (templateState[sectionId] && templateState[sectionId][index]) {
+                                templateState[sectionId][index] = currentElement;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Add the timestamp for real-time ordering.
+            templateState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
+
+            // Now, save this newly merged state back to Firestore.
+            // The onSnapshot listener will then handle the UI update automatically.
+            noteDocRef.set(templateState).then(() => {
+                console.log("DEBUG: Reset complete. Preserved data has been saved.");
+                // The alert is optional, as the UI will update visually.
+                // alert("Note has been reset for the next patient.");
+            }).catch(err => {
+                console.error("Reset failed during save:", err);
+                alert("Error: Could not save the reset state to the cloud.");
+            });
+
+        }).catch(err => {
+            console.error("Reset failed while fetching current state:", err);
+            alert("Error: Could not read the current note state to perform a safe reset.");
         });
-    } else if (!currentNoteId) {
-        // This fallback handles the case where the user is offline and not in a session.
-        alert("Cannot reset a note without an active cloud session.");
     }
 };
+
 // =================================================================
 
 
 
 
 
+
+// =================================================================
+//  The New Cloud-Aware `fullReset` Function
+// =================================================================
 const fullReset = () => {
-    // We use a more descriptive confirmation message now.
-    if (confirm("Are you sure you want to perform a FULL application reset? This will clear ALL saved sessions, note history, and the saved technician name.")) {
-        console.log("Performing a full reset. Clearing all localStorage data...");
-        
-        // 1. Clear the old session data.
-        localStorage.removeItem('dentalNoteMakerSession');
-        
-        // 2. Clear the note history.
-        localStorage.removeItem('dentalNoteHistory');
-        
-        // 3. **THE NEW LOGIC:** Clear the saved technician name.
-        localStorage.removeItem('dentalNoteMakerTechName');
-        
-        // 4. Immediately reload the page to start from a completely blank slate.
-        window.location.reload();
+    // Determine the current note ID (tech's name) from either the active session or localStorage.
+    const noteIdToReset = currentNoteId || localStorage.getItem('dentalNoteMakerTechName');
+
+    if (confirm("Are you sure you want to perform a FULL application reset? This will clear ALL local storage and delete the current live note from the cloud.")) {
+        console.log("Performing a full reset...");
+
+        if (noteIdToReset) {
+            // **THE NEW LOGIC:** If there is a live note, delete it from Firestore.
+            console.log(`DEBUG: Deleting live note "${noteIdToReset}" from Firestore...`);
+            db.collection('live_notes').doc(noteIdToReset).delete()
+                .then(() => {
+                    console.log("DEBUG: Cloud document deleted successfully.");
+                    // After successful deletion, proceed with the local cleanup.
+                    performLocalReset();
+                })
+                .catch((error) => {
+                    console.error("Failed to delete cloud document. Aborting local reset.", error);
+                    alert("Error: Could not delete the live note from the cloud. Please check your connection and permissions.");
+                });
+        } else {
+            // If there's no note ID, there's nothing in the cloud to delete,
+            // so we can just proceed with the local cleanup.
+            performLocalReset();
+        }
     }
 };
+
+// We move the local cleanup into its own helper function.
+const performLocalReset = () => {
+    console.log("DEBUG: Clearing all local storage data...");
+    localStorage.removeItem('dentalNoteMakerSession');
+    localStorage.removeItem('dentalNoteHistory');
+    localStorage.removeItem('dentalNoteMakerTechName');
+    
+    // Reload the page to start from a completely blank slate.
+    window.location.reload();
+};
+// =================================================================
+
 
 
 // **** START OF CODE for copyAction with evaluation****
@@ -2905,8 +2960,102 @@ const fullReset = () => {
                 lockToggle.dispatchEvent(new Event('change'));
             }
         };
+		
+		
+// =================================================================
+// Data Reconciliation Function
+// This function surgically updates the DOM instead of re-rendering it.
+// =================================================================
 
-// Your original `loadDefaults` function is also still needed.
+const reconcileState = (newState) => {
+    console.log("DEBUG: Reconciling DOM with new cloud state...");
+
+    // This flag helps us know if we need to call updateLiveOutput at the end.
+    let changed = false;
+
+    // Loop through each section in the new state.
+    SECTIONS.forEach((sectionId, secIndex) => {
+        const elementsFromState = newState[sectionId] || [];
+
+        elementsFromState.forEach((stateItem, itemIndex) => {
+            stateItem.originalId = `${secIndex}-${itemIndex}`;
+            let existingElement = document.querySelector(`.draggable-element[data-original-id="${stateItem.originalId}"]`);
+
+            if (!existingElement) {
+                // If the element doesn't exist, create and append it.
+                console.log(`DEBUG: Element ${stateItem.originalId} not found. CREATING.`);
+                const dropzone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+                if (dropzone) {
+                    dropzone.appendChild(createElement(stateItem.type, stateItem));
+                    changed = true;
+                }
+            } else {
+                // If the element exists, get its current state.
+                const localState = getElementState(existingElement);
+                
+                // Compare the state from the cloud with the state from the DOM.
+                if (JSON.stringify(localState) !== JSON.stringify(stateItem)) {
+                    // If they differ, and the user is NOT typing in this element...
+                    if (document.activeElement && document.activeElement.closest('.draggable-element') === existingElement) {
+                        console.log(`DEBUG: Skipping update for focused element ${stateItem.originalId}.`);
+                        return; // ...then we skip this update to preserve focus.
+                    }
+
+                    console.log(`DEBUG: State for element ${stateItem.originalId} differs. SURGICALLY UPDATING.`);
+                    changed = true;
+                    
+                    // --- THIS IS THE NEW SURGICAL UPDATE LOGIC ---
+                    // Instead of replacing the whole element, we update its dataset and inner content.
+                    // This preserves classes (.element-highlighted) and attributes (draggable).
+                    for (const key in stateItem) {
+                        const value = stateItem[key];
+                        if (typeof value === 'object') {
+                            existingElement.dataset[key] = JSON.stringify(value);
+                        } else {
+                            existingElement.dataset[key] = value;
+                        }
+                    }
+
+                    // After updating the data, call a specific UI refresh function for that element type.
+                    // This is much better than a full re-render.
+                    if (existingElement.dataset.type === 'enhanced-textbox') {
+                        existingElement.querySelector('.enhanced-textbox-preview').textContent = stateItem.content || stateItem.defaultText || '';
+                    } else if (existingElement.dataset.type === 'psr') {
+                        // A more advanced app would have a dedicated 'updatePsrUI(element, state)' function.
+                        // For now, replacing the element is an acceptable compromise for complex types.
+                        existingElement.replaceWith(createElement(stateItem.type, stateItem));
+                    }
+                    // ... add else-if blocks here for other element types as needed ...
+                }
+            }
+        });
+
+        // This part for removing deleted elements remains the same.
+        const elementsOnPage = document.querySelectorAll(`.dropzone[data-section-id="${sectionId}"] .draggable-element`);
+        elementsOnPage.forEach(elOnPage => {
+            if (!elementsFromState.some(item => item.originalId === elOnPage.dataset.originalId)) {
+                elOnPage.remove();
+                changed = true;
+            }
+        });
+    });
+
+    // If any changes were made, update the final note preview.
+    if (changed) {
+        console.log("DEBUG: Reconciliation caused changes, updating live output.");
+        isRenderingFromCloud = true;
+        updateLiveOutput();
+        isRenderingFromCloud = false;
+    }
+};
+
+// =================================================================
+
+		
+		
+		
+
+//  original `loadDefaults` function is also still needed.
 async function loadDefaults(noteIdForNewNote) {
 
     console.log("--- Running Default Loading Sequence ---");
@@ -2974,6 +3123,11 @@ auth.onAuthStateChanged(user => {
         userStatusEmail.textContent = "Technician Mode";
         logoutButton.classList.add('view-hidden');
         saveCopyButton.classList.add('view-hidden');
+		// Before we do anything else, make sure the base template is loaded into memory.
+        // This will populate 'lastLoadedState' so the "Reset" button can use it.
+        // We pass 'null' because we don't want to create a Firestore doc yet.
+        loadDefaults(null); 
+		
         const savedTechName = localStorage.getItem('dentalNoteMakerTechName');
         if (savedTechName) {
             startEditingSession(savedTechName);
@@ -3016,25 +3170,116 @@ saveCopyButton.addEventListener('click', () => {
     }
 });
 
-// Re-attach ORIGINAL Event Listeners
+// Event Listeners
 // This section is critical. It re-connects all of your app's original buttons
 // and interactive elements to their respective functions.
 
-document.querySelectorAll('.add-element-btn').forEach(btn => btn.onclick = (e) => { /* ... your original logic ... */ });
-document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = (e) => { /* ... your original logic ... */ });
-document.querySelectorAll('.element-type').forEach(el => el.onclick = (e) => { /* ... your original logic ... */ });
-document.querySelectorAll('.dropzone').forEach(zone => { /* ... your original dragover listener ... */ });
+
+// A single, global shortcut handler for Shift+Enter that routes actions based on context.
+document.addEventListener('keydown', (event) => {
+   // Only proceed if the specific key combination is pressed.
+   if (!event.shiftKey || event.key !== 'Enter') {
+       return;
+   }
+
+   // --- CONTEXT-SENSITIVE ROUTING ---
+   const anesModal = document.getElementById('anesthetic-editor-modal');
+   const textModal = document.getElementById('textbox-editor-modal');
+   const endoModal = document.getElementById('endo-testing-modal');
+   const allergyModal = document.getElementById('allergy-modal');
+   const txPlanModal = document.getElementById('tx-plan-modal');
+   const propsModal = document.getElementById('properties-modal');
+
+   // Check which modal is open
+   const isAnesOpen = getComputedStyle(anesModal).display !== 'none';
+   const isTextOpen = getComputedStyle(textModal).display !== 'none';
+   const isEndoOpen = getComputedStyle(endoModal).display !== 'none';
+   const isAllergyOpen = getComputedStyle(allergyModal).display !== 'none';
+   const isTxPlanOpen = getComputedStyle(txPlanModal).display !== 'none';
+   const isPropsOpen = getComputedStyle(propsModal).display !== 'none';
+
+   const isModalOpen = isAnesOpen || isTextOpen || isEndoOpen || isAllergyOpen || isTxPlanOpen || isPropsOpen;
+
+   // If any modal is open, we need to handle it.
+   if (isModalOpen) {
+       // Prevent the default browser action (like adding a newline or submitting a form)
+       event.preventDefault();
+       // Stop the event from propagating further, just in case.
+       event.stopPropagation();
+
+       // Now, click the correct save button.
+       if (isTextOpen) {
+           document.getElementById('textbox-editor-save-btn').click();
+       } else if (isAnesOpen) {
+           document.getElementById('anesthetic-editor-save-btn').click();
+       } else if (isEndoOpen) {
+           document.getElementById('endo-testing-save-btn').click();
+       } else if (isAllergyOpen) {
+           document.getElementById('allergy-save-btn').click();
+       } else if (isTxPlanOpen) {
+           document.getElementById('tx-plan-save-btn').click();
+       } else if (isPropsOpen) {
+           document.getElementById('properties-save-btn').click();
+       }
+   }
+   // If NO modal is open, perform the global copy action.
+   else {
+       event.preventDefault();
+       document.getElementById('copy-btn-top').click();
+
+   }
+});
+
+   
+// New, smarter logic for closing modals by clicking the backdrop
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('mousedown', (e) => {
+        // Close the modal ONLY if the mousedown event is on the backdrop itself
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+
+// Separate listener for closing the context menu
+        // **** START OF MODIFIED CODE to include tx plan copy/paste****
+        window.addEventListener('mousedown', (e) => {
+            const contextMenu = document.getElementById('context-menu');
+            const selectionMenu = document.getElementById('text-selection-menu');
+            
+            if (!e.target.closest('#context-menu') && !e.target.closest('.draggable-element')) {
+                contextMenu.style.display = 'none';
+            }
+
+        // ****this code is erroring with style in console            if (!e.target.closest('#text-selection-menu')) {
+         // ****               selectionMenu.style.display = 'none';
+          // ****          }
+
+        });
+        // **** END OF MODIFIED CODE ****
+
+
+
+
+
+
+        document.getElementById('ctx-delete').onclick = () => { if (activeElementForEditor) { activeElementForEditor.remove(); updateLiveOutput(); } };
+        document.getElementById('ctx-properties').onclick = () => { if (activeElementForEditor) openPropertiesModal(activeElementForEditor); };
+        document.querySelectorAll('.add-element-btn').forEach(btn => btn.onclick = e => { currentSectionToAdd = e.target.dataset.section; document.getElementById('add-element-modal').style.display = 'block'; });
+        document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = e => document.getElementById(e.target.dataset.modalId).style.display = 'none');
+        document.querySelectorAll('.element-type').forEach(el => el.onclick = e => { const type = e.currentTarget.dataset.type; const dropzone = document.querySelector(`#${currentSectionToAdd} .dropzone`); if(dropzone) { dropzone.appendChild(createElement(type)); } updateLiveOutput(); document.getElementById('add-element-modal').style.display = 'none'; });
+        document.querySelectorAll('.dropzone').forEach(zone => zone.addEventListener('dragover', e => { e.preventDefault(); const draggingEl = document.querySelector('.draggable-element.dragging'); if (!draggingEl) return; const afterElement = [...zone.querySelectorAll('.draggable-element:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = e.clientY - box.top - box.height / 2; return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element; if (afterElement == null) zone.appendChild(draggingEl); else zone.insertBefore(draggingEl, afterElement); }));
 
 document.getElementById('copy-btn-top').addEventListener('click', copyAction);
 document.getElementById('copy-btn-bottom').addEventListener('click', copyAction);
-const fileInput = document.querySelector('input[type="file"]') || document.createElement('input'); // Make sure it exists
-document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', (e) => { /* ... your original fileInput logic ... */ });
-document.getElementById('export-btn').onclick = () => { /* ... your original export logic ... */ };
+        const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.json'; fileInput.style.display = 'none'; document.body.appendChild(fileInput);
+        document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (re) => { loadJsonData(re.target.result); }; reader.readAsText(file); e.target.value = ''; });
+        document.getElementById('export-btn').onclick = () => { const state = {}; SECTIONS.forEach(id => { state[id] = []; document.querySelector(`.dropzone[data-section-id="${id}"]`).querySelectorAll('.draggable-element').forEach(el => state[id].push(getElementState(el))); }); const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dental-note-template.json'; a.click(); URL.revokeObjectURL(a.href); };
 
 // Connect to the NEW cloud-aware reset functions
 document.getElementById('reset-btn').onclick = resetValues;
-document.getElementById('full-reset-btn').onclick = fullReset; // We wrapped this earlier
+document.getElementById('full-reset-btn').onclick = fullReset; 
 
 document.getElementById('view-hidden-toggle').addEventListener('change', (e) => { document.body.classList.toggle('show-hidden-elements', e.target.checked); });
 document.getElementById('lock-layout-toggle').addEventListener('change', (e) => { document.body.classList.toggle('layout-locked', e.target.checked); document.querySelectorAll('.draggable-element').forEach(el => el.setAttribute('draggable', !e.target.checked)); });
