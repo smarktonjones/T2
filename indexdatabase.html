@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 01APR26 mgh -->
+<!-- version as of 31MAR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -558,11 +558,11 @@ opacity: 0.4;
 
     <div class="controls">
 	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
-		<button id="import-btn" class="control-btn">Import JSON File...</button>
+		<button id="import-btn" class="control-btn element-hidden">Import JSON File...</button>
 		
 
 		
-        <button id="export-btn" class="control-btn">Export JSON</button>
+        <button id="export-btn" class="control-btn element-hidden">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values (and save to history below)</button>
@@ -570,7 +570,7 @@ opacity: 0.4;
 <!-- ================================================================= -->
 <!-- SNIPPET #4: Add Doctor's "Save Final Copy" Button                 -->
 <!-- ================================================================= -->
-<button id="save-copy-button" class="control-btn view-hidden" style="background-color: var(--success-color);">Save Final Copy</button>
+<button id="save-copy-button" class="control-btn view-hidden element-hidden" style="background-color: var(--success-color);">Save Final Copy</button>
 <!-- ================================================================= -->
 		
 		
@@ -665,7 +665,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 </div>
 
 
-//insert JSON data here inside {}
+    <!-- **** insert JSON data here inside {} -->
 <script type="application/json" id="default-json-data">
 
 
@@ -2279,6 +2279,248 @@ const COLOR_PALETTE = [
     const entryCount = Object.values(state.txData).filter(d => d.text && d.text.trim() !== '').length;
     summarySpan.textContent = entryCount > 0 ? `Treatment Plan: ${entryCount} Entries` : 'Click to set Treatment Plan'; 
 };
+   
+   
+   
+   
+   
+   // =================================================================
+// START: IMPORT CODE WITH HIGHLIGHTING
+// P.
+// =================================================================
+
+/**
+ * This is the central import logic, now with highlighting.
+ * It takes raw text, processes it, and updates the application state.
+ * @param {string} noteText The raw text to be imported.
+ */
+
+
+const runImportLogic = (noteText) => {
+    console.log("DEBUG: runImportLogic started with final highlighting logic.");
+
+    try {
+        // --- All the parsing and data mapping logic from before (this part is correct) ---
+        const parseNoteContent = (content) => {
+            const sections = [
+                "RADIOGRAPHIC FINDINGS:", "CARIES/DEFECTIVE RESTORATIONS:", "INCIPIENT CARIES:",
+                "SOFT TISSUE / OCS:", "OCS/SOFT TISSUE:", "PERIO:", "ENDO:", "TMJ:", 
+                "OCCLUSION:", "ORAL SURGERY:", "OTHER FINDINGS:", "PSR:"
+            ];
+            const parsed = {};
+            for (const header of sections) {
+                if (header === "PSR:") continue;
+                const startIndex = content.indexOf(header);
+                if (startIndex === -1) continue;
+                const searchStart = startIndex + header.length;
+                let nextHeaderPos = content.length;
+                for (const nextH of sections) {
+                    if (nextH === header) continue;
+                    const pos = content.indexOf(nextH, searchStart);
+                    if (pos > -1 && pos < nextHeaderPos) nextHeaderPos = pos;
+                }
+                const singleNewlinePos = content.indexOf('\n', searchStart);
+                let endIndex = nextHeaderPos;
+                if (singleNewlinePos > -1 && singleNewlinePos < endIndex) endIndex = singleNewlinePos;
+                const value = content.substring(searchStart, endIndex).trim();
+                if (value) {
+                    const primaryHeader = header.includes("OCS") ? "SOFT TISSUE / OCS:" : header;
+                    parsed[primaryHeader] = value;
+                }
+            }
+            return parsed;
+        };
+
+        const parsePsrScores = (content) => {
+            const psrHeader = "PSR:";
+            const startIndex = content.indexOf(psrHeader);
+            if (startIndex === -1) return null;
+            const searchStart = startIndex + psrHeader.length;
+            const blockEndIndex = content.indexOf('\n\n', searchStart);
+            const psrBlock = content.substring(searchStart, blockEndIndex > -1 ? blockEndIndex : undefined).trim();
+            if (!psrBlock) return null;
+            const matches = [...psrBlock.matchAll(/\[(.*?)\]/g)];
+            let rawScores = matches.map(match => match[1].trim());
+            if (rawScores.length < 6) {
+                while(rawScores.length < 6) rawScores.push("");
+            } else if (rawScores.length > 6) {
+                rawScores = rawScores.slice(0, 6);
+            }
+            const topLine = rawScores.slice(0, 3);
+            const bottomLine = rawScores.slice(3, 6);
+            bottomLine.reverse();
+            return topLine.concat(bottomLine);
+        };
+
+        const standardData = parseNoteContent(noteText);
+        const psrData = parsePsrScores(noteText);
+        
+        if (Object.keys(standardData).length === 0 && !psrData) {
+            alert("Could not find any specific headers or a PSR block in the pasted text. Nothing was changed.");
+            return;
+        }
+
+        const labelToOriginalIdMap = {
+            "RADIOGRAPHIC FINDINGS:": "2-4", "CARIES/DEFECTIVE RESTORATIONS:": "2-5", "INCIPIENT CARIES:": "2-6",
+            "SOFT TISSUE / OCS:": "2-7", "PERIO:": "2-8", "ENDO:": "2-9", "TMJ:": "2-11",
+            "OCCLUSION:": "2-12", "ORAL SURGERY:": "2-13", "OTHER FINDINGS:": "2-14"
+        };
+
+        const liveState = {};
+        SECTIONS.forEach(id => {
+            liveState[id] = [];
+            const dropzone = document.querySelector(`.dropzone[data-section-id="${id}"]`);
+            if (dropzone) {
+                dropzone.querySelectorAll('.draggable-element').forEach(el => liveState[id].push(getElementState(el)));
+            }
+        });
+
+        // --- FINAL HIGHLIGHTING LOGIC ---
+
+        // 1. Create a list to store the ORIGINAL IDs of elements that will be updated.
+        const originalIdsToHighlight = [];
+
+        for (const sectionId in liveState) {
+            if (Array.isArray(liveState[sectionId])) {
+                liveState[sectionId].forEach(element => {
+                    const matchingLabel = Object.keys(labelToOriginalIdMap).find(label => labelToOriginalIdMap[label] === element.originalId);
+                    if (matchingLabel && standardData[matchingLabel]) {
+                        element.content = standardData[matchingLabel];
+                        originalIdsToHighlight.push(element.originalId); // Store the originalId
+                    }
+                    if (element.type === 'psr' && element.originalId === '2-15' && psrData) {
+                        element.scores = psrData;
+                        originalIdsToHighlight.push(element.originalId); // Store the PSR originalId
+                    }
+                });
+            }
+        }
+        
+        console.log("DEBUG: The following original IDs will be highlighted:", originalIdsToHighlight);
+
+        // 2. Render the state first.
+        renderState(liveState, false);
+
+        // 3. NOW, apply the highlight to the NEW elements on the page by finding them via their data attribute.
+        console.log("DEBUG: Applying '.element-highlighted' class by finding new elements via data-original-id...");
+        if (originalIdsToHighlight.length > 0) {
+            originalIdsToHighlight.forEach(oId => {
+                // Find the newly rendered element on the page that has the matching data-original-id attribute.
+                const elementToHighlight = document.querySelector(`.draggable-element[data-original-id="${oId}"]`);
+                if (elementToHighlight) {
+                    console.log(`%cSUCCESS: Found new element with originalId "${oId}". Applying highlight.`, 'color: lightgreen; font-weight: bold;');
+                    elementToHighlight.classList.add('element-highlighted2');
+                } else {
+                    console.error(`DEBUG: FAILED to find element with data-original-id: ${oId} on the page after rendering.`);
+                }
+            });
+        }
+
+        console.log("--- IMPORT PROCESS COMPLETE ---");
+
+    } catch (error) {
+        console.error("An error occurred during the import process:", error);
+        alert("A critical error occurred. See console for details.");
+    }
+};
+
+
+// =================================================================
+// END:  CODE WITH CORRECTED PARSER AWARENESS
+// =================================================================
+
+
+
+// --- MODAL EVENT LISTENERS ---
+// This block controls the new modal's behavior.
+
+// Get all the modal elements from the page.
+const modalBackdrop = document.getElementById('modal-backdrop');
+const pasteTextarea = document.getElementById('paste-note-textarea');
+const mainImportButton = document.getElementById('import-note-button');
+const closeModalButton = document.getElementById('close-modal-button');
+const cancelModalButton = document.getElementById('cancel-modal-button');
+const pasteFromClipboardButton = document.getElementById('paste-from-clipboard-button');
+const importFromModalButton = document.getElementById('import-from-modal-button');
+const clearModalButton = document.getElementById('clear-modal-button');
+
+// Function to open the modal
+const openImportModal = () => {
+    modalBackdrop.classList.add('modal-visible');
+	    pasteTextarea.value = ''; // Set the textarea's value to an empty string when opening (clear)
+};
+
+// Function to close the modal
+const closeImportModal = () => {
+    modalBackdrop.classList.remove('modal-visible');
+};
+
+
+// Add a listener to the modal's background.
+modalBackdrop.addEventListener('click', (event) => {
+    // The 'target' of the event is the specific element that was clicked.
+    // We check if the clicked element's ID is 'modal-backdrop'.
+    // This ensures that clicks on the modal content (the white box) do NOT close the modal.
+    if (event.target.id === 'modal-backdrop') {
+        console.log("Clicked outside the modal. Closing.");
+        closeImportModal();
+    }
+});
+
+
+
+// --- Wire up the buttons ---
+
+// The main "Import Previous Note..." button now opens the modal.
+mainImportButton.addEventListener('click', openImportModal);
+
+// The 'X' and 'Cancel' buttons close the modal.
+closeModalButton.addEventListener('click', closeImportModal);
+cancelModalButton.addEventListener('click', closeImportModal);
+
+// The "Paste from Clipboard" button
+pasteFromClipboardButton.addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        pasteTextarea.value = text;
+        console.log("Pasted text from clipboard.");
+    } catch (err) {
+        console.error('Failed to read clipboard contents: ', err);
+        alert('Could not paste from clipboard. This may be due to browser permissions. Please paste manually (Ctrl+V or Cmd+V).');
+    }
+});
+
+// Clear button
+clearModalButton.addEventListener('click', () => {
+    pasteTextarea.value = ''; // Set the textarea's value to an empty string
+    console.log("Cleared the import textarea.");
+});
+
+
+// The final "Import Text" button runs our logic.
+importFromModalButton.addEventListener('click', () => {
+    console.log("DEBUG: 'Import Text' button clicked.");
+    const textToImport = pasteTextarea.value;
+    if (textToImport && textToImport.trim() !== '') {
+        runImportLogic(textToImport);
+        closeImportModal(); // Close the modal on success
+    } else {
+        alert("The textbox is empty. Please paste your note first.");
+    }
+});
+
+
+
+// =================================================================
+// END: IMPORT CODE
+// =================================================================
+   
+   
+   
+   
+   
+   
+   
    
    
    
