@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 31MAR26 mgh -->
+<!-- version as of 02APR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -472,6 +472,23 @@ opacity: 0.4;
     border-color: var(--button-bg);
 }
 
+/* ================================================================= */
+/* CSS FOR FIREBASE LOGIN NOTE MODAL                                    */
+/* ================================================================= */
+   
+
+.view-hidden {
+    display: none !important; /* Use !important to ensure this rule always wins */
+}
+      .container { padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; margin-top: 20px; }
+        #user-status { text-align: right; }
+        
+        /* Note List Styles */
+        #note-list { list-style-type: none; padding: 0; }
+        #note-list li { padding: 10px; border: 1px solid #eee; margin-top: -1px; cursor: pointer; }
+        #note-list li:hover { background-color: #e8f0fe; }
+   
+   
    
     </style>
 	
@@ -508,6 +525,11 @@ opacity: 0.4;
     <p>To begin or resume your session for the day, please enter your name.</p>
     <input type="text" id="tech-name-input" placeholder="Enter Your Name...">
     <button id="start-day-button" class="primary-button">Start My Day</button>
+	
+	<p style="text-align: center; margin-bottom: 0;">- or -</p>
+    <button id="show-doctor-login-btn">Switch to Doctor Login</button>
+	
+	
 </div>
 
 <!-- This view is for the Doctor to log in -->
@@ -1665,7 +1687,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 	
 
 // =================================================================
-// SNIPPET #5: Firebase Initialization (outside DOMContentLoaded)
+// Firebase Initialization (outside DOMContentLoaded)
 // =================================================================
 // This section handles the initial connection to your Firebase project.
 // It should be at the very top of your main application script.
@@ -2879,19 +2901,15 @@ evaluateNote(noteText);
 
 
 
-// --- 3. The NEW Firebase-Aware Logic ---
+// --- 3. The NEW Firebase-Aware Logic startup cascade ---
 
-// This section contains the new functions for Firebase, the modified versions
-// of your old functions, and the consolidated event listeners.
-
-console.log("DEBUG: Initializing Firebase and new state variables...");
-
-// New global state variables for Firebase
+// --- 1. State Variables ---
+console.log("DEBUG: Initializing Firebase state variables...");
 let unsubscribeFromNote = null;
 let currentNoteId = null;
 let isRenderingFromCloud = false;
 
-// References to all the NEW UI elements
+// --- 2. UI Element References ---
 const userStatusEmail = document.getElementById('user-email');
 const logoutButton = document.getElementById('logout-button');
 const viewTechnicianStart = document.getElementById('view-technician-start');
@@ -2906,24 +2924,19 @@ const loginButton = document.getElementById('login-button');
 const signupButton = document.getElementById('signup-button');
 const noteList = document.getElementById('note-list');
 const saveCopyButton = document.getElementById('save-copy-button');
+const showDoctorLoginBtn = document.getElementById('show-doctor-login-btn');
 
+// --- 3. Core Functions ---
 
-
-
-
-
-
-
-
-// This function controls which part of the UI is visible.
 const showView = (viewName) => {
+    console.log(`%cDEBUG: showView() called. Attempting to show: '${viewName}'`, "color: cyan;");
     [viewTechnicianStart, viewDoctorLogin, viewDoctorDashboard, viewNoteEditor].forEach(v => v.classList.add('view-hidden'));
     const viewToShow = document.getElementById(viewName);
     if (viewToShow) viewToShow.classList.remove('view-hidden');
 };
 
-// New function for the Doctor's Dashboard to list notes.
 const listenForActiveNotes = () => {
+    console.log("DEBUG: Listening for active notes for doctor dashboard...");
     db.collection('live_notes').orderBy('lastUpdated', 'desc').onSnapshot(snapshot => {
         noteList.innerHTML = snapshot.empty ? '<li>No active notes found.</li>' : '';
         snapshot.forEach(doc => {
@@ -2938,38 +2951,33 @@ const listenForActiveNotes = () => {
     });
 };
 
-// New core function to connect to a specific note in Firestore.
 const startEditingSession = (noteId) => {
+    console.log(`DEBUG: Starting editing session for note: "${noteId}"`);
     currentNoteId = noteId;
     if (unsubscribeFromNote) unsubscribeFromNote();
+    
     showView('view-note-editor');
     const noteDocRef = db.collection('live_notes').doc(noteId);
-    // =================================================================
-// SNIPPET TO REPLACE THE onSnapshot CALLBACK
-// =================================================================
-
-unsubscribeFromNote = noteDocRef.onSnapshot(doc => {
-    console.log(`DEBUG: Real-time data received for note "${currentNoteId}".`);
-
-    if (doc.exists) {
-        reconcileState(doc.data());
-        
-    } else {
-        // This 'else' block remains the same.
-        console.log(`DEBUG: Note "${currentNoteId}" does not exist. Creating it.`);
-        loadDefaults(currentNoteId);
-    }
-}, error => {
-    console.error("Firebase real-time listener failed: ", error);
-});
-
-// =================================================================
-
-// =================================================================
-
+    
+    unsubscribeFromNote = noteDocRef.onSnapshot(doc => {
+        console.log(`DEBUG: Real-time update received for note "${noteId}".`);
+        if (doc.exists) {
+		        // Set the flag to true BEFORE rendering.
+        isRenderingFromCloud = true;
+            reconcileState(doc.data());
+			    // Set the flag back to false immediately after.
+        isRenderingFromCloud = false;
+			
+        } else {
+            console.log(`DEBUG: Note "${noteId}" does not exist. Creating it.`);
+            loadDefaults(noteId);
+        }
+    });
 };
 
-// This REPLACES your old `saveCurrentStateToLocalStorage` function.
+
+
+// This REPLACES old `saveCurrentStateToLocalStorage` function.
 const syncStateToFirestore = () => {
 // If the 'isRenderingFromCloud' flag is true, stop immediately.
     if (isRenderingFromCloud) {
@@ -2992,68 +3000,137 @@ const syncStateToFirestore = () => {
 };
 
 
+// =================================================================
+// Data Reconciliation Function
+// This function surgically updates the DOM instead of re-rendering it.
+// =================================================================
+
+
+const reconcileState = (newState) => {
+    console.log("DEBUG: Reconciling DOM with new cloud state...");
+    let changed = false;
+
+    SECTIONS.forEach((sectionId, secIndex) => {
+        const elementsFromState = newState[sectionId] || [];
+
+        elementsFromState.forEach((stateItem, itemIndex) => {
+            stateItem.originalId = `${secIndex}-${itemIndex}`;
+            let existingElement = document.querySelector(`.draggable-element[data-original-id="${stateItem.originalId}"]`);
+
+            if (!existingElement) {
+                // If element doesn't exist, create it.
+                console.log(`DEBUG: Element ${stateItem.originalId} not found. CREATING.`);
+                const dropzone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+                if (dropzone) {
+                    dropzone.appendChild(createElement(stateItem.type, stateItem));
+                    changed = true;
+                }
+            } else {
+                // If element exists, compare its current state to the new state.
+                const localState = getElementState(existingElement);
+                
+                // Use JSON.stringify for a simple but effective deep comparison.
+                if (JSON.stringify(localState) !== JSON.stringify(stateItem)) {
+                    if (document.activeElement && document.activeElement.closest('.draggable-element') === existingElement) {
+                        console.log(`DEBUG: Skipping update for focused element ${stateItem.originalId}.`);
+                        return;
+                    }
+
+                    console.log(`%cDEBUG: State for element ${stateItem.originalId} differs. Replacing element to ensure UI consistency.`, 'color: orange');
+                    changed = true;
+                    
+                    // --- THE FIX ---
+                    // Instead of complex surgical logic, we will simply replace the single
+                    // out-of-sync element. This is guaranteed to work for ALL element types.
+                    const newElement = createElement(stateItem.type, stateItem);
+                    existingElement.replaceWith(newElement);
+                }
+            }
+        });
+
+        // This part for removing deleted elements remains the same.
+        const elementsOnPage = document.querySelectorAll(`.dropzone[data-section-id="${sectionId}"] .draggable-element`);
+        elementsOnPage.forEach(elOnPage => {
+            if (!elementsFromState.some(item => item.originalId === elOnPage.dataset.originalId)) {
+                elOnPage.remove();
+                changed = true;
+            }
+        });
+    });
+
+    if (changed) {
+        console.log("DEBUG: Reconciliation caused changes, updating live output.");
+        isRenderingFromCloud = true;
+        updateLiveOutput();
+        isRenderingFromCloud = false;
+    }
+};
+// =================================================================
+
+
+
+// --- 4. Modified Existing Functions ---
+// These wrappers correctly link your original functions to the new cloud sync.
+
+
 
 // =================================================================
 // UPDATED `resetValues` Function
+// This version correctly handles 'doNotReset' properties.
 // =================================================================
-
 const resetValues = () => {
-    // 1. Keep the history saving feature.
+    // 1. Keep the history saving feature, it's good practice.
     saveNoteToHistory();
 
     // 2. The single confirmation dialog.
-    if (currentNoteId && confirm("Are you sure you want to reset this note for the next patient?")) {
-        console.log(`DEBUG: Resetting note in Firestore for "${currentNoteId}", preserving 'doNotReset' fields...`);
+    if (currentNoteId && confirm("Are you sure you want to reset this note for the next patient? This will not affect fields marked 'Do Not Reset'.")) {
+        console.log(`DEBUG: Smart Reset initiated for note "${currentNoteId}"...`);
         
         if (!lastLoadedState) {
-            alert("Error: Default template not available. Cannot reset.");
+            alert("Error: Default template (lastLoadedState) is not available. Cannot perform reset.");
             return;
         }
 
-        // Get a reference to the document.
         const noteDocRef = db.collection('live_notes').doc(currentNoteId);
 
-        // **THE NEW LOGIC STARTS HERE**
-        // First, get the most recent version of the document from the server.
+        // 3. GET the most recent version of the document from the server first.
         noteDocRef.get().then(doc => {
             if (!doc.exists) {
                 console.error("Cannot reset a document that doesn't exist.");
+                alert("Error: The note could not be found in the cloud to reset.");
                 return;
             }
 
             const currentState = doc.data();
-            // Create a clean copy of the original template.
-            const templateState = JSON.parse(JSON.stringify(lastLoadedState));
+            // 4. Create a fresh, clean copy of the original template.
+            const newResetState = JSON.parse(JSON.stringify(lastLoadedState));
 
             console.log("DEBUG: Checking for 'doNotReset' elements to preserve...");
 
-            // Loop through every section in the current state.
-            for (const sectionId in currentState) {
-                if (Array.isArray(currentState[sectionId])) {
-                    // For each element in the section...
-                    currentState[sectionId].forEach((currentElement, index) => {
-                        // ...check if it has the doNotReset flag.
-                        if (currentElement.doNotReset === true) {
-                            console.log(`%cPreserving data for element with originalId: ${currentElement.originalId}`, 'color: yellow;');
-                            // If it does, overwrite the element in our clean template
-                            // with the version from the current state.
-                            if (templateState[sectionId] && templateState[sectionId][index]) {
-                                templateState[sectionId][index] = currentElement;
-                            }
+            // 5. LOOP through the clean state and PRESERVE data from the current state.
+            for (const sectionId in newResetState) {
+                if (Array.isArray(newResetState[sectionId])) {
+                    newResetState[sectionId].forEach((templateElement, index) => {
+                        // Find the corresponding element in the current state on the server.
+                        const currentElement = currentState[sectionId]?.[index];
+                        
+                        // If the element in the TEMPLATE is marked as 'doNotReset'...
+                        if (templateElement.doNotReset === true && currentElement) {
+                            console.log(`%cPreserving data for element with originalId: ${templateElement.originalId}`, 'color: orange;');
+                            // ...then replace the clean template element with the one from the current state.
+                            newResetState[sectionId][index] = currentElement;
                         }
                     });
                 }
             }
             
-            // Add the timestamp for real-time ordering.
-            templateState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
+            // 6. Add the timestamp for real-time ordering.
+            newResetState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
 
-            // Now, save this newly merged state back to Firestore.
-            // The onSnapshot listener will then handle the UI update automatically.
-            noteDocRef.set(templateState).then(() => {
-                console.log("DEBUG: Reset complete. Preserved data has been saved.");
-                // The alert is optional, as the UI will update visually.
-                // alert("Note has been reset for the next patient.");
+            // 7. Now, SAVE this newly merged state back to Firestore.
+            // The onSnapshot listener will automatically handle the UI update.
+            noteDocRef.set(newResetState).then(() => {
+                console.log("DEBUG: Smart Reset complete. The UI will now update via the real-time listener.");
             }).catch(err => {
                 console.error("Reset failed during save:", err);
                 alert("Error: Could not save the reset state to the cloud.");
@@ -3065,8 +3142,8 @@ const resetValues = () => {
         });
     }
 };
-
 // =================================================================
+
 
 
 
@@ -3076,6 +3153,7 @@ const resetValues = () => {
 // =================================================================
 //  The New Cloud-Aware `fullReset` Function
 // =================================================================
+
 const fullReset = () => {
     // Determine the current note ID (tech's name) from either the active session or localStorage.
     const noteIdToReset = currentNoteId || localStorage.getItem('dentalNoteMakerTechName');
@@ -3204,94 +3282,7 @@ const performLocalReset = () => {
         };
 		
 		
-// =================================================================
-// Data Reconciliation Function
-// This function surgically updates the DOM instead of re-rendering it.
-// =================================================================
 
-const reconcileState = (newState) => {
-    console.log("DEBUG: Reconciling DOM with new cloud state...");
-
-    // This flag helps us know if we need to call updateLiveOutput at the end.
-    let changed = false;
-
-    // Loop through each section in the new state.
-    SECTIONS.forEach((sectionId, secIndex) => {
-        const elementsFromState = newState[sectionId] || [];
-
-        elementsFromState.forEach((stateItem, itemIndex) => {
-            stateItem.originalId = `${secIndex}-${itemIndex}`;
-            let existingElement = document.querySelector(`.draggable-element[data-original-id="${stateItem.originalId}"]`);
-
-            if (!existingElement) {
-                // If the element doesn't exist, create and append it.
-                console.log(`DEBUG: Element ${stateItem.originalId} not found. CREATING.`);
-                const dropzone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
-                if (dropzone) {
-                    dropzone.appendChild(createElement(stateItem.type, stateItem));
-                    changed = true;
-                }
-            } else {
-                // If the element exists, get its current state.
-                const localState = getElementState(existingElement);
-                
-                // Compare the state from the cloud with the state from the DOM.
-                if (JSON.stringify(localState) !== JSON.stringify(stateItem)) {
-                    // If they differ, and the user is NOT typing in this element...
-                    if (document.activeElement && document.activeElement.closest('.draggable-element') === existingElement) {
-                        console.log(`DEBUG: Skipping update for focused element ${stateItem.originalId}.`);
-                        return; // ...then we skip this update to preserve focus.
-                    }
-
-                    console.log(`DEBUG: State for element ${stateItem.originalId} differs. SURGICALLY UPDATING.`);
-                    changed = true;
-                    
-                    // --- THIS IS THE NEW SURGICAL UPDATE LOGIC ---
-                    // Instead of replacing the whole element, we update its dataset and inner content.
-                    // This preserves classes (.element-highlighted) and attributes (draggable).
-                    for (const key in stateItem) {
-                        const value = stateItem[key];
-                        if (typeof value === 'object') {
-                            existingElement.dataset[key] = JSON.stringify(value);
-                        } else {
-                            existingElement.dataset[key] = value;
-                        }
-                    }
-
-                    // After updating the data, call a specific UI refresh function for that element type.
-                    // This is much better than a full re-render.
-                    if (existingElement.dataset.type === 'enhanced-textbox') {
-                        existingElement.querySelector('.enhanced-textbox-preview').textContent = stateItem.content || stateItem.defaultText || '';
-                    } else if (existingElement.dataset.type === 'psr') {
-                        // A more advanced app would have a dedicated 'updatePsrUI(element, state)' function.
-                        // For now, replacing the element is an acceptable compromise for complex types.
-                        existingElement.replaceWith(createElement(stateItem.type, stateItem));
-                    }
-                    // ... add else-if blocks here for other element types as needed ...
-                }
-            }
-        });
-
-        // This part for removing deleted elements remains the same.
-        const elementsOnPage = document.querySelectorAll(`.dropzone[data-section-id="${sectionId}"] .draggable-element`);
-        elementsOnPage.forEach(elOnPage => {
-            if (!elementsFromState.some(item => item.originalId === elOnPage.dataset.originalId)) {
-                elOnPage.remove();
-                changed = true;
-            }
-        });
-    });
-
-    // If any changes were made, update the final note preview.
-    if (changed) {
-        console.log("DEBUG: Reconciliation caused changes, updating live output.");
-        isRenderingFromCloud = true;
-        updateLiveOutput();
-        isRenderingFromCloud = false;
-    }
-};
-
-// =================================================================
 
 		
 		
@@ -3352,9 +3343,10 @@ async function loadDefaults(noteIdForNewNote) {
 
 console.log("DEBUG: Attaching main auth listener and all UI event handlers...");
 
-// The "brain" of the app. It runs on page load.
+// The "brain" of the app. It runs on page load and controls the entire UI flow.
 auth.onAuthStateChanged(user => {
     if (unsubscribeFromNote) unsubscribeFromNote();
+
     if (user) { // DOCTOR
         userStatusEmail.textContent = `Dr. ${user.email}`;
         logoutButton.classList.remove('view-hidden');
@@ -3365,51 +3357,81 @@ auth.onAuthStateChanged(user => {
         userStatusEmail.textContent = "Technician Mode";
         logoutButton.classList.add('view-hidden');
         saveCopyButton.classList.add('view-hidden');
-		// Before we do anything else, make sure the base template is loaded into memory.
-        // This will populate 'lastLoadedState' so the "Reset" button can use it.
-        // We pass 'null' because we don't want to create a Firestore doc yet.
-        loadDefaults(null); 
-		
+       
+        console.log("DEBUG: Pre-loading default template into lastLoadedState...");
+        loadDefaults(); 
+
+	   
         const savedTechName = localStorage.getItem('dentalNoteMakerTechName');
         if (savedTechName) {
             startEditingSession(savedTechName);
+            // **THE FIX for Technician Status:** Update the status text AFTER starting the session.
+            userStatusEmail.textContent = `Tech: ${savedTechName}`;
+            logoutButton.classList.remove('view-hidden'); // Also show the logout button.
         } else {
             showView('view-technician-start');
-            viewDoctorLogin.classList.remove('view-hidden');
         }
     }
 });
 
 // --- Attach All Event Listeners ---
-
-// New Firebase UI Listeners
 startDayButton.addEventListener('click', () => {
     const techName = techNameInput.value.trim();
     if (!techName) return alert("Please enter your name.");
+    
+    console.log(`DEBUG: Technician "${techName}" is starting their day.`);
     localStorage.setItem('dentalNoteMakerTechName', techName);
-    startEditingSession(techName);
+    
+    const templateState = JSON.parse(document.getElementById('default-json-data').textContent || '{}');
+
+    let techElementFound = false;
+    for (const sectionId in templateState) {
+        if (Array.isArray(templateState[sectionId])) {
+            const techElement = templateState[sectionId].find(el => el.originalId === "5-0");
+            if (techElement) {
+                techElement.content = techName.toUpperCase();
+                techElementFound = true;
+                break;
+            }
+        }
+    }
+    
+    const noteDocRef = db.collection('live_notes').doc(techName);
+    noteDocRef.set(templateState).then(() => {
+        startEditingSession(techName);
+		
+		console.log("DEBUG: Updating tech status UI after 'Start Day' click.");
+        userStatusEmail.textContent = `Tech: ${techName}`;
+        logoutButton.classList.remove('view-hidden');
+		
+    });
 });
+
+showDoctorLoginBtn.addEventListener('click', () => {
+    showView('view-doctor-login');
+});
+
 loginButton.addEventListener('click', () => auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value).catch(err => loginErrorMessage.textContent = err.message));
 signupButton.addEventListener('click', () => auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value).catch(err => loginErrorMessage.textContent = err.message));
+
 logoutButton.addEventListener('click', () => {
-    if (confirm("Are you sure you want to log out? If you are a technician, this will clear your saved name.")) {
+    if (confirm("Are you sure you want to log out or end the session?")) {
         localStorage.removeItem('dentalNoteMakerTechName');
-        auth.signOut();
-        window.location.reload(); // Force a reload to go back to the start screen
-    }
-});
-saveCopyButton.addEventListener('click', () => {
-    if (currentNoteId && auth.currentUser) {
-        db.collection('live_notes').doc(currentNoteId).get().then(doc => {
-            if (doc.exists) {
-                const newDocId = `FINAL-${currentNoteId}-${Date.now()}`;
-                db.collection('finalized_notes').doc(newDocId).set(doc.data()).then(() => {
-                    alert(`Saved a final copy with ID: ${newDocId}`);
-                    showView('view-doctor-dashboard');
-                });
-            }
+        auth.signOut().then(() => {
+            // After successful sign out, reload the page to get a clean start.
+            window.location.reload();
         });
     }
+});
+
+saveCopyButton.addEventListener('click', () => {
+    // **THE FIX for Doctor's 'Back' button**
+    // We simply need to stop the real-time listener and show the dashboard.
+    if (unsubscribeFromNote) {
+        unsubscribeFromNote();
+        unsubscribeFromNote = null;
+    }
+    showView('view-doctor-dashboard');
 });
 
 // Event Listeners
