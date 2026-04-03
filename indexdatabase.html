@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 02APR26 mgh -->
+<!-- version as of 31MAR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -517,6 +517,11 @@ opacity: 0.4;
 <div id="user-status" style="position: fixed; top: 10px; right: 20px; background: #fff; padding: 5px 10px; border-radius: 5px; box-shadow: var(--element-shadow); z-index: 100;">
     <span id="user-email"></span>
     <button id="logout-button" class="view-hidden">Logout</button>
+<!-- ================================================================= -->
+<!--  Doctor's "Save Final Copy or Go Back" Button                 -->
+<!-- ================================================================= -->
+<button id="save-copy-button" class="control-btn view-hidden" style="background-color: var(--success-color);">Save and Go Back</button>
+<!-- ================================================================= -->
 </div>
 
 <!-- This view is for the Technician to start their day -->
@@ -589,11 +594,7 @@ opacity: 0.4;
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
         <button id="reset-btn" class="control-btn">Reset Values (and save to history below)</button>
 
-<!-- ================================================================= -->
-<!-- SNIPPET #4: Add Doctor's "Save Final Copy" Button                 -->
-<!-- ================================================================= -->
-<button id="save-copy-button" class="control-btn view-hidden element-hidden" style="background-color: var(--success-color);">Save Final Copy</button>
-<!-- ================================================================= -->
+
 		
 		
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
@@ -3064,6 +3065,17 @@ const reconcileState = (newState) => {
         updateLiveOutput();
         isRenderingFromCloud = false;
     }
+	
+    // After any potential DOM changes from reconciliation, we must
+    // re-assert the layout lock state to ensure new elements are also locked.
+    const lockToggle = document.getElementById('lock-layout-toggle');
+    if (lockToggle && lockToggle.checked) {
+        console.log("DEBUG: Re-applying layout lock after reconciliation.");
+        lockToggle.dispatchEvent(new Event('change'));
+    }
+    // --- END OF  CODE ---
+	
+	
 };
 // =================================================================
 
@@ -3555,7 +3567,7 @@ document.getElementById('lock-layout-toggle').addEventListener('change', (e) => 
 renderHistoryUI();
 
 // =================================================================
-// END: SNIPPET TO PASTE
+// END: 
 // =================================================================
 
 
