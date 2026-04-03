@@ -2942,7 +2942,7 @@ const listenForActiveNotes = () => {
         noteList.innerHTML = snapshot.empty ? '<li>No active notes found.</li>' : '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            const date = data.lastUpdated?.toDate().toLocaleTimeString() || 'No date';
+            const date = data.lastUpdated?.toDate().toLocaleString() || 'No date';
             const li = document.createElement('li');
             li.innerHTML = `<span>Note for: <b>${doc.id}</b></span><small>Last Update: ${date}</small>`;
             li.dataset.noteId = doc.id;
