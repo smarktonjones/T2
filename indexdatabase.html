@@ -1715,12 +1715,13 @@ const auth = firebase.auth();
 	
     document.addEventListener('DOMContentLoaded', () => {
         // --- State and Constants ---
-        let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null;
+		let stagedContentChange = null;
+        let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null; 
         const SECTIONS = ['header', 'subjective', 'objective', 'assessment', 'plan', 'footer'];
         const ALLERGY_LIST = ["None", "PREGNANCY", "Penicillin", "Amoxicillin", "Codeine", "Aspirin", "NSAIDs", "Sulfa Drugs", "Local Anesthetics", "Latex", "Iodine", "Erythromycin", "Tetracycline", "Metals (Nickel, etc.)", "IV Contrast Dye", "Eugenol", "Shellfish", "Cinnamon", "Peanuts", "Tree Nuts", "Soy"];
         const PSR_AUTOFOCUS_MAP = new Map([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
         const liveOutput = document.getElementById('live-output');
-        
+        const textboxEditorModal = document.getElementById('textbox-editor-modal');
         // --- Helper Functions ---
 
 	// --- History Management Logic ---
@@ -2606,12 +2607,43 @@ importFromModalButton.addEventListener('click', () => {
    
    
    
-   const textboxEditorModal = document.getElementById('textbox-editor-modal'); const openTextboxEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); textarea.value = state.content; select.innerHTML = ''; state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt))); textboxEditorModal.style.display = 'block'; 
-// this is where the textbox editor focus gets set
-   textboxEditorTextarea.focus();
-// this is where the default text gets highlighted for easier deletion - if there is a default text defined
-   if (textarea.value === activeElementForEditor.dataset.defaultText) { textboxEditorTextarea.select();};
-																													  }; document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
+// =================================================================
+// The `openTextboxEditor` Function
+// =================================================================
+const openTextboxEditor = (element) => {
+    activeElementForEditor = element;
+    const state = getElementState(element);
+    const textarea = document.getElementById('textbox-editor-textarea');
+    
+    // --- Staging logic for the textarea (to prevent race conditions) ---
+    stagedContentChange = state.content;
+    textarea.value = stagedContentChange;
+    textarea.oninput = () => {
+        stagedContentChange = textarea.value;
+    };
+
+    // --- THIS IS THE DROPDOWN LOGIC ---
+    console.log("DEBUG: Populating dropdown phrases for the editor.");
+    const select = document.getElementById('textbox-editor-select');
+    select.innerHTML = ''; // Clear any old options from a previous element.
+    if (state.dropdownOptions && Array.isArray(state.dropdownOptions)) {
+        state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt)));
+    }
+    // --- END OF LOGIC ---
+    
+    // Show the modal and focus the textarea.
+    textboxEditorModal.style.display = 'block';
+    textarea.focus();
+
+    // The logic to select default text remains.
+    if (textarea.value === activeElementForEditor.dataset.defaultText) {
+        textarea.select();
+    }
+};
+// =================================================================
+
+																													  
+document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
 
 
 
@@ -2765,15 +2797,29 @@ document.getElementById('textbox-editor-replace-btn').click(); });
 
    
 
-document.getElementById('textbox-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newContent = document.getElementById('textbox-editor-textarea').value; activeElementForEditor.dataset.content = newContent; activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent; updateLiveOutput(); textboxEditorModal.style.display = 'none'; 
+document.getElementById('textbox-editor-save-btn').onclick = () => {
+    if (!activeElementForEditor) return;
 
-//check the cc, etc with every Save
-const noteText = liveOutput.value;
-evaluateNote(noteText);
+    // the 'stagedContentChange' variable, which has been
+    // tracking the user's typing inside the modal, completely isolated
+    // from any background reconciliation updates.
+    const newContent = stagedContentChange;
 
+    // Now, apply this new content to the element's dataset.
+    activeElementForEditor.dataset.content = newContent;
+    activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent;
+    
+    // Clear the staging variable and the input handler.
+    stagedContentChange = null;
+    document.getElementById('textbox-editor-textarea').oninput = null;
 
+    // Trigger the save to the cloud. This will now send the correct, user-entered data.
+    updateLiveOutput();
+    textboxEditorModal.style.display = 'none';
 
-
+    // The evaluation logic remains the same.
+    const noteText = liveOutput.value;
+    evaluateNote(noteText);
 };
 
 
