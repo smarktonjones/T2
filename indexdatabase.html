@@ -3059,6 +3059,20 @@ const startEditingSession = (noteId) => {
     const noteDocRef = db.collection('live_notes').doc(noteId);
     
     unsubscribeFromNote = noteDocRef.onSnapshot(doc => {
+	
+	    // --- THIS IS THE  GUARD CLAUSE ---
+		// Check if any modal is currently visible on the page.
+		const isModalOpen = !!document.querySelector('.modal[style*="display: block"]');
+    
+		if (isModalOpen) {
+        // If a modal is open, the user is actively editing. DO NOT apply
+        // any updates from the cloud to prevent overwriting their work.
+        console.log("DEBUG: A modal is open. Deferring real-time update to prevent data loss.");
+        return; // Stop right here.
+		}
+		// --- END OF  GUARD CLAUSE ---
+	
+	
         console.log(`DEBUG: Real-time update received for note "${noteId}".`);
         if (doc.exists) {
 		        // Set the flag to true BEFORE rendering.
@@ -3124,15 +3138,69 @@ const reconcileState = (newState) => {
         // This is the key to updating the view without destroying the element.
         if (newStateItem.type === 'enhanced-textbox') {
             updateEnhancedTextboxUI(element); // We'll create this small helper
-        } else if (newStateItem.type === 'bloodpressure') {
-            updateBPElementUI(element); // You already have this!
-        } else if (newStateItem.type === 'psr') {
+        } 
+		
+		else if (newStateItem.type === 'painscale') {
+        // For the pain scale, we need to update both the visible number
+        // and the position of the range slider itself.
+        console.log(`DEBUG: Surgically updating Pain Scale element (originalId: ${newStateItem.originalId})`);
+        
+        const valueDisplay = element.querySelector('.pain-value');
+        const slider = element.querySelector('.pain-slider');
+
+        // Update the values only if they have actually changed.
+        if (valueDisplay && valueDisplay.textContent !== `${newStateItem.value}/10`) {
+            valueDisplay.textContent = `${newStateItem.value}/10`;
+        }
+        if (slider && slider.value !== newStateItem.value) {
+            slider.value = newStateItem.value;
+        }
+		}
+		
+		
+		else if (newStateItem.type === 'bloodpressure') {
+        // For a blood pressure element, we need to update the values
+        // of the two input fields and the checkbox.
+        console.log(`DEBUG: Surgically updating Blood Pressure element (originalId: ${newStateItem.originalId})`);
+        
+        const systolicInput = element.querySelector('.bp-systolic');
+        const diastolicInput = element.querySelector('.bp-diastolic');
+        const priorTxCheckbox = element.querySelector('.bp-prior-tx-check');
+
+        // Update the values only if they are different to prevent losing focus unnecessarily.
+        if (systolicInput.value !== newStateItem.systolic) {
+            systolicInput.value = newStateItem.systolic || '';
+        }
+        if (diastolicInput.value !== newStateItem.diastolic) {
+            diastolicInput.value = newStateItem.diastolic || '';
+        }
+        if (priorTxCheckbox.checked !== newStateItem.isPriorTxChecked) {
+            priorTxCheckbox.checked = newStateItem.isPriorTxChecked;
+        }
+
+        // Finally, call your existing UI updater to refresh the border color and visibility.
+        updateBPElementUI(element);
+		}	
+
+		else if (newStateItem.type === 'psr') {
             // It's too complex to surgically update the PSR grid, so we will
             // replace just this one element type as a compromise.
             element.replaceWith(createElement(newStateItem.type, newStateItem));
         } else if (newStateItem.type === 'alert') {
             updateAlertElementUI(element); // You already have this!
         }
+		else if (newStateItem.type === 'dropdown') {
+        // For a dropdown, just update the selected value.
+        element.querySelector('select').value = newStateItem.selected;
+		}
+		
+		else if (newStateItem.type === 'tx-plan') {
+        // For the treatment plan, we just need to call the existing summary
+        // update function. The dataset has already been updated above.
+        console.log(`DEBUG: Surgically updating Treatment Plan summary (originalId: ${newStateItem.originalId})`);
+        updateTxPlanSummary(element);
+		}
+		
         // ... add other UI update functions here as needed ...
     };
 
