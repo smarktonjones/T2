@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 31MAR26 mgh -->
+<!-- version as of 07APR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1783,6 +1783,12 @@ const renderHistoryUI = () => {
     });
 
  };
+ 
+// helper function.
+const updateEnhancedTextboxUI = (element) => {
+    const state = getElementState(element);
+    element.querySelector('.enhanced-textbox-preview').textContent = state.content || state.defaultText || '';
+};
 const getBPStatus = (s, d) => {if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 85) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal';};
 const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
 
@@ -2614,28 +2620,25 @@ const openTextboxEditor = (element) => {
     activeElementForEditor = element;
     const state = getElementState(element);
     const textarea = document.getElementById('textbox-editor-textarea');
-    
-    // --- Staging logic for the textarea (to prevent race conditions) ---
+    const select = document.getElementById('textbox-editor-select');
+
+    // 1. When the modal opens, "stage" the current content in our isolated variable.
     stagedContentChange = state.content;
     textarea.value = stagedContentChange;
+
+    // 2. As the user types, ONLY update the staging variable. This is safe from background syncs.
     textarea.oninput = () => {
         stagedContentChange = textarea.value;
     };
-
-    // --- THIS IS THE DROPDOWN LOGIC ---
-    console.log("DEBUG: Populating dropdown phrases for the editor.");
-    const select = document.getElementById('textbox-editor-select');
-    select.innerHTML = ''; // Clear any old options from a previous element.
+    
+    // 3. Populate the dropdown as before.
+    select.innerHTML = '';
     if (state.dropdownOptions && Array.isArray(state.dropdownOptions)) {
         state.dropdownOptions.forEach(opt => select.add(new Option(opt, opt)));
     }
-    // --- END OF LOGIC ---
     
-    // Show the modal and focus the textarea.
     textboxEditorModal.style.display = 'block';
     textarea.focus();
-
-    // The logic to select default text remains.
     if (textarea.value === activeElementForEditor.dataset.defaultText) {
         textarea.select();
     }
@@ -2643,7 +2646,9 @@ const openTextboxEditor = (element) => {
 // =================================================================
 
 																													  
-document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; } }; 
+document.getElementById('textbox-editor-add-btn').onclick = () => { if (!activeElementForEditor) return; const textarea = document.getElementById('textbox-editor-textarea'); const select = document.getElementById('textbox-editor-select'); const defaultText = activeElementForEditor.dataset.defaultText; const selectedValue = select.value.replace(/\\n/g, '\n'); if (!selectedValue) return; if (textarea.value === defaultText || textarea.value.trim() === '') { textarea.value = selectedValue; } else { textarea.value += `, ${selectedValue}`; }
+    stagedContentChange = textarea.value;
+ }; 
 
 
 
@@ -2657,6 +2662,7 @@ document.getElementById('textbox-editor-replace-btn').onclick = () => {
 
     // This is a standard textarea, so we can just assign the processed value directly.
     textarea.value = selectedValue;
+	stagedContentChange = textarea.value;
 };
 
 
@@ -2797,30 +2803,75 @@ document.getElementById('textbox-editor-replace-btn').click(); });
 
    
 
+// =================================================================
+// SNIPPET: The Transaction-Based Save Button Logic
+// =================================================================
 document.getElementById('textbox-editor-save-btn').onclick = () => {
     if (!activeElementForEditor) return;
 
-    // the 'stagedContentChange' variable, which has been
-    // tracking the user's typing inside the modal, completely isolated
-    // from any background reconciliation updates.
+    // The 'stagedContentChange' variable is still the correct way to get the user's intended text.
     const newContent = stagedContentChange;
 
-    // Now, apply this new content to the element's dataset.
+    // We still do the optimistic UI update to make the app feel fast.
     activeElementForEditor.dataset.content = newContent;
     activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent;
     
-    // Clear the staging variable and the input handler.
     stagedContentChange = null;
     document.getElementById('textbox-editor-textarea').oninput = null;
+    document.getElementById('textbox-editor-modal').style.display = 'none';
 
-    // Trigger the save to the cloud. This will now send the correct, user-entered data.
-    updateLiveOutput();
-    textboxEditorModal.style.display = 'none';
+    // --- THIS IS THE NEW, TRANSACTIONAL SAVE LOGIC ---
+    console.log("DEBUG: Initiating Firestore Transaction to save content.");
+    const noteDocRef = db.collection('live_notes').doc(currentNoteId);
+    const elementOriginalId = activeElementForEditor.dataset.originalId;
 
-    // The evaluation logic remains the same.
-    const noteText = liveOutput.value;
-    evaluateNote(noteText);
+    // db.runTransaction() is an atomic operation.
+    db.runTransaction((transaction) => {
+        // 1. First, READ the document inside the transaction.
+        return transaction.get(noteDocRef).then((doc) => {
+            if (!doc.exists) {
+                throw "Document does not exist!";
+            }
+            
+            // 2. Get the current full state from the server.
+            const currentState = doc.data();
+            
+            // 3. Find the specific element within the state that needs to be updated.
+            let elementFound = false;
+            for (const sectionId in currentState) {
+                if (Array.isArray(currentState[sectionId])) {
+                    const elementToUpdate = currentState[sectionId].find(el => el.originalId === elementOriginalId);
+                    if (elementToUpdate) {
+                        // 4. Modify ONLY the 'content' of that one element.
+                        elementToUpdate.content = newContent;
+                        elementFound = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!elementFound) {
+                throw `Could not find element with originalId ${elementOriginalId} in the document!`;
+            }
+            
+            // Add the last updated timestamp.
+            currentState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
+
+            // 5. Finally, tell the transaction to UPDATE the document with our modified state.
+            transaction.update(noteDocRef, currentState);
+        });
+    }).then(() => {
+        console.log("%cTransaction successfully committed! Your change is now permanent.", "color: lightgreen; font-weight: bold;");
+        // We don't need to call updateLiveOutput here, because onSnapshot will handle it.
+        const noteText = liveOutput.value;
+        evaluateNote(noteText);
+    }).catch((error) => {
+        console.error("Transaction failed: ", error);
+        alert("Save failed due to a conflict or network error. Please try again.");
+    });
 };
+// =================================================================
+
 
 
 
@@ -2956,6 +3007,7 @@ let unsubscribeFromNote = null;
 let currentNoteId = null;
 let isRenderingFromCloud = false;
 
+
 // --- 2. UI Element References ---
 const userStatusEmail = document.getElementById('user-email');
 const logoutButton = document.getElementById('logout-button');
@@ -3043,7 +3095,7 @@ const syncStateToFirestore = () => {
         });
         stateToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
         db.collection('live_notes').doc(currentNoteId).set(stateToSave, { merge: true });
-    }, 5000);
+    }, 3000);
 };
 
 
@@ -3056,6 +3108,34 @@ const syncStateToFirestore = () => {
 const reconcileState = (newState) => {
     console.log("DEBUG: Reconciling DOM with new cloud state...");
     let changed = false;
+
+    // This is a helper function to update an element without replacing it.
+    const surgicallyUpdateElement = (element, newStateItem) => {
+        // Update all dataset properties. This is safe and preserves the element.
+        for (const key in newStateItem) {
+            const value = newStateItem[key];
+            if (typeof value === 'object') {
+                element.dataset[key] = JSON.stringify(value);
+            } else {
+                element.dataset[key] = value;
+            }
+        }
+        // Now, call the specific UI refresh function for this element type.
+        // This is the key to updating the view without destroying the element.
+        if (newStateItem.type === 'enhanced-textbox') {
+            updateEnhancedTextboxUI(element); // We'll create this small helper
+        } else if (newStateItem.type === 'bloodpressure') {
+            updateBPElementUI(element); // You already have this!
+        } else if (newStateItem.type === 'psr') {
+            // It's too complex to surgically update the PSR grid, so we will
+            // replace just this one element type as a compromise.
+            element.replaceWith(createElement(newStateItem.type, newStateItem));
+        } else if (newStateItem.type === 'alert') {
+            updateAlertElementUI(element); // You already have this!
+        }
+        // ... add other UI update functions here as needed ...
+    };
+
 
     SECTIONS.forEach((sectionId, secIndex) => {
         const elementsFromState = newState[sectionId] || [];
@@ -3086,11 +3166,8 @@ const reconcileState = (newState) => {
                     console.log(`%cDEBUG: State for element ${stateItem.originalId} differs. Replacing element to ensure UI consistency.`, 'color: orange');
                     changed = true;
                     
-                    // --- THE FIX ---
-                    // Instead of complex surgical logic, we will simply replace the single
-                    // out-of-sync element. This is guaranteed to work for ALL element types.
-                    const newElement = createElement(stateItem.type, stateItem);
-                    existingElement.replaceWith(newElement);
+// **THE FIX:** Call our new surgical update function.
+                    surgicallyUpdateElement(existingElement, stateItem);
                 }
             }
         });
