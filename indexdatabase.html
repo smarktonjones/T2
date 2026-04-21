@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 07APR26 mgh -->
+<!-- version as of 21APR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2804,71 +2804,33 @@ document.getElementById('textbox-editor-replace-btn').click(); });
    
 
 // =================================================================
-// SNIPPET: The Transaction-Based Save Button Logic
+// Textbox Save Button (No Transaction Needed)
 // =================================================================
 document.getElementById('textbox-editor-save-btn').onclick = () => {
     if (!activeElementForEditor) return;
 
-    // The 'stagedContentChange' variable is still the correct way to get the user's intended text.
-    const newContent = stagedContentChange;
+    // Use the staged content that protected us from the background refresh
+    const newContent = stagedContentChange !== null ? stagedContentChange : document.getElementById('textbox-editor-textarea').value;
 
-    // We still do the optimistic UI update to make the app feel fast.
+    // 1. Apply the text to the local DOM element
     activeElementForEditor.dataset.content = newContent;
-    activeElementForEditor.querySelector('.enhanced-textbox-preview').textContent = newContent;
+    const preview = activeElementForEditor.querySelector('.enhanced-textbox-preview');
+    if (preview) preview.textContent = newContent;
     
+    // 2. Clean up modal variables
     stagedContentChange = null;
     document.getElementById('textbox-editor-textarea').oninput = null;
     document.getElementById('textbox-editor-modal').style.display = 'none';
 
-    // --- THIS IS THE NEW, TRANSACTIONAL SAVE LOGIC ---
-    console.log("DEBUG: Initiating Firestore Transaction to save content.");
-    const noteDocRef = db.collection('live_notes').doc(currentNoteId);
-    const elementOriginalId = activeElementForEditor.dataset.originalId;
+    // 3. Use updateLiveOutput() instead of a Transaction.
+    // This reads the ENTIRE current DOM (including your new Tx Plan changes)
+    // and queues it all up to be saved to the cloud together perfectly.
+    console.log("DEBUG: Modal saved. Triggering updateLiveOutput to read full DOM.");
+    updateLiveOutput(); 
 
-    // db.runTransaction() is an atomic operation.
-    db.runTransaction((transaction) => {
-        // 1. First, READ the document inside the transaction.
-        return transaction.get(noteDocRef).then((doc) => {
-            if (!doc.exists) {
-                throw "Document does not exist!";
-            }
-            
-            // 2. Get the current full state from the server.
-            const currentState = doc.data();
-            
-            // 3. Find the specific element within the state that needs to be updated.
-            let elementFound = false;
-            for (const sectionId in currentState) {
-                if (Array.isArray(currentState[sectionId])) {
-                    const elementToUpdate = currentState[sectionId].find(el => el.originalId === elementOriginalId);
-                    if (elementToUpdate) {
-                        // 4. Modify ONLY the 'content' of that one element.
-                        elementToUpdate.content = newContent;
-                        elementFound = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!elementFound) {
-                throw `Could not find element with originalId ${elementOriginalId} in the document!`;
-            }
-            
-            // Add the last updated timestamp.
-            currentState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
-
-            // 5. Finally, tell the transaction to UPDATE the document with our modified state.
-            transaction.update(noteDocRef, currentState);
-        });
-    }).then(() => {
-        console.log("%cTransaction successfully committed! Your change is now permanent.", "color: lightgreen; font-weight: bold;");
-        // We don't need to call updateLiveOutput here, because onSnapshot will handle it.
-        const noteText = liveOutput.value;
-        evaluateNote(noteText);
-    }).catch((error) => {
-        console.error("Transaction failed: ", error);
-        alert("Save failed due to a conflict or network error. Please try again.");
-    });
+    // 4. Run the evaluation logic
+    const noteText = document.getElementById('live-output').value;
+    evaluateNote(noteText);
 };
 // =================================================================
 
