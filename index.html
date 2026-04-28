@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 27APR26 mgh -->
+<!-- version as of 28APR26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -494,6 +494,79 @@ opacity: 0.4;
 }
    
    
+   
+   /* ======== NEW LANDING PAGE STYLES ======== */
+.landing-title {
+    font-size: 3.5em; /* Larger, more impactful title */
+    font-weight: 300; /* A thinner, more modern font weight */
+    color: #2c3e50;
+    text-shadow: none;
+    margin-bottom: 0;
+	text-align: center;
+}
+.landing-version {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    margin-top: -10px;
+    margin-bottom: 30px;
+}
+.login-box {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    margin: 0 auto; /* Center the login box itself */
+    text-align: left;
+}
+.feature-showcase {
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    color: #ecf0f1;
+    padding: 40px 20px;
+    margin-top: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.feature-showcase h2 {
+    color: #ffffff;
+    text-shadow: none;
+    margin-top: 0;
+}
+.feature-rotator {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    padding: 10px 20px;
+    margin-top: 20px;
+    display: inline-block;
+    min-width: 300px;
+}
+#feature-text {
+    font-size: 1.1em;
+    transition: opacity 0.5s ease-in-out; /* This is for the fade effect */
+}
+.landing-footer {
+    margin-top: 40px;
+    font-size: 0.8em;
+    color: #95a5a6;
+}
+.landing-footer a {
+    color: #7f8c8d;
+    text-decoration: none;
+}
+.landing-footer a:hover {
+    text-decoration: underline;
+}
+#start-day-button {
+    font-size: 1.2em; /* Make the font larger */
+    font-weight: bold;
+    background-color: var(--success-color); /* Use the prominent green color */
+    border: none;
+}
+#start-day-button:hover {
+    background-color: var(--success-hover); /* Darken on hover */
+}
+   
+   
     </style>
 	
 	
@@ -528,18 +601,54 @@ opacity: 0.4;
 <!-- ================================================================= -->
 </div>
 
-<!-- This view is for the Technician to start their day -->
-<div id="view-technician-start" class="container">
-    <h2>Technician Station</h2>
-    <p>To begin a session for the day, please enter your name.</p>
-    <input type="text" id="tech-name-input" placeholder="Enter Your Name...">
-    <button id="start-day-button" class="primary-button">Start My Day</button>
+<!-- ======== NEW LANDING PAGE / TECHNICIAN LOGIN ======== -->
+<div id="view-technician-start" class="container" style="max-width: 900px; text-align: center; border: none; background: transparent; box-shadow: none;">
+
+    <!-- 1. Title and Version Number -->
+    <h1 class="landing-title">Dental Note Maker</h1>
+    <p class="landing-version">v4.5</p>
 	
-	<p style="text-align: center; margin-bottom: 0;">- or -</p>
-    <button id="show-doctor-login-btn">Switch to Doctor Login</button>
-	
-	
+
+    <!-- 2. The Login Box (contains the original functionality) -->
+    <div class="login-box">
+        <h2 style="color: #333; text-shadow: none;">Get Started</h2>
+        
+        <label for="clinic-select" style="display: block; margin-bottom: 5px; text-align: left;"><strong>1. Select Your Clinic Template:</strong></label>
+        <select id="clinic-select" style="width: 100%; padding: 8px; margin-bottom: 15px;">
+            <option value="--loading--">Loading Clinics...</option>
+        </select>
+
+        <label for="tech-name-input" style="display: block; margin-bottom: 5px; text-align: left;"><strong>2. Enter Your Name:</strong></label>
+        <input type="text" id="tech-name-input" placeholder="Enter Your Name..." style="width: 100%; box-sizing: border-box; padding: 8px;">
+
+        <button id="start-day-button" class="primary-button" style="width: 100%; margin-top: 15px; padding: 12px;">Start My Day</button>
+        
+        <p style="text-align: center; margin: 15px 0 0;">- or -</p>
+        <button id="show-doctor-login-btn" >Switch to Doctor Login</button>
+    </div>
+
+    <!-- 3. The Feature Showcase Section -->
+    <div class="feature-showcase">
+        <h2>A Collaborative Note-Making Tool</h2>
+        <p>Built for speed and teamwork, enabling seamless real-time updates between doctors and technicians.</p>
+        <div class="feature-rotator">
+            <span id="feature-text">Doctor-Tech real-time collaboration</span>
+        </div>
+    </div>
+
+    <!-- 4. The Disclaimer Footer -->
+    <div class="landing-footer">
+        <p>
+            This is a non-DoD, non-Navy affiliated website. The appearance of hyperlinks does not constitute endorsement. This website is provided as-is without any warranty of any kind. Users shall not enter, store, or transmit any Personally Identifiable Information (PII) or Protected Health Information (PHI).
+        </p>
+        <p>
+            For questions or support, contact the developer: <a href="mailto:mark.g.horning.civ@health.mil">mark.g.horning.civ@health.mil</a>
+        </p>
+    </div>
+
 </div>
+
+
 
 <!-- This view is for the Doctor to log in -->
 <div id="view-doctor-login" class="container view-hidden">
@@ -593,7 +702,7 @@ opacity: 0.4;
 
     <!-- Text Labels -->
     <div class="text-top-right">Dental Note</div>
-    <div class="text-bottom-left">Maker v4.5b</div>
+    <div class="text-bottom-left">Maker</div>
   </div>
 
 </div>
@@ -607,13 +716,13 @@ opacity: 0.4;
     <div class="controls">
 	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
 		<button id="import-btn" class="control-btn element-hidden">Import JSON File...</button>
-		
+		<button id="set-template-btn" class="control-btn view-hidden" style="background-color: var(--warning-color);">Set as Clinic Default...</button>
 
 		
         <button id="export-btn" class="control-btn element-hidden">Export JSON</button>
         <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
 <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
-        <button id="reset-btn" class="control-btn">Reset Values (and save to history below)</button>
+        <button id="reset-btn" class="control-btn">Reset Values & Archive Below</button>
 
 
 		
@@ -3616,55 +3725,48 @@ const performLocalReset = () => {
 		
 		
 
-//  original `loadDefaults` function is also still needed.
-async function loadDefaults(noteIdForNewNote) {
-
-    console.log("--- Running Default Loading Sequence ---");
+/**
+ * NEW "Config Cascade"
+ * Fetches clinic templates from Firestore and populates the technician's dropdown selector.
+ */
+async function loadDefaults() {
+    console.log("--- Running Clinic Template Loading Sequence ---");
+    const clinicSelect = document.getElementById('clinic-select');
+    clinicSelect.innerHTML = '<option value="--loading--">Loading Clinics...</option>'; // Reset
 
     try {
-        // **NEW: Priority 1 - Attempt to fetch external config.json**
-        console.log("Attempting to fetch external 'config.json'...");
-        const response = await fetch('config.json');
+        const snapshot = await db.collection('clinic_templates').orderBy('clinicName').get();
+        
+        // Clear loading message
+        clinicSelect.innerHTML = ''; 
 
-        // Check if the request was successful (e.g., status 200 OK)
-        if (response.ok) {
-            const externalJsonText = await response.text();
-            console.log("Successfully fetched external 'config.json'.");
-            // Use the external data. The 'true, true' arguments treat it as a new template.
-            loadJsonData(externalJsonText, true, true);
-            return; // Stop the function here, as we have successfully loaded.
+        // Add the built-in template as the default first option
+        const defaultOption = new Option("Default Built-in Template", "BUILT_IN");
+        clinicSelect.add(defaultOption);
+
+        if (!snapshot.empty) {
+            console.log("Successfully fetched clinic templates from Firestore.");
+            snapshot.forEach(doc => {
+                const clinic = doc.data();
+                // The value is the document ID, the text is the pretty display name
+                const option = new Option(clinic.clinicName, doc.id);
+                clinicSelect.add(option);
+            });
         } else {
-            // This will trigger if the file is not found (404) or there's another server error.
-            console.warn(`'config.json' not found or failed to load (Status: ${response.status}). Falling back to embedded JSON.`);
+            console.log("No custom clinic templates found in Firestore. Only default is available.");
         }
     } catch (error) {
-        // This will trigger for network errors (e.g., CORS issues, no network connection).
-        console.error("A network error occurred while trying to fetch 'config.json'. Falling back to embedded JSON.", error);
-    }
-
-    // --- FALLBACK LOGIC  ---
-
-    // **Priority 2: Try to load from the embedded JSON data.**
-    console.log("Attempting to load from embedded JSON data.");
-    const defaultJsonText = document.getElementById('default-json-data').textContent;
-    if (defaultJsonText && defaultJsonText.trim().length > 2) {
-        console.log("Loading from embedded JSON data.");
-        loadJsonData(defaultJsonText, true, true);
-    } else {
-        // **Priority 3: If no embedded JSON, start blank.**
-        console.log("No external or embedded JSON found. Starting with a blank slate.");
-        renderState({});
-    }
-
-
-
-    if (noteIdForNewNote) {
-        // Here you would find the element in the state that holds the tech name and set it.
-        // This depends on your JSON structure. For example:
-        // const techNameElement = state['header']?.find(el => el.internalLabel === 'Technician Name');
-        // if (techNameElement) techNameElement.content = noteIdForNewNote;
+        console.error("Error fetching clinic templates:", error);
+        // If Firestore fails, ensure the default option is still available
+        clinicSelect.innerHTML = ''; 
+        const defaultOption = new Option("Default Built-in Template", "BUILT_IN");
+        clinicSelect.add(defaultOption);
+        const errorOption = new Option("Could not load cloud templates", "", true, true);
+        errorOption.disabled = true;
+        clinicSelect.add(errorOption);
     }
 }
+
 
 
 // --- 6. The Main Controller and All Event Listeners (The New Startup Cascade) ---
@@ -3679,6 +3781,7 @@ auth.onAuthStateChanged(user => {
         userStatusEmail.textContent = `Dr. ${user.email}`;
         logoutButton.classList.remove('view-hidden');
         saveCopyButton.classList.remove('view-hidden');
+		document.getElementById('set-template-btn').classList.remove('view-hidden');
         showView('view-doctor-dashboard');
         listenForActiveNotes();
 		listenForHistoryNotes();
@@ -3706,54 +3809,184 @@ auth.onAuthStateChanged(user => {
 
 });
 
-// --- Attach All Event Listeners ---
-startDayButton.addEventListener('click', async () => {
-    const techName = techNameInput.value.trim().toUpperCase();
-    if (!techName) return alert("Please enter your name.");
 
-    console.log(`DEBUG: Technician "${techName}" is starting their day.`);
-    localStorage.setItem('dentalNoteMakerTechName', techName);
+// ==========================================================
+//  LOGIC FOR SAVING/UPDATING CLINIC TEMPLATES
+// ==========================================================
+const saveTemplateModal = document.getElementById('save-template-modal');
+const setTemplateBtn = document.getElementById('set-template-btn');
+const existingClinicsSelect = document.getElementById('existing-clinics-select');
+const newClinicNameInput = document.getElementById('new-clinic-name-input');
+const confirmSaveBtn = document.getElementById('confirm-template-save-btn');
+const cancelSaveBtn = document.getElementById('cancel-template-save-btn');
+const modalError = document.getElementById('template-modal-error');
 
-    const templateState = JSON.parse(document.getElementById('default-json-data').textContent || '{}');
+// --- Open the modal and fetch existing clinics ---
+setTemplateBtn.addEventListener('click', async () => {
+    // Clear previous state
+    existingClinicsSelect.innerHTML = '<option value="">-- Select a clinic to overwrite --</option>';
+    newClinicNameInput.value = '';
+    modalError.textContent = '';
 
-    // Find the technician name element and update it in the template.
-    let techElementFound = false;
-    for (const sectionId in templateState) {
-        if (Array.isArray(templateState[sectionId])) {
-            const techElement = templateState[sectionId].find(el => el.originalId === "5-0");
-            if (techElement) {
-                techElement.content = techName;
-                techElementFound = true;
-                break;
-            }
+    // Fetch all documents from the clinic_templates collection
+    try {
+        const snapshot = await db.collection('clinic_templates').get();
+        if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+                const clinic = doc.data();
+                // Use the document ID (the unique name) as the value
+                const option = new Option(clinic.clinicName, doc.id);
+                existingClinicsSelect.add(option);
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching clinics:", error);
+        modalError.textContent = "Could not load existing clinics.";
+    }
+
+    saveTemplateModal.style.display = 'block';
+});
+
+// --- Handle the final "Save" click ---
+confirmSaveBtn.addEventListener('click', async () => {
+    const selectedClinicId = existingClinicsSelect.value;
+    const newClinicName = newClinicNameInput.value.trim();
+    modalError.textContent = '';
+
+    // Validate input: user must choose one option or the other
+    if (selectedClinicId && newClinicName) {
+        modalError.textContent = "Please either select an existing clinic OR enter a new name, not both.";
+        return;
+    }
+    if (!selectedClinicId && !newClinicName) {
+        modalError.textContent = "You must either select a clinic to overwrite or provide a new clinic name.";
+        return;
+    }
+
+    // Gather the current state of the note to be used as the template
+    const templateState = {};
+    SECTIONS.forEach(id => {
+        templateState[id] = [];
+        document.querySelector(`.dropzone[data-section-id="${id}"]`)
+            .querySelectorAll('.draggable-element').forEach(el => templateState[id].push(getElementState(el)));
+    });
+
+    let clinicDocId = selectedClinicId;
+    let clinicDisplayName = selectedClinicId ? existingClinicsSelect.options[existingClinicsSelect.selectedIndex].text : newClinicName;
+
+    // If it's a new clinic, create a URL-friendly document ID
+    if (newClinicName) {
+        clinicDocId = newClinicName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        if (!clinicDocId) {
+             modalError.textContent = "Invalid clinic name. Please use alphanumeric characters.";
+             return;
         }
     }
     
+    // Prepare the data payload for Firestore
+    const payload = {
+        clinicName: clinicDisplayName, // The "pretty" name for display
+        templateData: templateState,
+        lastModified: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    // Confirm overwrite
+    if (selectedClinicId) {
+        if (!confirm(`Are you sure you want to overwrite the template for "${clinicDisplayName}"? This cannot be undone.`)) {
+            return;
+        }
+    }
+
+    // Save to Firestore
     try {
-        // Use Firestore's .add() to get a truly unique ID for the document.
-        // 1. Generate a unique ID string from Firestore on the client-side.
+        confirmSaveBtn.disabled = true;
+        await db.collection('clinic_templates').doc(clinicDocId).set(payload);
+        showFeedback(`Template for "${clinicDisplayName}" saved successfully!`, true);
+        saveTemplateModal.style.display = 'none';
+    } catch (error) {
+        console.error("Error saving template:", error);
+        modalError.textContent = "Failed to save template. See console for details.";
+    } finally {
+        confirmSaveBtn.disabled = false;
+    }
+});
+
+// --- Handle Cancel button ---
+cancelSaveBtn.addEventListener('click', () => {
+    saveTemplateModal.style.display = 'none';
+});
+
+
+
+
+// --- Attach All Event Listeners ---
+startDayButton.addEventListener('click', async () => {
+    const techName = techNameInput.value.trim().toUpperCase();
+    const selectedClinicId = document.getElementById('clinic-select').value;
+
+    if (!techName) {
+        return alert("Please enter your name.");
+    }
+    if (!selectedClinicId || selectedClinicId === '--loading--') {
+        return alert("Please select a clinic template.");
+    }
+
+    console.log(`DEBUG: Technician "${techName}" is starting a session with template: "${selectedClinicId}"`);
+    localStorage.setItem('dentalNoteMakerTechName', techName);
+
+    let templateState;
+
+    try {
+        // --- THIS IS THE NEW TEMPLATE SELECTION LOGIC ---
+        if (selectedClinicId === 'BUILT_IN') {
+            console.log("Loading from the Default Built-in Template.");
+            templateState = JSON.parse(document.getElementById('default-json-data').textContent);
+        } else {
+            console.log(`Fetching template "${selectedClinicId}" from Firestore...`);
+            const doc = await db.collection('clinic_templates').doc(selectedClinicId).get();
+            if (doc.exists) {
+                templateState = doc.data().templateData;
+            } else {
+                throw new Error("Selected clinic template not found in Firestore.");
+            }
+        }
+        
+        // Now that we have the correct template, proceed with session creation
+        // Update the tech name within the selected template
+        let techElementFound = false;
+        for (const sectionId in templateState) {
+            if (Array.isArray(templateState[sectionId])) {
+                const techElement = templateState[sectionId].find(el => el.originalId === "5-0");
+                if (techElement) {
+                    techElement.content = techName;
+                    techElementFound = true;
+                    break;
+                }
+            }
+        }
+        
+		lastLoadedState = JSON.parse(JSON.stringify(templateState));
+		
+        // Generate a custom unique ID for the live session document
         const uniquePart = db.collection('live_notes').doc().id;
-
-        // 2. Combine it with the tech's name to create our desired ID format.
         const newCustomSessionId = `${techName}-${uniquePart}`;
-        console.log(`New session created with custom unique ID: ${newCustomSessionId}`);
-
-        // 3. Use .set() with our new custom ID to create the document.
+        
+        // Create the live note document
         await db.collection('live_notes').doc(newCustomSessionId).set(templateState);
-
-        // 4. Save this new custom ID to localStorage for session resumption.
         localStorage.setItem('dentalNoteSessionID', newCustomSessionId);
 
-        // Start editing the new session with the custom ID.
+        // Start the editing session
         startEditingSession(newCustomSessionId);
         
         userStatusEmail.textContent = `Tech: ${techName}`;
         logoutButton.classList.remove('view-hidden');
+
     } catch (error) {
-        console.error("Error creating new session:", error);
-        alert("Could not create a new session in Firestore. Please check permissions and console.");
+        console.error("Error starting day:", error);
+        alert(`Could not start session. ${error.message}`);
     }
 });
+
 
 
 showDoctorLoginBtn.addEventListener('click', () => {
@@ -3930,8 +4163,49 @@ renderHistoryUI();
 
 
 
+// ==========================================================
+//  LOGIC FOR LANDING PAGE FEATURE ROTATOR
+// ==========================================================
+const features = [
+    "Real-time Doctor-Tech collaboration",
+	"MHS Genesis-ready formatting",
+	"Navy T-2 Exam Template built-in",
+    "Seamlessly import past notes",
+	"Cloud-synced note history",
+    "Detailed Endo-Testing tables",
+    "Built-in dental term autocorrect",
+    "Quick-Copy with Shift + Enter",
+    "Double-click to replace text snippets",
+    "Offline mode for doctors",
+	"Fully customizable note templates",
+];
+const featureTextElement = document.getElementById('feature-text');
+let featureIndex = 0;
 
+if (featureTextElement) { // Only run if the element exists
+    setInterval(() => {
+        // 1. Fade out the current text
+        featureTextElement.style.opacity = 0;
 
+        // 2. After the fade-out completes, change the text and fade it back in
+        setTimeout(() => {
+            // Move to the next feature, looping back to the start if necessary
+            featureIndex = (featureIndex + 1) % features.length;
+            featureTextElement.textContent = features[featureIndex];
+            
+            // 3. Fade in the new text
+            featureTextElement.style.opacity = 1;
+        }, 500); // This duration should match the CSS transition duration
+
+    }, 4000); // Change feature every 4 seconds
+}
+
+techNameInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent default form submission
+        startDayButton.click(); // Programmatically click the button
+    }
+});
 
 
 
@@ -3971,11 +4245,6 @@ renderHistoryUI();
 //
 //   --- DENTAL SUGGESTER SCRIPT (PORTABLE VERSION) ---
 //
-//   Instructions:
-//   1. Ensure the <textarea> or <input> you want to target in your HTML has a unique `id`.
-//   2. Copy this entire <script> block and paste it just before the closing </body> tag
-//      in your existing HTML file.
-//   3. Change the `targetTextboxId` value below to match the `id` of your textbox.
 //
 // ===================================================================================
 
@@ -4559,6 +4828,42 @@ function attachEventListeners() {
 </div>
 
 </div>
+
+
+<!-- ======== TEMPLATE SAVER MODAL ======== -->
+<div id="save-template-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Save as Clinic Default Template</h2>
+            <span class="close-btn" data-modal-id="save-template-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>You can save the current note configuration as a new clinic template or overwrite an existing one.</p>
+            
+            <fieldset style="margin-top: 15px;">
+                <legend>Option 1: Overwrite an Existing Clinic</legend>
+                <select id="existing-clinics-select" style="width: 100%; padding: 8px;">
+                    <option value="">-- Select a clinic to overwrite --</option>
+                </select>
+            </fieldset>
+
+            <p style="text-align: center; margin: 10px 0; font-weight: bold;">- OR -</p>
+
+            <fieldset>
+                <legend>Option 2: Save as a New Clinic</legend>
+                <input type="text" id="new-clinic-name-input" placeholder="Enter New Clinic Name..." style="width: 100%; box-sizing: border-box; padding: 8px;">
+            </fieldset>
+
+            <p id="template-modal-error" style="color: red; text-align: center; margin-top: 10px;"></p>
+        </div>
+        <div class="modal-footer">
+            <button id="cancel-template-save-btn" class="control-btn">Cancel</button>
+            <button id="confirm-template-save-btn" class="control-btn" style="background-color: var(--success-color);">Save Template</button>
+        </div>
+    </div>
+</div>
+
+
 
 </body>
 </html>
