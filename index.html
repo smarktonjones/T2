@@ -714,7 +714,7 @@ opacity: 0.4;
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
 
     <div class="controls">
-	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
+	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" >Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
 		<button id="import-btn" class="control-btn element-hidden">Import JSON File...</button>
 		<button id="set-template-btn" class="control-btn view-hidden" style="background-color: var(--warning-color);">Set as Clinic Default...</button>
 
@@ -3199,6 +3199,8 @@ const signupButton = document.getElementById('signup-button');
 const noteList = document.getElementById('note-list');
 const saveCopyButton = document.getElementById('save-copy-button');
 const showDoctorLoginBtn = document.getElementById('show-doctor-login-btn');
+const viewHiddenToggleLabel = document.getElementById('view-hidden-toggle').parentElement;
+const lockLayoutToggleLabel = document.getElementById('lock-layout-toggle').parentElement;
 
 // --- 3. Core Functions ---
 
@@ -3782,6 +3784,8 @@ auth.onAuthStateChanged(user => {
         logoutButton.classList.remove('view-hidden');
         saveCopyButton.classList.remove('view-hidden');
 		document.getElementById('set-template-btn').classList.remove('view-hidden');
+		viewHiddenToggleLabel.classList.remove('view-hidden');
+        lockLayoutToggleLabel.classList.remove('view-hidden');
         showView('view-doctor-dashboard');
         listenForActiveNotes();
 		listenForHistoryNotes();
@@ -3792,6 +3796,9 @@ auth.onAuthStateChanged(user => {
        
         console.log("DEBUG: Pre-loading default template into lastLoadedState...");
         loadDefaults(); 
+
+        viewHiddenToggleLabel.classList.add('view-hidden');
+        lockLayoutToggleLabel.classList.add('view-hidden');
 
         // ** THIS IS THE MODIFIED LOGIC **
 	    const savedSessionID = localStorage.getItem('dentalNoteSessionID');
