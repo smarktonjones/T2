@@ -3576,7 +3576,7 @@ const resetValues = () => {
 
         }).catch(err => {
             console.error("Reset failed while fetching current state:", err);
-            alert("Error: Could not read the current note state to perform a safe reset.");
+            alert("Error: Could not read the current note state to perform a safe reset. You may need to refresh the webpage, logoff note session, or do a full reset.");
         });
     }
 };
