@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 28APR26 mgh -->
+<!-- version as of 08MAY26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -606,7 +606,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.5</p>
+    <p class="landing-version">v4.6</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -714,7 +714,7 @@ opacity: 0.4;
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
 
     <div class="controls">
-	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" >Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
+	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
 		<button id="import-btn" class="control-btn element-hidden">Import JSON File...</button>
 		<button id="set-template-btn" class="control-btn view-hidden" style="background-color: var(--warning-color);">Set as Clinic Default...</button>
 
@@ -753,7 +753,7 @@ opacity: 0.4;
    
 <!-- **** START OF MODIFIED HTML for class to tx plan **** -->
 <div id="textbox-editor-area">
-    <textarea id="textbox-editor-textarea" spellcheck="true"></textarea>
+    <textarea id="textbox-editor-textarea"></textarea>
 
     <!-- NEW container for action buttons that appear on text selection -->
     <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
@@ -2195,7 +2195,59 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
      else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
             else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
             else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-inputs"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
-            else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; draggable.querySelectorAll('.psr-input').forEach(input => { input.addEventListener('input', () => { const index = parseInt(input.dataset.index, 10); const checkbox = draggable.querySelector(`.psr-asterisk[data-index="${index}"]`); if (input.value.includes('*')) { if (!checkbox.checked) checkbox.checked = true; } else { if (checkbox.checked) checkbox.checked = false; } const scorePart = input.value.replace(/\*/g, ''); if (scorePart.length > 1) input.value = scorePart.charAt(0) + (checkbox.checked ? '*' : ''); if (!scorePart.match(/^[0-4]?$/)) input.value = '' + (checkbox.checked ? '*' : ''); if (scorePart.length === 1 && scorePart.match(/[0-4]/)) { const nextIndex = PSR_AUTOFOCUS_MAP.get(index); if (nextIndex !== undefined) { const nextInput = draggable.querySelector(`.psr-input[data-index="${nextIndex}"]`); if (nextInput) { nextInput.focus(); nextInput.select(); } } } updatePSRElementUI(draggable); }); input.addEventListener('keydown', handlePSRTabbing); }); draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
+            else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; 
+
+
+draggable.querySelectorAll('.psr-input').forEach(input => {
+        input.addEventListener('input', () => {
+            const index = parseInt(input.dataset.index, 10);
+            const checkbox = draggable.querySelector(`.psr-asterisk[data-index="${index}"]`);
+            if (input.value.includes('*')) {
+                if (!checkbox.checked) checkbox.checked = true;
+            } else {
+                if (checkbox.checked) checkbox.checked = false;
+            }
+            const scorePart = input.value.replace(/\*/g, '');
+            if (scorePart.length > 1) input.value = scorePart.charAt(0) + (checkbox.checked ? '*' : '');
+            if (!scorePart.match(/^[0-4]?$/)) input.value = '' + (checkbox.checked ? '*' : '');
+            if (scorePart.length === 1 && scorePart.match(/[0-4]/)) {
+                const nextIndex = PSR_AUTOFOCUS_MAP.get(index);
+                if (nextIndex !== undefined) {
+                    const nextInput = draggable.querySelector(`.psr-input[data-index="${nextIndex}"]`);
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select();
+                    }
+                }
+            }
+            updatePSRElementUI(draggable);
+
+            // ======== NEW LOGIC TO UPDATE PERIO RISK ========
+            // 1. Get all six current scores from the input fields.
+            const allScores = Array.from(draggable.querySelectorAll('.psr-input')).map(inp => inp.value);
+
+            // 2. Clean the scores for evaluation (remove '*' and convert to numbers).
+            const numericScores = allScores.map(s => parseInt(s.replace('*', ''), 10)).filter(n => !isNaN(n));
+
+            // 3. Determine the risk level based on the image provided.
+            let risk = "Low"; // Default to Low
+            const countOf3s = numericScores.filter(s => s === 3).length;
+            const has4s = numericScores.some(s => s === 4);
+
+            if (has4s || countOf3s >= 3) {
+                risk = "High";
+            } else if (countOf3s >= 1 && countOf3s <= 2) {
+                risk = "Moderate";
+            }
+
+            // 4. Call our new helper function to update the dropdown.
+            updatePerioRiskDropdown(risk);
+        });
+        input.addEventListener('keydown', handlePSRTabbing);
+    });
+
+
+draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
             else if (type === 'dropdown') { const select = document.createElement('select'); (data.options || ['Select...', 'Opt 1', 'Opt 2']).forEach(opt => select.add(new Option(opt, opt, false, opt === data.selected))); draggable.appendChild(select); draggable.addEventListener('change', updateLiveOutput); }
             else if (type === 'checkbox') { draggable.innerHTML = `<label><input type="checkbox" ${data.checked ? 'checked' : ''}> <span contenteditable="true">${data.content || 'Checkbox text'}</span></label>`; }
             else if (type.startsWith('label-')) { draggable.classList.add(type === 'label-red' ? 'element-label-red' : 'element-label-black'); draggable.innerHTML = `<div contenteditable="true">${data.content || 'Descriptive Label'}</div>`; }
@@ -2473,6 +2525,88 @@ const COLOR_PALETTE = [
 
 
 
+/**
+ * Finds the Caries Risk dropdown and sets its value based on a calculated risk level.
+ * @param {string} riskLevel - The calculated risk level ("Low", "Moderate", or "High").
+ */
+const updateCariesRiskDropdown = (riskLevel) => {
+    // 1. Find the dropdown element by its unique originalId.
+    const cariesRiskDropdown = document.querySelector('[data-original-id="3-5"]');
+    if (!cariesRiskDropdown) {
+        console.warn("Caries Risk dropdown element not found on the page.");
+        return;
+    }
+
+    // 2. Construct the full option text that matches the dropdown's value.
+    const optionValue = `CARIES RISK: ${riskLevel}`;
+
+    // 3. Find the <select> element and update its value if it's different.
+    const selectElement = cariesRiskDropdown.querySelector('select');
+    if (selectElement && selectElement.value !== optionValue) {
+        console.log(`Automatically setting Caries Risk to: ${riskLevel}`);
+        selectElement.value = optionValue;
+
+        // Trigger a save to persist the automated change.
+        updateLiveOutput();
+    }
+};
+
+/**
+ * Reads the content of the caries text boxes and triggers the dropdown update.
+ */
+const checkAndSetCariesRisk = () => {
+    // 1. Find the two relevant enhanced-textbox elements by their unique IDs.
+    const defectiveElement = document.querySelector('[data-original-id="2-5"]');
+    const incipientElement = document.querySelector('[data-original-id="2-6"]');
+
+    // If either element isn't on the page, we can't proceed.
+    if (!defectiveElement || !incipientElement) return;
+
+    // 2. Get the text content from each element's dataset.
+    const defectiveText = defectiveElement.dataset.content || "";
+    const incipientText = incipientElement.dataset.content || "";
+
+    // 3. Evaluate the risk using the same logic from your copy button.
+    const defectiveCount = (defectiveText.match(/\d+/g) || []).length;
+    const incipientCount = (incipientText.match(/\d+/g) || []).length;
+
+    let risk = "Low"; // Default to Low risk
+    if (defectiveCount > 2 || incipientCount > 4) {
+        risk = "High";
+    } else if (defectiveCount >= 1 || incipientCount >= 3) {
+        risk = "Moderate";
+    }
+
+    // 4. Call our new helper function to update the dropdown UI.
+    updateCariesRiskDropdown(risk);
+};
+
+
+/**
+ * Finds the Perio Risk dropdown and sets its value based on a calculated risk level.
+ * @param {string} riskLevel - The calculated risk level ("Low", "Moderate", or "High").
+ */
+const updatePerioRiskDropdown = (riskLevel) => {
+    // 1. Find the dropdown element using its unique originalId.
+    const perioRiskDropdown = document.querySelector('[data-original-id="3-6"]');
+    if (!perioRiskDropdown) {
+        console.warn("Perio Risk dropdown element not found on the page.");
+        return;
+    }
+
+    // 2. Construct the full option text that matches the dropdown's <option> value.
+    const optionValue = `PERIO RISK: ${riskLevel}`;
+
+    // 3. Find the <select> element inside the dropdown and set its value.
+    const selectElement = perioRiskDropdown.querySelector('select');
+    if (selectElement && selectElement.value !== optionValue) {
+        console.log(`Automatically setting Perio Risk to: ${riskLevel}`);
+        selectElement.value = optionValue;
+
+        // This is crucial for ensuring the change is saved to the cloud.
+        updateLiveOutput();
+    }
+};
 
 
 
@@ -2986,7 +3120,7 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
 
     // Use the staged content that protected us from the background refresh
     const newContent = stagedContentChange !== null ? stagedContentChange : document.getElementById('textbox-editor-textarea').value;
-
+    const editedElementId = activeElementForEditor.dataset.originalId;
     // 1. Apply the text to the local DOM element
     activeElementForEditor.dataset.content = newContent;
     const preview = activeElementForEditor.querySelector('.enhanced-textbox-preview');
@@ -2996,6 +3130,13 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
     stagedContentChange = null;
     document.getElementById('textbox-editor-textarea').oninput = null;
     document.getElementById('textbox-editor-modal').style.display = 'none';
+
+   //  After saving, check if the edited element was one of the caries fields.
+    if (editedElementId === "2-5" || editedElementId === "2-6") {
+        console.log("Caries-related field was updated. Re-evaluating Caries Risk...");
+        // 2. If it was, run our new evaluation function.
+        checkAndSetCariesRisk();
+    }
 
     // 3. Use updateLiveOutput() instead of a Transaction.
     // This reads the ENTIRE current DOM (including your new Tx Plan changes)
@@ -3199,8 +3340,6 @@ const signupButton = document.getElementById('signup-button');
 const noteList = document.getElementById('note-list');
 const saveCopyButton = document.getElementById('save-copy-button');
 const showDoctorLoginBtn = document.getElementById('show-doctor-login-btn');
-const viewHiddenToggleLabel = document.getElementById('view-hidden-toggle').parentElement;
-const lockLayoutToggleLabel = document.getElementById('lock-layout-toggle').parentElement;
 
 // --- 3. Core Functions ---
 
@@ -3576,7 +3715,7 @@ const resetValues = () => {
 
         }).catch(err => {
             console.error("Reset failed while fetching current state:", err);
-            alert("Error: Could not read the current note state to perform a safe reset. You may need to refresh the webpage, logoff note session, or do a full reset.");
+            alert("Error: Could not read the current note state to perform a safe reset.");
         });
     }
 };
@@ -3784,8 +3923,6 @@ auth.onAuthStateChanged(user => {
         logoutButton.classList.remove('view-hidden');
         saveCopyButton.classList.remove('view-hidden');
 		document.getElementById('set-template-btn').classList.remove('view-hidden');
-		viewHiddenToggleLabel.classList.remove('view-hidden');
-        lockLayoutToggleLabel.classList.remove('view-hidden');
         showView('view-doctor-dashboard');
         listenForActiveNotes();
 		listenForHistoryNotes();
@@ -3796,9 +3933,6 @@ auth.onAuthStateChanged(user => {
        
         console.log("DEBUG: Pre-loading default template into lastLoadedState...");
         loadDefaults(); 
-
-        viewHiddenToggleLabel.classList.add('view-hidden');
-        lockLayoutToggleLabel.classList.add('view-hidden');
 
         // ** THIS IS THE MODIFIED LOGIC **
 	    const savedSessionID = localStorage.getItem('dentalNoteSessionID');
@@ -4176,7 +4310,6 @@ renderHistoryUI();
 const features = [
     "Real-time Doctor-Tech collaboration",
 	"MHS Genesis-ready formatting",
-	"Navy T-2 Exam Template built-in",
     "Seamlessly import past notes",
 	"Cloud-synced note history",
     "Detailed Endo-Testing tables",
