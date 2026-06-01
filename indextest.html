@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 08MAY26 mgh -->
+<!-- version as of 01JUN26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -613,7 +613,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.6</p>
+    <p class="landing-version">v4.7</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -2845,24 +2845,17 @@ const updateBackdropMirror = () => {
     if (isCariesField) {
         // --- MATCH TYPE 1: EXACT TEXT PHRASES ---
         // Collect and sort all exact phrases by length descending to match longest first (e.g. "ext #3" before "ext")
-        let allPhrases = [];
+        const allPhrases = [];
         ['class3', 'class2', 'class1'].forEach(cls => {
             if (txPlanPhrasesMap[cls]) {
                 txPlanPhrasesMap[cls].forEach(phrase => {
-                    if (phrase.trim()) allPhrases.append({ text: phrase, cls: cls }); // Wait, let's use .push instead of .append!
+                    if (phrase.trim()) {
+                        allPhrases.push({ text: phrase, cls: cls });
+                    }
                 });
             }
         });
-        
-        // FIX: Use push instead of append for JS array
-        allPhrases = [];
-        ['class3', 'class2', 'class1'].forEach(cls => {
-            if (txPlanPhrasesMap[cls]) {
-                txPlanPhrasesMap[cls].forEach(phrase => {
-                    if (phrase.trim()) allPhrases.push({ text: phrase, cls: cls });
-                });
-            }
-        });
+
         
         allPhrases.sort((a, b) => b.text.length - a.text.length);
 
