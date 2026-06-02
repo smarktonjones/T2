@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 08MAY26 mgh -->
+<!-- version as of 01JUN26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -31,6 +31,11 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
         .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  
         
+
+
+
+
+
 
 
   /* --- START ANIMATION CODE --- */
@@ -97,7 +102,9 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         .pain-scale-container { display: flex; align-items: center; gap: 10px; }
         .pain-scale-container input[type=range] { flex-grow: 1; }
         #textbox-editor-area { display: flex; flex-direction: column; gap: 10px; align-items: stretch; height: 100%; }
-        #textbox-editor-textarea { flex-grow: 1; min-height: 200px; resize: vertical; position: relative;}
+
+
+
         #textbox-editor-snippets { display: flex; align-items: center; gap: 10px; }
         #textbox-editor-select { flex-grow: 1; }
         #textbox-editor-buttons { display: flex; flex-direction: column; gap: 5px; }
@@ -606,7 +613,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.6</p>
+    <p class="landing-version">v4.7</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -753,9 +760,13 @@ opacity: 0.4;
    
 <!-- **** START OF MODIFIED HTML for class to tx plan **** -->
 <div id="textbox-editor-area">
-    <textarea id="textbox-editor-textarea"></textarea>
+    <div class="backdrop-container">
+        <div id="backdrop-mirror"></div>
+    <textarea id="textbox-editor-textarea" spellcheck="true"></textarea>
+	</div>
 
-    <!-- NEW container for action buttons that appear on text selection -->
+
+    <!-- Container for action buttons that appear on text selection -->
     <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
         <b>Send Selected Text To Treatment Plan Block:</b><br>
         <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 3">Oper Class 3</button>
@@ -1844,6 +1855,154 @@ const auth = firebase.auth();
 
 	
     document.addEventListener('DOMContentLoaded', () => {
+
+        // ========  STYLE INJECTION ========
+        const injectHighlightingCSS = () => {
+            const style = document.createElement('style');
+            style.id = 'caries-highlight-styles';
+            style.innerHTML = `
+                .backdrop-container {
+                    position: relative !important;
+                    width: 100% !important;
+                    flex-grow: 1 !important;
+                    min-height: 220px !important;
+                    margin-bottom: 10px !important;
+                    display: block !important;
+                }
+
+                #backdrop-mirror, #textbox-editor-textarea {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    margin: 0 !important;
+                    padding: 12px !important;
+                    box-sizing: border-box !important;
+                    font-family: monospace !important;
+                    font-size: 14px !important;
+                    line-height: 1.8 !important; /* Spacing for floating badges */
+                    white-space: pre-wrap !important;
+                    word-wrap: break-word !important;
+                    border: 1px solid #ccc !important;
+                    border-radius: 4px !important;
+                    overflow-y: auto !important;
+                }
+
+                #backdrop-mirror {
+                    color: transparent !important; /* Hides duplicate text */
+                    background-color: #ffffff !important;
+                    z-index: 1 !important;
+                    pointer-events: none !important;
+                    border-color: #ccc !important;
+                }
+
+                #textbox-editor-textarea {
+                    background-color: transparent !important;
+                    color: #333333 !important;
+                    z-index: 2 !important;
+                    caret-color: #333333 !important;
+                    resize: none !important;
+                }
+
+                /* --- CORE HIGHLIGHT SPANS --- */
+                .match-class3, .match-class2, .match-class1 {
+                    position: relative !important;
+                    display: inline-block !important;
+                }
+
+                /* Class 3: Soft Red highlight */
+                .match-class3 {
+                    background-color: rgba(217, 48, 37, 0.2) !important;
+                    border-bottom: 2px solid #d93025 !important;
+                    border-radius: 2px !important;
+                }
+
+                /* Class 2: Soft Yellow highlight */
+                .match-class2 {
+                    background-color: rgba(255, 193, 7, 0.25) !important;
+                    border-bottom: 2px solid #ffc107 !important;
+                    border-radius: 2px !important;
+                }
+
+                /* Class 1: Soft Green highlight */
+                .match-class1 {
+                    background-color: rgba(40, 167, 69, 0.2) !important;
+                    border-bottom: 2px solid #28a745 !important;
+                    border-radius: 2px !important;
+                }
+
+                /* --- CLASS 3 BADGE --- */
+                .match-class3::after {
+                    content: 'Class 3' !important;
+                    position: absolute !important;
+                    bottom: 100% !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    font-size: 8px !important;
+                    font-weight: bold !important;
+                    color: #d93025 !important;
+                    background-color: #fce8e6 !important;
+                    padding: 1px 4px !important;
+                    border-radius: 3px !important;
+                    border: 1px solid rgba(217, 48, 37, 0.3) !important;
+                    white-space: nowrap !important;
+                    line-height: 1 !important;
+                    margin-bottom: 2px !important;
+                    pointer-events: none !important;
+                }
+
+                /* --- CLASS 2 BADGE --- */
+                .match-class2::after {
+                    content: 'Class 2' !important;
+                    position: absolute !important;
+                    bottom: 100% !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    font-size: 8px !important;
+                    font-weight: bold !important;
+                    color: #b28900 !important;
+                    background-color: #fef7e0 !important;
+                    padding: 1px 4px !important;
+                    border-radius: 3px !important;
+                    border: 1px solid rgba(255, 193, 7, 0.4) !important;
+                    white-space: nowrap !important;
+                    line-height: 1 !important;
+                    margin-bottom: 2px !important;
+                    pointer-events: none !important;
+                }
+
+                /* --- CLASS 1 BADGE --- */
+                .match-class1::after {
+                    content: 'Class 1' !important;
+                    position: absolute !important;
+                    bottom: 100% !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    font-size: 8px !important;
+                    font-weight: bold !important;
+                    color: #28a745 !important;
+                    background-color: #e8f5e9 !important; /* Light solid green background */
+                    padding: 1px 4px !important;
+                    border-radius: 3px !important;
+                    border: 1px solid rgba(40, 167, 69, 0.3) !important;
+                    white-space: nowrap !important;
+                    line-height: 1 !important;
+                    margin-bottom: 2px !important;
+                    pointer-events: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+        };
+        
+        injectHighlightingCSS();
+
+        // ======================================================
+
+
+
+
+
         // --- State and Constants ---
 		let stagedContentChange = null;
         let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null; 
@@ -1999,62 +2158,46 @@ const updateBPElementUI = (element) => { const s = parseInt(element.querySelecto
 
 
         
-        const updateLiveOutput = () => {
-            let outputParts = [];
-            document.querySelectorAll('.draggable-element').forEach(el => {
-                const state = getElementState(el); let content = '';
-                if (state.type === 'enhanced-textbox') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
-
-                // **** START OF NEW CODE for tx plan****
-                else if (state.type === 'tx-plan') {
-                    const classOrder = ["CLASS 3", "CLASS 2", "CLASS 1"];
-                    let planParts = [];
-                    classOrder.forEach(className => {
-                        let classContent = [];
-                        for (let priority = 1; priority <= 5; priority++) {
-                            let priorityItems = [];
-                            state.txRows.forEach(rowName => {
-   const key = `${rowName}-${className}`;
+const updateLiveOutput = (forceImmediate = false) => {
+    let outputParts = [];
+    document.querySelectorAll('.draggable-element').forEach(el => {
+        const state = getElementState(el); let content = '';
+        if (state.type === 'enhanced-textbox') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
+        else if (state.type === 'tx-plan') {
+            const classOrder = ["CLASS 3", "CLASS 2", "CLASS 1"];
+            let planParts = [];
+            classOrder.forEach(className => {
+                let classContent = [];
+                for (let priority = 1; priority <= 5; priority++) {
+                    let priorityItems = [];
+                    state.txRows.forEach(rowName => {
+                        const key = `${rowName}-${className}`;
                         if (state.txData[key] && state.txData[key].priority === priority && state.txData[key].text.trim() !== '') {
-                            // **** START OF MODIFIED LINE ****
-                            // Add the row name as a prefix to the treatment text
                             priorityItems.push(`${rowName}: ${state.txData[key].text}`);
-                            // **** END OF MODIFIED LINE ****
                         }
                     });
-                            if (priorityItems.length > 0) {
-                                classContent.push(`${priority}) ${priorityItems.join(', ')}`);
-                            }
-                        }
-                        if (classContent.length > 0) {
-                            planParts.push(`${className}:\n     ${classContent.join('\n     ')}`);
-                        }
-                    });
-                    content = planParts.join('\n');
+                    if (priorityItems.length > 0) {
+                        classContent.push(`${priority}) ${priorityItems.join(', ')}`);
+                    }
                 }
-                // **** END OF NEW CODE ****
-
-                else if (state.type === 'anesthetic') { let an_parts = []; if (state.includeTopical) { an_parts.push('Topical Anesthetic.'); } for (const [name, carpules] of Object.entries(state.anestheticValues)) { if (carpules > 0) { const typeInfo = state.anestheticTypes.find(t => t.name === name); if (typeInfo) { const totalMg = parseFloat((typeInfo.mg * carpules).toPrecision(3)); const totalEpi = parseFloat((typeInfo.epi * carpules).toPrecision(3)); an_parts.push(`[${totalMg} MILLIGRAMS ${name} ${totalEpi} MICROGRAMS EPI.]`); } } } content = an_parts.join(' '); }
-
-
-        // **** START OF REPLACEMENT CODE BLOCK for tab delimited endo testing ****
-
+                if (classContent.length > 0) {
+                    planParts.push(`${className}:\n     ${classContent.join('\n     ')}`);
+                }
+            });
+            content = planParts.join('\n');
+        }
+        else if (state.type === 'anesthetic') { let an_parts = []; if (state.includeTopical) { an_parts.push('Topical Anesthetic.'); } for (const [name, carpules] of Object.entries(state.anestheticValues)) { if (carpules > 0) { const typeInfo = state.anestheticTypes.find(t => t.name === name); if (typeInfo) { const totalMg = parseFloat((typeInfo.mg * carpules).toPrecision(3)); const totalEpi = parseFloat((typeInfo.epi * carpules).toPrecision(3)); an_parts.push(`[${totalMg} MILLIGRAMS ${name} ${totalEpi} MICROGRAMS EPI.]`); } } } content = an_parts.join(' '); }
         else if (state.type === 'endo-testing') {
             const data = state.endoData; 
             const tests = state.endoTests;
             const activeTeethIndices = data.teeth
                 .map((tooth, i) => (tooth && tooth.trim() !== '' && Object.values(data.results).some(testRow => testRow[i] && testRow[i].trim() !== '')) ? i : -1)
                 .filter(i => i !== -1);
-            
             if (activeTeethIndices.length > 0) {
                 const activeTeeth = activeTeethIndices.map(i => data.teeth[i]);
                 const activeTests = tests.filter(testName => data.results[testName] && activeTeethIndices.some(i => data.results[testName][i] && data.results[testName][i].trim() !== ''));
-                
                 if (activeTests.length > 0) {
-                    // Define the non-breaking space character for padding
                     const nbsp = '\u2002'; 
-
-                    // 1. Calculate the maximum width needed for each column
                     const colWidths = activeTeeth.map((tooth, i) => {
                         let maxWidth = tooth.length;
                         activeTests.forEach(testName => {
@@ -2063,47 +2206,33 @@ const updateBPElementUI = (element) => { const s = parseInt(element.querySelecto
                         });
                         return maxWidth;
                     });
-
-                    // 2. Build the output using padEnd and the non-breaking space
                     const header = 'Endo Tests'.padEnd(20, nbsp) + ' | ' + activeTeeth.map((tooth, i) => tooth.padEnd(colWidths[i], nbsp)).join(' | ');
-                    
                     const separator = '-'.repeat(20) + '-+-' + colWidths.map(w => '-'.repeat(w)).join('-+-');
-                    
                     const rows = activeTests.map(testName => {
                         const rowData = data.results[testName] || [];
                         const rowResults = activeTeethIndices.map((toothIndex, i) => (rowData[toothIndex] || '').padEnd(colWidths[i], nbsp));
                         return testName.padEnd(20, nbsp) + ' | ' + rowResults.join(' | ');
                     });
-                    
                     content = [header, separator, ...rows].join('\n');
                 }
             }
         }
+        else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
+        else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
+        else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
+        else if (state.type === 'psr') { const scores = state.scores; const topRow = `     ${padBox(scores[0])} ${padBox(scores[1])} ${padBox(scores[2])}`; const botRow = `     ${padBox(scores[5])} ${padBox(scores[4])} ${padBox(scores[3])}`; content = `PSR:\n${topRow}\n${botRow}`; if (state.asterisks.some(a => a) && state.asteriskNote.trim()) { content += `\n     (*: ${state.asteriskNote.trim()})`; } }
+        else if (state.type === 'dropdown') { if (el.querySelector('select').selectedIndex > 0 || !state.required) content = el.querySelector('select').value; }
+        else if (state.type === 'checkbox') { if(el.querySelector('input').checked) content = el.querySelector('span').innerText; }
+        else if (state.type === 'formatter') { if (state.formatType === 'newline') content = '\n'; else if (state.formatType === 'tab') content = '     '; else content = state.customChars; }
+        if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
+    });
+    liveOutput.value = outputParts.join('');
 
-        // **** END OF REPLACEMENT CODE BLOCK ****
-
-
-                else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
-                else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
-                else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
-                else if (state.type === 'psr') { const scores = state.scores; const topRow = `     ${padBox(scores[0])} ${padBox(scores[1])} ${padBox(scores[2])}`; const botRow = `     ${padBox(scores[5])} ${padBox(scores[4])} ${padBox(scores[3])}`; content = `PSR:\n${topRow}\n${botRow}`; if (state.asterisks.some(a => a) && state.asteriskNote.trim()) { content += `\n     (*: ${state.asteriskNote.trim()})`; } }
-                else if (state.type === 'dropdown') { if (el.querySelector('select').selectedIndex > 0 || !state.required) content = el.querySelector('select').value; }
-                else if (state.type === 'checkbox') { if(el.querySelector('input').checked) content = el.querySelector('span').innerText; }
-                else if (state.type === 'formatter') { if (state.formatType === 'newline') content = '\n'; else if (state.formatType === 'tab') content = '     '; else content = state.customChars; }
-                if (content || state.type === 'formatter') { let prefix = (state.prefixNewline ? '\n' : '') + (state.prefixTab ? '     ' : ''); let suffix = state.suffixNewline ? '\n' : ''; outputParts.push(prefix + content + suffix); }
-            });
-            liveOutput.value = outputParts.join('');
-
-// Auto-save the entire state to the browser's local storage on every change.   saveCurrentStateToLocalStorage();
-
-    // Instead of saving to local storage, we now trigger a sync to the cloud.
     console.log("DEBUG: updateLiveOutput finished. Triggering cloud sync.");
-    syncStateToFirestore();
+    syncStateToFirestore(forceImmediate); // Pass the flag along
 
-
-// Update Charting on every change.
-		generateChart();
-		};
+    generateChart();
+};
 
 
 // --- 2. Core Application Logic (createDraggableContainer, createElement, getElementState) ---
@@ -2619,7 +2748,190 @@ const updatePerioRiskDropdown = (riskLevel) => {
     summarySpan.textContent = entryCount > 0 ? `Treatment Plan: ${entryCount} Entries` : 'Click to set Treatment Plan'; 
 };
    
-   
+  
+
+// ==========================================================
+//  LOGIC FOR REAL-TIME CARIES HIGHLIGHTING IN TEXTAREA
+// ==========================================================
+// Global memory store for both types of matches
+let txPlanHighlightMap = {}; 
+let txPlanPhrasesMap = { class3: [], class2: [], class1: [] };
+
+const parseTreatmentPlanForHighlighting = () => {
+    txPlanHighlightMap = {}; // Reset shorthand map
+    txPlanPhrasesMap = { class3: [], class2: [], class1: [] }; // Reset exact phrases map
+
+    const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+    if (!txPlanElement) return;
+
+    try {
+        const state = getElementState(txPlanElement);
+        const txData = state.txData || {};
+
+        for (const key in txData) {
+            // Key format: "Department-CLASS X", e.g., "Operative-CLASS 3"
+            const parts = key.split('-');
+            const className = parts[1]; // "CLASS 3", "CLASS 2", or "CLASS 1"
+            
+            if (className === 'CLASS 3' || className === 'CLASS 2' || className === 'CLASS 1') {
+                const text = txData[key].text || "";
+                if (!text.trim()) continue;
+
+                // 1. EXTRACT EXACT PHRASES: Split by commas (standard treatment plan notation)
+                const items = text.split(',').map(item => item.trim()).filter(Boolean);
+                items.forEach(item => {
+                    if (className === 'CLASS 3') txPlanPhrasesMap.class3.push(item);
+                    if (className === 'CLASS 2') txPlanPhrasesMap.class2.push(item);
+                    if (className === 'CLASS 1') txPlanPhrasesMap.class1.push(item);
+                });
+
+                // 2. EXTRACT SHORTHAND MAP
+                const regex = /(\d+)\s*\(([^)]+)\)/g;
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    const toothNum = match[1];
+                    const surfaceStr = match[2].toUpperCase();
+                    
+                    const surfaces = new Set(surfaceStr.split(''));
+                    if (surfaceStr.includes('MOD')) { surfaces.add('M'); surfaces.add('O'); surfaces.add('D'); }
+                    if (surfaceStr.includes('MO')) { surfaces.add('M'); surfaces.add('O'); }
+                    if (surfaceStr.includes('DO')) { surfaces.add('D'); surfaces.add('O'); }
+                    if (surfaceStr.includes('MI')) { surfaces.add('M'); surfaces.add('I'); }
+                    if (surfaceStr.includes('DI')) { surfaces.add('D'); surfaces.add('I'); }
+
+                    if (!txPlanHighlightMap[toothNum]) {
+                        txPlanHighlightMap[toothNum] = {};
+                    }
+                    
+                    surfaces.forEach(s => {
+                        if (className === 'CLASS 3') txPlanHighlightMap[toothNum][s] = 'class3';
+                        if (className === 'CLASS 2') txPlanHighlightMap[toothNum][s] = 'class2';
+                        if (className === 'CLASS 1') txPlanHighlightMap[toothNum][s] = 'class1';
+                    });
+                }
+            }
+        }
+        console.log("Parsed Treatment Plan Phrases:", txPlanPhrasesMap);
+    } catch (e) {
+        console.error("Error parsing treatment plan for highlights:", e);
+    }
+};
+
+
+/**
+ * Syncs the textarea text to the backdrop mirror, applying HTML highlights if relevant.
+ */
+/**
+ * Syncs the textarea text to the backdrop mirror, applying HTML highlights if relevant.
+ * Implements a compiler placeholder tokenization system to prevent nesting HTML conflicts.
+ */
+const updateBackdropMirror = () => {
+    const textarea = document.getElementById('textbox-editor-textarea');
+    const mirror = document.getElementById('backdrop-mirror');
+    if (!textarea || !mirror) return;
+
+    let text = textarea.value;
+
+    const editedElementId = activeElementForEditor ? activeElementForEditor.dataset.originalId : "";
+    const isCariesField = (editedElementId === "2-5" || editedElementId === "2-6");
+
+    let workingText = text;
+    const placeholders = {};
+    let placeholderCounter = 0;
+
+    // Helper to safely escape exact phrases for RegExp matching
+    const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    if (isCariesField) {
+        // --- MATCH TYPE 1: EXACT TEXT PHRASES ---
+        // Collect and sort all exact phrases by length descending to match longest first (e.g. "ext #3" before "ext")
+        const allPhrases = [];
+        ['class3', 'class2', 'class1'].forEach(cls => {
+            if (txPlanPhrasesMap[cls]) {
+                txPlanPhrasesMap[cls].forEach(phrase => {
+                    if (phrase.trim()) {
+                        allPhrases.push({ text: phrase, cls: cls });
+                    }
+                });
+            }
+        });
+
+        
+        allPhrases.sort((a, b) => b.text.length - a.text.length);
+
+        allPhrases.forEach(item => {
+            const escaped = escapeRegExp(item.text);
+            const pattern = new RegExp(escaped, 'gi'); // Case-insensitive exact match
+            
+            workingText = workingText.replace(pattern, (matchedText) => {
+                const token = `___PH_${placeholderCounter}___`;
+                placeholders[token] = `<span class="match-${item.cls}">${matchedText}</span>`;
+                placeholderCounter++;
+                return token;
+            });
+        });
+
+        // --- MATCH TYPE 2: TOOTH SHORTHANDS ---
+        const shorthandRegex = /#?(\d+)\s*\(([^)]+)\)/gi;
+        workingText = workingText.replace(shorthandRegex, (fullMatch, toothNum, surfaceStr) => {
+            const surfaces = surfaceStr.toUpperCase();
+            let matchedClass = null;
+
+            if (txPlanHighlightMap[toothNum]) {
+                const surfacesToCheck = new Set(surfaces.split(''));
+                if (surfaces.includes('MOD')) { surfacesToCheck.add('M'); surfacesToCheck.add('O'); surfacesToCheck.add('D'); }
+                if (surfaces.includes('MO')) { surfacesToCheck.add('M'); surfacesToCheck.add('O'); }
+                if (surfaces.includes('DO')) { surfacesToCheck.add('D'); surfacesToCheck.add('O'); }
+                if (surfaces.includes('MI')) { surfacesToCheck.add('M'); surfacesToCheck.add('I'); }
+                if (surfaces.includes('DI')) { surfacesToCheck.add('D'); surfacesToCheck.add('I'); }
+
+                // Determine the highest priority class match for this shorthand
+                for (const s of surfacesToCheck) {
+                    if (txPlanHighlightMap[toothNum][s]) {
+                        matchedClass = txPlanHighlightMap[toothNum][s];
+                        break; // Stop at first matched surface class
+                    }
+                }
+            }
+
+            if (matchedClass) {
+                const token = `___PH_${placeholderCounter}___`;
+                placeholders[token] = `<span class="match-${matchedClass}">${fullMatch}</span>`;
+                placeholderCounter++;
+                return token;
+            }
+            return fullMatch;
+        });
+    }
+
+    // 1. Escape basic HTML characters in our compiled string to keep it safe from parsing errors
+    let html = workingText
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // 2. Restore all placeholders (inserting clean matching HTML spans safely back)
+    for (const token in placeholders) {
+        html = html.replace(token, placeholders[token]);
+    }
+
+    // 3. Convert multi-spaces to non-breaking spaces for alignment
+    html = html.replace(/ {2,}/g, match => '&nbsp;'.repeat(match.length));
+    
+    if (html.endsWith('\n')) {
+        html += ' ';
+    }
+    html = html.replace(/\n/g, '<br>');
+
+    // 4. Paint the mirror
+    mirror.innerHTML = html;
+};
+
+
+
+
+
+  
    
    
    
@@ -2896,6 +3208,8 @@ importFromModalButton.addEventListener('click', () => {
             updateTxPlanSummary(txPlanElement);
             updateLiveOutput();
             showFeedback("Copied to Treatment Plan!");
+			parseTreatmentPlanForHighlighting(); // Re-parse the updated plan
+			updateBackdropMirror();              // Repaint the highlights instantly
         };
         
         // Listen for clicks on any of our new action buttons
@@ -2934,6 +3248,26 @@ const openTextboxEditor = (element) => {
     // 1. When the modal opens, "stage" the current content in our isolated variable.
     stagedContentChange = state.content;
     textarea.value = stagedContentChange;
+
+
+    // ======== START HIGHLIGHT EVENT BINDING ========
+    // A. Parse the current treatment plan
+    parseTreatmentPlanForHighlighting();
+    // B. Do the initial paint of the backdrop mirror
+    updateBackdropMirror();
+
+    // C. Update mirror on input
+    textarea.oninput = () => {
+        stagedContentChange = textarea.value;
+        updateBackdropMirror(); // <-- ADD THIS
+    };
+
+    // D. Sync scrolling perfectly
+    textarea.onscroll = () => {
+        if (mirror) mirror.scrollTop = textarea.scrollTop;
+    };
+    // ============================================
+
 
     // 2. As the user types, ONLY update the staging variable. This is safe from background syncs.
     textarea.oninput = () => {
@@ -3118,36 +3452,30 @@ document.getElementById('textbox-editor-replace-btn').click(); });
 document.getElementById('textbox-editor-save-btn').onclick = () => {
     if (!activeElementForEditor) return;
 
-    // Use the staged content that protected us from the background refresh
-    const newContent = stagedContentChange !== null ? stagedContentChange : document.getElementById('textbox-editor-textarea').value;
     const editedElementId = activeElementForEditor.dataset.originalId;
-    // 1. Apply the text to the local DOM element
+
+    const newContent = stagedContentChange !== null ? stagedContentChange : document.getElementById('textbox-editor-textarea').value;
     activeElementForEditor.dataset.content = newContent;
     const preview = activeElementForEditor.querySelector('.enhanced-textbox-preview');
     if (preview) preview.textContent = newContent;
-    
-    // 2. Clean up modal variables
     stagedContentChange = null;
     document.getElementById('textbox-editor-textarea').oninput = null;
     document.getElementById('textbox-editor-modal').style.display = 'none';
 
-   //  After saving, check if the edited element was one of the caries fields.
+    // 1. If caries fields were updated, re-evaluate Caries Risk
     if (editedElementId === "2-5" || editedElementId === "2-6") {
         console.log("Caries-related field was updated. Re-evaluating Caries Risk...");
-        // 2. If it was, run our new evaluation function.
         checkAndSetCariesRisk();
     }
+    
+    // 2. Pass 'true' to trigger an INSTANT save to Firestore!
+    console.log("DEBUG: Modal saved. Triggering IMMEDIATE cloud sync.");
+    updateLiveOutput(true); 
 
-    // 3. Use updateLiveOutput() instead of a Transaction.
-    // This reads the ENTIRE current DOM (including your new Tx Plan changes)
-    // and queues it all up to be saved to the cloud together perfectly.
-    console.log("DEBUG: Modal saved. Triggering updateLiveOutput to read full DOM.");
-    updateLiveOutput(); 
-
-    // 4. Run the evaluation logic
     const noteText = document.getElementById('live-output').value;
     evaluateNote(noteText);
 };
+
 // =================================================================
 
 
@@ -3464,8 +3792,7 @@ const startEditingSession = (noteId) => {
 
 
 // This REPLACES old `saveCurrentStateToLocalStorage` function.
-const syncStateToFirestore = () => {
-// If the 'isRenderingFromCloud' flag is true, stop immediately.
+const syncStateToFirestore = (forceImmediate = false) => {
     if (isRenderingFromCloud) {
         console.log("DEBUG: Suppressing Firestore sync because a cloud render is in progress.");
         return;
@@ -3473,7 +3800,8 @@ const syncStateToFirestore = () => {
 
     if (!currentNoteId) return;
     clearTimeout(window.firestoreSaveTimeout);
-    window.firestoreSaveTimeout = setTimeout(() => {
+
+    const saveAction = () => {
         const stateToSave = {};
         SECTIONS.forEach(id => {
             stateToSave[id] = [];
@@ -3482,8 +3810,17 @@ const syncStateToFirestore = () => {
         });
         stateToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
         db.collection('live_notes').doc(currentNoteId).set(stateToSave, { merge: true });
-    }, 3000);
+    };
+
+    // If forceImmediate is true, save right away. Otherwise, wait 3 seconds.
+    if (forceImmediate) {
+        console.log("DEBUG: Bypassing delay. Writing to Firestore instantly!");
+        saveAction();
+    } else {
+        window.firestoreSaveTimeout = setTimeout(saveAction, 3000);
+    }
 };
+
 
 
 // =================================================================
