@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 01JUN26 mgh -->
+<!-- version as of 10JUN26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -613,7 +613,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.7</p>
+    <p class="landing-version">v4.8</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -3178,7 +3178,41 @@ importFromModalButton.addEventListener('click', () => {
    
            // --- UI & Event Handlers ---
 
-        // **** START OF REPLACEMENT JAVASCRIPT ****
+
+        /**
+         * Automatically calculates and sets the priority for a newly activated treatment plan category.
+         * Sets it to the next available lower priority level (max_existing_priority + 1), capped at 5.
+         */
+        const autoSetPriorityForCell = (textarea, prioritySelect) => {
+            const key = textarea.dataset.key;
+            const parts = key.split('-');
+            const className = parts[1]; // "CLASS 3", "CLASS 2", or "CLASS 1"
+            
+            const table = textarea.closest('table');
+            let maxPriority = 0;
+            
+            // Look at all other select dropdowns belonging to the same classification column
+            table.querySelectorAll(`.priority-select[data-key$="-${className}"]`).forEach(sel => {
+                if (sel === prioritySelect) return; // Skip our own cell
+                
+                const cell = sel.closest('.cell-content');
+                const txt = cell.querySelector('textarea').value.trim();
+                // Only count categories that currently have treatment text entered
+                if (txt !== '') {
+                    const pri = parseInt(sel.value, 10);
+                    if (pri > maxPriority) {
+                        maxPriority = pri;
+                    }
+                }
+            });
+            
+            const nextPriority = Math.min(maxPriority + 1, 5);
+            prioritySelect.value = String(nextPriority);
+        };
+
+
+
+
 
         // --- Textbox Selection-to-Treatment-Plan Logic ---
         const textboxEditorTextarea = document.getElementById('textbox-editor-textarea');
@@ -3196,11 +3230,35 @@ importFromModalButton.addEventListener('click', () => {
             }
 
             const state = getElementState(txPlanElement);
-            const key = `${targetClass}`; // removed Hardcoded to "Operative" row with `Operative-${targetClass}`
+            const key = `${targetClass}`;
 
             const existingEntry = state.txData[key] || { text: '', priority: 0 };
             const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
-            const newPriority = existingEntry.priority > 0 ? existingEntry.priority : 1; // Default to priority 1
+            
+            // --- AUTOMATIC PRIORITIZATION LOGIC ---
+            let newPriority;
+            if (existingEntry.priority > 0 && existingEntry.text.trim() !== '') {
+                // If this category already has treatment content, keep its current priority.
+                newPriority = existingEntry.priority;
+            } else {
+                // If it is a newly added category (was empty or didn't exist), set to the next available lower level.
+                const parts = key.split('-');
+                const className = parts[1]; // "CLASS 3", "CLASS 2", or "CLASS 1"
+                
+                let maxPriority = 0;
+                for (const k in state.txData) {
+                    if (k.endsWith(`-${className}`) && k !== key) {
+                        const entry = state.txData[k];
+                        if (entry && entry.text && entry.text.trim() !== '') {
+                            const pri = parseInt(entry.priority, 10);
+                            if (pri > maxPriority) {
+                                maxPriority = pri;
+                            }
+                        }
+                    }
+                }
+                newPriority = Math.min(maxPriority + 1, 5);
+            }
 
             state.txData[key] = { text: newText, priority: newPriority };
 
@@ -3208,9 +3266,10 @@ importFromModalButton.addEventListener('click', () => {
             updateTxPlanSummary(txPlanElement);
             updateLiveOutput();
             showFeedback("Copied to Treatment Plan!");
-			parseTreatmentPlanForHighlighting(); // Re-parse the updated plan
-			updateBackdropMirror();              // Repaint the highlights instantly
+            parseTreatmentPlanForHighlighting(); // Re-parse the updated plan
+            updateBackdropMirror();              // Repaint the highlights instantly
         };
+
         
         // Listen for clicks on any of our new action buttons
         selectionActionsDiv.addEventListener('click', (e) => {
@@ -3369,26 +3428,48 @@ document.getElementById('textbox-editor-replace-btn').click(); });
                 });
             });
 
-            // Snippet adding and has-content logic
+            // Snippet adding, has-content logic, and auto-prioritization
             tbody.addEventListener('change', e => {
                 if (e.target.classList.contains('snippet-select')) {
                     const select = e.target;
                     if (select.value) {
-                        const textarea = select.closest('.cell-content').querySelector('textarea');
+                        const cellContent = select.closest('.cell-content');
+                        const textarea = cellContent.querySelector('textarea');
+                        const prioritySelect = cellContent.querySelector('.priority-select');
+                        
+                        // Check if the cell was completely blank before this action
+                        const isPreviouslyEmpty = (textarea.value.trim() === '');
+                        
                         textarea.value += (textarea.value.trim() ? ', ' : '') + select.value;
                         textarea.classList.add('has-content'); // Add class when snippet is added
                         select.selectedIndex = 0;
+                        
+                        // Automatically set priority to next lower level if it was previously empty
+                        if (isPreviouslyEmpty) {
+                            autoSetPriorityForCell(textarea, prioritySelect);
+                        }
                     }
                 }
             });
 
-            // Change 3: Add input event listener to toggle the green border
+            // Input event listener to toggle the green border and auto-prioritize on typing
             tbody.addEventListener('input', e => {
                 if (e.target.tagName === 'TEXTAREA') {
-                    if (e.target.value.trim() !== '') {
-                        e.target.classList.add('has-content');
+                    const textarea = e.target;
+                    const cellContent = textarea.closest('.cell-content');
+                    const prioritySelect = cellContent.querySelector('.priority-select');
+                    
+                    // We check if it is a transition from empty to active
+                    const isPreviouslyEmpty = !textarea.classList.contains('has-content') && (textarea.value.trim() !== '');
+                    
+                    if (textarea.value.trim() !== '') {
+                        textarea.classList.add('has-content');
+                        // Automatically set priority to next lower level if this is a newly typed category
+                        if (isPreviouslyEmpty) {
+                            autoSetPriorityForCell(textarea, prioritySelect);
+                        }
                     } else {
-                        e.target.classList.remove('has-content');
+                        textarea.classList.remove('has-content');
                     }
                 }
             });
