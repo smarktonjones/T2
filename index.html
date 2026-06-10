@@ -613,7 +613,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.8</p>
+    <p class="landing-version">v4.81</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -2005,7 +2005,7 @@ const auth = firebase.auth();
 
         // --- State and Constants ---
 		let stagedContentChange = null;
-        let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null; 
+        let lastLoadedState = null, activeTemplateId = null, currentSectionToAdd = null, activeElementForEditor = null;
         const SECTIONS = ['header', 'subjective', 'objective', 'assessment', 'plan', 'footer'];
         const ALLERGY_LIST = ["None", "PREGNANCY", "Penicillin", "Amoxicillin", "Codeine", "Aspirin", "NSAIDs", "Sulfa Drugs", "Local Anesthetics", "Latex", "Iodine", "Erythromycin", "Tetracycline", "Metals (Nickel, etc.)", "IV Contrast Dye", "Eugenol", "Shellfish", "Cinnamon", "Peanuts", "Tree Nuts", "Soy"];
         const PSR_AUTOFOCUS_MAP = new Map([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
@@ -3832,6 +3832,37 @@ const listenForHistoryNotes = () => {
 };
 
 
+        /**
+         * Silently fetches the clinic template from Firestore or the local fallback
+         * and populates the in-memory lastLoadedState blueprint.
+         */
+        const fetchAndSetTemplateState = async (templateId) => {
+            console.log(`DEBUG: Silently fetching default template state for: "${templateId}"`);
+            try {
+                let templateState;
+                if (templateId === 'BUILT_IN') {
+                    templateState = JSON.parse(document.getElementById('default-json-data').textContent);
+                } else {
+                    const doc = await db.collection('clinic_templates').doc(templateId).get();
+                    if (doc.exists) {
+                        templateState = doc.data().templateData;
+                    } else {
+                        console.warn(`Template "${templateId}" not found in Firestore. Falling back to built-in template.`);
+                        templateState = JSON.parse(document.getElementById('default-json-data').textContent);
+                    }
+                }
+                lastLoadedState = JSON.parse(JSON.stringify(templateState));
+                console.log("DEBUG: lastLoadedState successfully restored in background.");
+            } catch (error) {
+                console.error("Error restoring default template for reset operations:", error);
+            }
+        };
+
+
+
+
+
+
 const startEditingSession = (noteId) => {
     console.log(`DEBUG: Starting editing session for note: "${noteId}"`);
     currentNoteId = noteId;
@@ -3840,28 +3871,32 @@ const startEditingSession = (noteId) => {
     showView('view-note-editor');
     const noteDocRef = db.collection('live_notes').doc(noteId);
     
-    unsubscribeFromNote = noteDocRef.onSnapshot(doc => {
-	
-	    // --- THIS IS THE  GUARD CLAUSE ---
-		// Check if any modal is currently visible on the page.
-		const isModalOpen = !!document.querySelector('.modal[style*="display: block"]');
+        unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
+        const isModalOpen = !!document.querySelector('.modal[style*="display: block"]');
     
-		if (isModalOpen) {
-        // If a modal is open, the user is actively editing. DO NOT apply
-        // any updates from the cloud to prevent overwriting their work.
-        console.log("DEBUG: A modal is open. Deferring real-time update to prevent data loss.");
-        return; // Stop right here.
-		}
-		// --- END OF  GUARD CLAUSE ---
-	
+        if (isModalOpen) {
+            console.log("DEBUG: A modal is open. Deferring real-time update to prevent data loss.");
+            return;
+        }
 	
         console.log(`DEBUG: Real-time update received for note "${noteId}".`);
         if (doc.exists) {
-		        // Set the flag to true BEFORE rendering.
-        isRenderingFromCloud = true;
-            reconcileState(doc.data());
-			    // Set the flag back to false immediately after.
-        isRenderingFromCloud = false;
+            const docData = doc.data();
+            const docTemplateId = docData.templateId || 'BUILT_IN';
+
+            // --- SELF-HEALING STATE RECOVERY ---
+            // If the local variable is null (e.g. from page reload, or doctor editing),
+            // silently restore the template in the background.
+            if (!lastLoadedState || activeTemplateId !== docTemplateId) {
+                activeTemplateId = docTemplateId;
+                await fetchAndSetTemplateState(docTemplateId);
+            }
+
+            // Set the flag to true BEFORE rendering.
+            isRenderingFromCloud = true;
+            reconcileState(docData);
+            // Set the flag back to false immediately after.
+            isRenderingFromCloud = false;
 			
         } else {
             console.log(`DEBUG: Note "${noteId}" does not exist. Creating it.`);
@@ -3890,6 +3925,12 @@ const syncStateToFirestore = (forceImmediate = false) => {
                 .querySelectorAll('.draggable-element').forEach(el => stateToSave[id].push(getElementState(el)));
         });
         stateToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
+        
+        // Preserve the session's active template ID metadata
+        if (activeTemplateId) {
+            stateToSave.templateId = activeTemplateId;
+        }
+        
         db.collection('live_notes').doc(currentNoteId).set(stateToSave, { merge: true });
     };
 
@@ -4525,7 +4566,11 @@ startDayButton.addEventListener('click', async () => {
         }
         
 		lastLoadedState = JSON.parse(JSON.stringify(templateState));
-		
+        activeTemplateId = selectedClinicId; // Keep track locally
+
+        // Inject the template ID as a metadata field inside the note document state
+        templateState.templateId = selectedClinicId;
+        
         // Generate a custom unique ID for the live session document
         const uniquePart = db.collection('live_notes').doc().id;
         const newCustomSessionId = `${techName}-${uniquePart}`;
