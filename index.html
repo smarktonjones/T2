@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 10JUN26 mgh -->
+<!-- version as of 11JUN26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -613,7 +613,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.81</p>
+    <p class="landing-version">v4.82</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -2011,6 +2011,8 @@ const auth = firebase.auth();
         const PSR_AUTOFOCUS_MAP = new Map([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
         const liveOutput = document.getElementById('live-output');
         const textboxEditorModal = document.getElementById('textbox-editor-modal');
+		const viewHiddenToggleLabel = document.getElementById('view-hidden-toggle').parentElement;
+        const lockLayoutToggleLabel = document.getElementById('lock-layout-toggle').parentElement;
         // --- Helper Functions ---
 
 	// --- History Management Logic ---
@@ -4382,6 +4384,8 @@ auth.onAuthStateChanged(user => {
         logoutButton.classList.remove('view-hidden');
         saveCopyButton.classList.remove('view-hidden');
 		document.getElementById('set-template-btn').classList.remove('view-hidden');
+		viewHiddenToggleLabel.classList.remove('view-hidden');
+        lockLayoutToggleLabel.classList.remove('view-hidden');
         showView('view-doctor-dashboard');
         listenForActiveNotes();
 		listenForHistoryNotes();
@@ -4389,6 +4393,8 @@ auth.onAuthStateChanged(user => {
         userStatusEmail.textContent = "Technician Mode";
         logoutButton.classList.add('view-hidden');
         saveCopyButton.classList.add('view-hidden');
+		viewHiddenToggleLabel.classList.add('view-hidden');
+        lockLayoutToggleLabel.classList.add('view-hidden');
        
         console.log("DEBUG: Pre-loading default template into lastLoadedState...");
         loadDefaults(); 
