@@ -3794,7 +3794,7 @@ const listenForHistoryNotes = () => {
     console.log("DEBUG: Listening for archived history notes for doctor dashboard...");
     const historyNoteList = document.getElementById('history-note-list');
 
-    db.collection('history_notes').orderBy('timestamp', 'desc').limit(10).onSnapshot(snapshot => {
+    db.collection('history_notes').orderBy('timestamp', 'desc').limit(20).onSnapshot(snapshot => {
         historyNoteList.innerHTML = snapshot.empty ? '<li>No archived notes found.</li>' : '';
         snapshot.forEach(doc => {
             const data = doc.data();
