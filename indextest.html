@@ -4843,7 +4843,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 });
 
                 // 2. Load the PDF Document
-                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                 const pages = pdfDoc.getPages();
                 const firstPage = pages[0];
                 const { width, height } = firstPage.getSize();
