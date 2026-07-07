@@ -4827,12 +4827,12 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
 
-        // ==========================================
-        // SF 603A PDF GENERATION (TARGETED CALIBRATION)
-        // ==========================================
+        // =================================================================
+        // SF 603A PDF GENERATION (REVISED TARGETED CALIBRATION)
+        // =================================================================
         const generateSF603ACalibration = async () => {
             try {
-                showFeedback("Generating Targeted Calibration...", true);
+                showFeedback("Generating Revised Calibration PDF...", true);
                 
                 const url = 'SF603a.pdf'; 
                 const existingPdfBytes = await fetch(url).then(res => {
@@ -4847,14 +4847,14 @@ techNameInput.addEventListener('keydown', (event) => {
                 const rgb = PDFLib.rgb;
 
                 // ==========================================
-                // 🎯 TUNING VARIABLES - ADJUST THESE 🎯
+                // 🎯 REVISED TUNING VARIABLES 🎯
                 // ==========================================
-                const dateX = 45;         // Left edge of the DATE column
-                const treatmentX = 135;   // Left edge of the TREATMENT column
+                const dateX = 40;         // Nudged left.
+                const treatmentX = 130;   // Nudged left.
                 
-                const firstRowY = 630;    // The Y coordinate for the VERY FIRST row (under the header)
-                const rowSpacing = 22.5;  // The vertical distance between each line
-                const fontSize = 10;      // Text size
+                const firstRowY = 448;    // Drastically lowered to start inside the first row.
+                const rowSpacing = 11.8;  // Squeezed by nearly half to fit all 24 rows.
+                const fontSize = 8;       // Reduced slightly to fit cleanly within the lines.
                 // ==========================================
 
                 // Loop exactly 24 times to fill the 24 physical rows on the SF603A
@@ -4863,7 +4863,7 @@ techNameInput.addEventListener('keydown', (event) => {
                     const rowNum = i + 1;
 
                     // Draw in the DATE Column (Blue Text)
-                    firstPage.drawText(`12/01/26`, {
+                    firstPage.drawText(`12/01/26 (R${rowNum})`, {
                         x: dateX,
                         y: currentY,
                         size: fontSize,
@@ -4893,16 +4893,17 @@ techNameInput.addEventListener('keydown', (event) => {
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `SF603A_Targeted_Calibration.pdf`;
+                link.download = `SF603A_Revised_Calibration.pdf`;
                 link.click();
                 
-                showFeedback("Calibration PDF Downloaded!");
+                showFeedback("Revised Calibration PDF Downloaded!");
 
             } catch (error) {
                 console.error("PDF Generation Error:", error);
                 alert("Error generating PDF: " + error.message);
             }
         };
+
 
 
         // Attach the Event Listener to the export button
