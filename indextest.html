@@ -4828,11 +4828,11 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
         // =================================================================
-        // SF 603A PDF GENERATION (PAGE 1 & 2 CALIBRATION)
+        // SF 603A PDF GENERATION (FINAL CALIBRATION)
         // =================================================================
         const generateSF603ACalibration = async () => {
             try {
-                showFeedback("Generating 2-Page Calibration PDF...", true);
+                showFeedback("Generating Final Calibration PDF...", true);
                 
                 const url = 'SF603a.pdf'; 
                 const existingPdfBytes = await fetch(url).then(res => {
@@ -4844,7 +4844,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                 const pages = pdfDoc.getPages();
                 
-                // Get Page 1, and either grab Page 2 or create it if it doesn't exist
+                // Get Page 1, and either grab Page 2 or create a copy if it doesn't exist
                 const firstPage = pages[0];
                 let secondPage;
                 if (pages.length > 1) {
@@ -4857,44 +4857,43 @@ techNameInput.addEventListener('keydown', (event) => {
                 const rgb = PDFLib.rgb;
 
                 // ==========================================
-                // 🎯 REVISED TUNING VARIABLES 🎯
+                // 🎯 FINAL TUNING VARIABLES 🎯
                 // ==========================================
-                const dateX = 40;         // Left edge of the DATE column
-                const treatmentX = 130;   // Left edge of the TREATMENT column
-                const fontSize = 8;       // Text size
-                const rowSpacing = 12.2;  // Stretched slightly to fit perfectly!
+                const dateX = 40;
+                const treatmentX = 130;
+                const fontSize = 8;
+                
+                // --- PAGE 1 ---
+                const page1FirstRowY = 430;      // Nudged down by half a row's height.
+                const page1RowCount = 24;
+                const page1RowSpacing = 11.95;    // Precisely adjusted to fix the half-line drift over 24 rows.
 
-                // PAGE 1 variables
-                const page1FirstRowY = 436; // Moved down approx 1 full row
-                const page1RowCount = 24;   // 24 rows on the front page
-
-                // PAGE 2 variables
-                // The back page usually lacks the big header, so lines start higher
-                const page2FirstRowY = 730; // Guessed top-starting point for Page 2
-                const page2RowCount = 45;   // Drawing 45 rows to see how many fit!
+                // --- PAGE 2 ---
+                const page2FirstRowY = 724;      // Nudged down by half a row's height.
+                const page2RowCount = 35;       // Capped at exactly 35 rows as requested.
                 // ==========================================
 
                 // ------------------------------------------
                 // DRAW PAGE 1 (Rows 1 to 24)
                 // ------------------------------------------
                 for (let i = 0; i < page1RowCount; i++) {
-                    const currentY = page1FirstRowY - (i * rowSpacing);
+                    const currentY = page1FirstRowY - (i * page1RowSpacing);
                     const rowNum = i + 1;
 
                     firstPage.drawText(`12/01/26`, { x: dateX, y: currentY, size: fontSize, color: rgb(0, 0, 0.8) });
-                    firstPage.drawText(`Page 1 - Row ${rowNum}. Spacing: ${rowSpacing}`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
+                    firstPage.drawText(`Page 1 - Row ${rowNum}. Spacing: ${page1RowSpacing}`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
                     firstPage.drawLine({ start: { x: dateX, y: currentY }, end: { x: 570, y: currentY }, thickness: 0.5, color: rgb(0, 0.8, 0), opacity: 0.3 });
                 }
 
                 // ------------------------------------------
-                // DRAW PAGE 2 (Rows 25 and onwards)
+                // DRAW PAGE 2 (Rows 25 to 59)
                 // ------------------------------------------
                 for (let i = 0; i < page2RowCount; i++) {
-                    const currentY = page2FirstRowY - (i * rowSpacing);
-                    const rowNum = page1RowCount + i + 1; // Starts at 25
+                    const currentY = page2FirstRowY - (i * page1RowSpacing); // Use the same precise spacing
+                    const rowNum = page1RowCount + i + 1;
 
                     secondPage.drawText(`12/01/26`, { x: dateX, y: currentY, size: fontSize, color: rgb(0, 0, 0.8) });
-                    secondPage.drawText(`Page 2 - Row ${rowNum}. Spacing: ${rowSpacing}. Count how many lines fit before the bottom!`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
+                    secondPage.drawText(`Page 2 - Row ${rowNum}. Spacing: ${page1RowSpacing}`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
                     secondPage.drawLine({ start: { x: dateX, y: currentY }, end: { x: 570, y: currentY }, thickness: 0.5, color: rgb(0, 0.8, 0), opacity: 0.3 });
                 }
 
@@ -4903,10 +4902,10 @@ techNameInput.addEventListener('keydown', (event) => {
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `SF603A_Page1_and_2_Calibration.pdf`;
+                link.download = `SF603A_FINAL_Calibration.pdf`;
                 link.click();
                 
-                showFeedback("2-Page Calibration Downloaded!");
+                showFeedback("Final 2-Page Calibration Downloaded!");
 
             } catch (error) {
                 console.error("PDF Generation Error:", error);
