@@ -4836,7 +4836,8 @@ techNameInput.addEventListener('keydown', (event) => {
                 
                 // 1. Get the text from the live output box
                 const outputElement = document.getElementById('live-output');
-                const clinicalText = outputElement.innerText || outputElement.textContent;
+                // --- THIS IS THE FIX: Use .value for a <textarea> ---
+                const clinicalText = outputElement.value;
                 
                 if (!clinicalText.trim()) {
                     showFeedback("No clinical note to export!", false);
@@ -4863,8 +4864,8 @@ techNameInput.addEventListener('keydown', (event) => {
                 const treatmentX = 130;
                 const fontSize = 8;
                 
-                // Text Wrapping Calibration (Adjust if text clips the right edge of the paper)
-                const maxTextWidth = 430; // Approx width from treatmentX to the right margin
+                // Text Wrapping Calibration
+                const maxTextWidth = 430; 
 
                 // --- PAGE 1 ---
                 const page1FirstRowY = 436;      
@@ -4921,7 +4922,6 @@ techNameInput.addEventListener('keydown', (event) => {
                         startingY = page1FirstRowY;
                         maxLinesOnThisPage = page1RowCount;
                     } else if (pageNumber === 2) {
-                        // Check if template naturally has a second page, otherwise copy page 1
                         if (pdfDoc.getPages().length > 1) {
                             currentPage = pdfDoc.getPages()[1];
                         } else {
@@ -4931,7 +4931,6 @@ techNameInput.addEventListener('keydown', (event) => {
                         startingY = page2FirstRowY;
                         maxLinesOnThisPage = page2RowCount;
                     } else {
-                        // For Page 3, 4, 5+ -> Copy Page 2's layout
                         const sourcePageIndex = pdfDoc.getPages().length > 1 ? 1 : 0;
                         const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [sourcePageIndex]);
                         currentPage = pdfDoc.addPage(copiedPage);
@@ -4983,6 +4982,8 @@ techNameInput.addEventListener('keydown', (event) => {
 
         // Bind the new function to the export button
         document.getElementById('export-sf603a-btn').addEventListener('click', exportToSF603A);
+
+
 
 
 
