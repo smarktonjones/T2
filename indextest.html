@@ -4828,32 +4828,32 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
         // =================================================================
-        // SF 603A PDF GENERATION (FINAL CALIBRATION)
+        // SF 603A PDF GENERATION (PRODUCTION EXPORT)
         // =================================================================
-        const generateSF603ACalibration = async () => {
+        const exportToSF603A = async () => {
             try {
-                showFeedback("Generating Final Calibration PDF...", true);
+                showFeedback("Generating SF 603A...", true);
                 
+                // 1. Get the text from the live output box
+                const outputElement = document.getElementById('live-output');
+                const clinicalText = outputElement.innerText || outputElement.textContent;
+                
+                if (!clinicalText.trim()) {
+                    showFeedback("No clinical note to export!", false);
+                    return;
+                }
+
+                // 2. Fetch the blank template
                 const url = 'SF603a.pdf'; 
                 const existingPdfBytes = await fetch(url).then(res => {
                     if (!res.ok) throw new Error("Could not find SF603a.pdf.");
                     return res.arrayBuffer();
                 });
 
-                // Load PDF ignoring encryption/XFA flags
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
-                const pages = pdfDoc.getPages();
                 
-                // Get Page 1, and either grab Page 2 or create a copy if it doesn't exist
-                const firstPage = pages[0];
-                let secondPage;
-                if (pages.length > 1) {
-                    secondPage = pages[1];
-                } else {
-                    const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [0]);
-                    secondPage = pdfDoc.addPage(copiedPage);
-                }
-
+                // Embed the standard Helvetica font for measuring and printing
+                const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
                 const rgb = PDFLib.rgb;
 
                 // ==========================================
@@ -4863,49 +4863,117 @@ techNameInput.addEventListener('keydown', (event) => {
                 const treatmentX = 130;
                 const fontSize = 8;
                 
-                // --- PAGE 1 ---
-                const page1FirstRowY = 438;      // Nudged down by half a row's height.
-                const page1RowCount = 24;
-                const page1RowSpacing = 12;    // Precisely adjusted to fix the half-line drift over 24 rows.
+                // Text Wrapping Calibration (Adjust if text clips the right edge of the paper)
+                const maxTextWidth = 430; // Approx width from treatmentX to the right margin
 
-                // --- PAGE 2 ---
-                const page2FirstRowY = 474;      // Nudged down by half a row's height.
-                const page2RowCount = 35;       // Capped at exactly 35 rows as requested.
+                // --- PAGE 1 ---
+                const page1FirstRowY = 436;      
+                const page1RowCount = 24;
+                const rowSpacing = 12; // Used for all pages
+                
+                // --- PAGE 2 (And all subsequent pages) ---
+                const page2FirstRowY = 472;      
+                const page2RowCount = 35;       
                 // ==========================================
 
-                // ------------------------------------------
-                // DRAW PAGE 1 (Rows 1 to 24)
-                // ------------------------------------------
-                for (let i = 0; i < page1RowCount; i++) {
-                    const currentY = page1FirstRowY - (i * page1RowSpacing);
-                    const rowNum = i + 1;
+                // 3. Helper Function: Word-Wrap the text dynamically
+                const splitTextIntoLines = (text, maxWidth) => {
+                    const paragraphs = text.split('\n'); // Respect existing line breaks
+                    let lines = [];
+                    for (const p of paragraphs) {
+                        if (p.trim() === '') {
+                            lines.push(''); // Keep blank lines
+                            continue;
+                        }
+                        const words = p.split(' ');
+                        let currentLine = words[0] || '';
+                        
+                        for (let i = 1; i < words.length; i++) {
+                            const word = words[i];
+                            const width = font.widthOfTextAtSize(currentLine + " " + word, fontSize);
+                            if (width < maxWidth) {
+                                currentLine += " " + word;
+                            } else {
+                                lines.push(currentLine);
+                                currentLine = word;
+                            }
+                        }
+                        if (currentLine) lines.push(currentLine);
+                    }
+                    return lines;
+                };
 
-                    firstPage.drawText(`12/01/26`, { x: dateX, y: currentY, size: fontSize, color: rgb(0, 0, 0.8) });
-                    firstPage.drawText(`Page 1 - Row ${rowNum}. Spacing: ${page1RowSpacing}`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
-                    firstPage.drawLine({ start: { x: dateX, y: currentY }, end: { x: 570, y: currentY }, thickness: 0.5, color: rgb(0, 0.8, 0), opacity: 0.3 });
+                // Create our array of perfectly wrapped lines
+                const textLines = splitTextIntoLines(clinicalText.trim(), maxTextWidth);
+                const today = new Date().toLocaleDateString('en-US');
+
+                // 4. Pagination Engine
+                let currentLineIndex = 0;
+                let pageNumber = 1;
+
+                while (currentLineIndex < textLines.length) {
+                    let currentPage;
+                    let startingY;
+                    let maxLinesOnThisPage;
+
+                    if (pageNumber === 1) {
+                        currentPage = pdfDoc.getPages()[0];
+                        startingY = page1FirstRowY;
+                        maxLinesOnThisPage = page1RowCount;
+                    } else if (pageNumber === 2) {
+                        // Check if template naturally has a second page, otherwise copy page 1
+                        if (pdfDoc.getPages().length > 1) {
+                            currentPage = pdfDoc.getPages()[1];
+                        } else {
+                            const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [0]);
+                            currentPage = pdfDoc.addPage(copiedPage);
+                        }
+                        startingY = page2FirstRowY;
+                        maxLinesOnThisPage = page2RowCount;
+                    } else {
+                        // For Page 3, 4, 5+ -> Copy Page 2's layout
+                        const sourcePageIndex = pdfDoc.getPages().length > 1 ? 1 : 0;
+                        const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [sourcePageIndex]);
+                        currentPage = pdfDoc.addPage(copiedPage);
+                        startingY = page2FirstRowY;
+                        maxLinesOnThisPage = page2RowCount;
+                    }
+
+                    // 5. Draw the lines for the current page
+                    let linesDrawn = 0;
+                    while (linesDrawn < maxLinesOnThisPage && currentLineIndex < textLines.length) {
+                        const currentY = startingY - (linesDrawn * rowSpacing);
+
+                        // Only print the Date on the very first line of the entire document
+                        if (currentLineIndex === 0) {
+                            currentPage.drawText(today, { x: dateX, y: currentY, size: fontSize, font: font, color: rgb(0, 0, 0) });
+                        }
+
+                        // Print the clinical text line
+                        currentPage.drawText(textLines[currentLineIndex], { 
+                            x: treatmentX, 
+                            y: currentY, 
+                            size: fontSize, 
+                            font: font, 
+                            color: rgb(0, 0, 0) 
+                        });
+
+                        linesDrawn++;
+                        currentLineIndex++;
+                    }
+                    
+                    pageNumber++;
                 }
 
-                // ------------------------------------------
-                // DRAW PAGE 2 (Rows 25 to 59)
-                // ------------------------------------------
-                for (let i = 0; i < page2RowCount; i++) {
-                    const currentY = page2FirstRowY - (i * page1RowSpacing); // Use the same precise spacing
-                    const rowNum = page1RowCount + i + 1;
-
-                    secondPage.drawText(`12/01/26`, { x: dateX, y: currentY, size: fontSize, color: rgb(0, 0, 0.8) });
-                    secondPage.drawText(`Page 2 - Row ${rowNum}. Spacing: ${page1RowSpacing}`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
-                    secondPage.drawLine({ start: { x: dateX, y: currentY }, end: { x: 570, y: currentY }, thickness: 0.5, color: rgb(0, 0.8, 0), opacity: 0.3 });
-                }
-
-                // Save and Trigger Download
+                // 6. Save and Trigger Download
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `SF603A_FINAL_Calibration.pdf`;
+                link.download = `SF603A_Note_${today.replace(/\//g, '-')}.pdf`;
                 link.click();
                 
-                showFeedback("Final 2-Page Calibration Downloaded!");
+                showFeedback("SF 603A Successfully Generated!");
 
             } catch (error) {
                 console.error("PDF Generation Error:", error);
@@ -4913,10 +4981,13 @@ techNameInput.addEventListener('keydown', (event) => {
             }
         };
 
+        // Bind the new function to the export button
+        document.getElementById('export-sf603a-btn').addEventListener('click', exportToSF603A);
 
 
-        // Attach the Event Listener to the export button
-        document.getElementById('export-sf603a-btn').addEventListener('click', generateSF603ACalibration);
+
+
+
 
 
 
