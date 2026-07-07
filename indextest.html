@@ -4395,6 +4395,8 @@ auth.onAuthStateChanged(user => {
                 if (exportBtn) exportBtn.classList.remove('view-hidden');
 		viewHiddenToggleLabel.classList.remove('view-hidden');
         lockLayoutToggleLabel.classList.remove('view-hidden');
+		document.getElementById('import-btn').classList.remove('element-hidden');
+        document.getElementById('export-btn').classList.remove('element-hidden');
         showView('view-doctor-dashboard');
         listenForActiveNotes();
 		listenForHistoryNotes();
