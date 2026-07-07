@@ -4404,7 +4404,9 @@ auth.onAuthStateChanged(user => {
         saveCopyButton.classList.add('view-hidden');
 		viewHiddenToggleLabel.classList.add('view-hidden');
         lockLayoutToggleLabel.classList.add('view-hidden');
-       
+       		// Unhide the Export button for Techs
+                const exportBtn = document.getElementById('export-sf603a-btn');
+                if (exportBtn) exportBtn.classList.remove('view-hidden');
         console.log("DEBUG: Pre-loading default template into lastLoadedState...");
         loadDefaults(); 
 
@@ -4829,7 +4831,7 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
         // =================================================================
-        // SF 603A PDF GENERATION (PRODUCTION EXPORT - MULTIPAGE FIX)
+        // SF 603A PDF GENERATION (PRODUCTION EXPORT - CONTINUATION LOGIC)
         // =================================================================
         const exportToSF603A = async () => {
             try {
@@ -4851,13 +4853,9 @@ techNameInput.addEventListener('keydown', (event) => {
                     return res.arrayBuffer();
                 });
 
-                // The active document we are drawing on
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
-                
-                // NEW: A pristine "Blueprint" document kept safe in memory just for cloning blank pages!
                 const blueprintDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                 
-                // Back to standard Helvetica font
                 const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
                 const rgb = PDFLib.rgb;
 
@@ -4865,16 +4863,18 @@ techNameInput.addEventListener('keydown', (event) => {
                 // 🎯 FINAL TUNING VARIABLES 🎯
                 // ==========================================
                 const dateX = 40;
-                const treatmentX = 130; // Shifted left by ~1 char width
+                const treatmentX = 125; 
                 const fontSize = 8;
                 
-                // Text Wrapping Calibration
-                const maxTextWidth = 420; // Reduced to force slightly earlier line wrapping on the right
+                const maxTextWidth = 420; 
+                
+                // X coordinate for "Continued..." at bottom right (treatmentX + maxTextWidth + small gap)
+                const continuedBottomX = 550; 
 
                 // --- PAGE 1 ---
                 const page1FirstRowY = 436;      
                 const page1RowCount = 24;
-                const rowSpacing = 12; // Used for all pages
+                const rowSpacing = 12; 
                 
                 // --- PAGE 2 (And all subsequent pages) ---
                 const page2FirstRowY = 472;      
@@ -4883,11 +4883,11 @@ techNameInput.addEventListener('keydown', (event) => {
 
                 // 3. Helper Function: Word-Wrap the text dynamically
                 const splitTextIntoLines = (text, maxWidth) => {
-                    const paragraphs = text.split('\n'); // Respect existing line breaks
+                    const paragraphs = text.split('\n'); 
                     let lines = [];
                     for (const p of paragraphs) {
                         if (p.trim() === '') {
-                            lines.push(''); // Keep blank lines
+                            lines.push(''); 
                             continue;
                         }
                         const words = p.split(' ');
@@ -4908,7 +4908,6 @@ techNameInput.addEventListener('keydown', (event) => {
                     return lines;
                 };
 
-                // Create our array of perfectly wrapped lines
                 const textLines = splitTextIntoLines(clinicalText.trim(), maxTextWidth);
                 const today = new Date().toLocaleDateString('en-US');
 
@@ -4929,15 +4928,12 @@ techNameInput.addEventListener('keydown', (event) => {
                         if (pdfDoc.getPages().length > 1) {
                             currentPage = pdfDoc.getPages()[1];
                         } else {
-                            // Copy from pristine blueprint just in case
                             const [copiedPage] = await pdfDoc.copyPages(blueprintDoc, [0]);
                             currentPage = pdfDoc.addPage(copiedPage);
                         }
                         startingY = page2FirstRowY;
                         maxLinesOnThisPage = page2RowCount;
                     } else {
-                        // PAGE 3+ (THE FIX)
-                        // Always copy from the pristine blueprintDoc so it has NO text on it
                         const blueprintIndex = blueprintDoc.getPages().length > 1 ? 1 : 0;
                         const [copiedPage] = await pdfDoc.copyPages(blueprintDoc, [blueprintIndex]);
                         currentPage = pdfDoc.addPage(copiedPage);
@@ -4951,9 +4947,17 @@ techNameInput.addEventListener('keydown', (event) => {
                     while (linesDrawn < maxLinesOnThisPage && currentLineIndex < textLines.length) {
                         const currentY = startingY - (linesDrawn * rowSpacing);
 
-                        // Only print the Date on the very first line of the entire document
-                        if (currentLineIndex === 0) {
+                        // --- DATE & CONTINUED LOGIC (LEFT COLUMN) ---
+                        if (pageNumber === 1 && currentLineIndex === 0) {
+                            // Print Date only on the very first entry of Page 1
                             currentPage.drawText(today, { x: dateX, y: currentY, size: fontSize, font: font, color: rgb(0, 0, 0) });
+                        } else if (pageNumber > 1) {
+                            // On Page 2+, print Date on row 1, and "Continued" on row 2
+                            if (linesDrawn === 0) {
+                                currentPage.drawText(today, { x: dateX, y: currentY, size: fontSize, font: font, color: rgb(0, 0, 0) });
+                            } else if (linesDrawn === 1) {
+                                currentPage.drawText("Continued", { x: dateX, y: currentY, size: fontSize - 1, font: font, color: rgb(0, 0, 0) });
+                            }
                         }
 
                         // Print the clinical text line
@@ -4967,6 +4971,22 @@ techNameInput.addEventListener('keydown', (event) => {
 
                         linesDrawn++;
                         currentLineIndex++;
+                    }
+                    
+                    // --- BOTTOM RIGHT "CONTINUED..." LOGIC ---
+                    // If we finished drawing this page, but there are still lines left in our array...
+                    if (currentLineIndex < textLines.length) {
+                        // Calculate the Y coordinate of the very last line we just drew on this page
+                        const lastLineY = startingY - ((maxLinesOnThisPage - 1) * rowSpacing);
+                        
+                        // Print "Continued..." far to the right
+                        currentPage.drawText("Continued...", { 
+                            x: continuedBottomX, 
+                            y: lastLineY, 
+                            size: fontSize, 
+                            font: font, 
+                            color: rgb(0, 0, 0) 
+                        });
                     }
                     
                     pageNumber++;
@@ -4987,6 +5007,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 alert("Error generating PDF: " + error.message);
             }
         };
+
 
         // Bind the new function to the export button
         document.getElementById('export-sf603a-btn').addEventListener('click', exportToSF603A);
