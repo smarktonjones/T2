@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 01JUN26 mgh -->
+<!-- version as of 11JUN26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -613,7 +613,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.7</p>
+    <p class="landing-version">v4.82</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -2005,12 +2005,14 @@ const auth = firebase.auth();
 
         // --- State and Constants ---
 		let stagedContentChange = null;
-        let lastLoadedState = null, currentSectionToAdd = null, activeElementForEditor = null; 
+        let lastLoadedState = null, activeTemplateId = null, currentSectionToAdd = null, activeElementForEditor = null;
         const SECTIONS = ['header', 'subjective', 'objective', 'assessment', 'plan', 'footer'];
         const ALLERGY_LIST = ["None", "PREGNANCY", "Penicillin", "Amoxicillin", "Codeine", "Aspirin", "NSAIDs", "Sulfa Drugs", "Local Anesthetics", "Latex", "Iodine", "Erythromycin", "Tetracycline", "Metals (Nickel, etc.)", "IV Contrast Dye", "Eugenol", "Shellfish", "Cinnamon", "Peanuts", "Tree Nuts", "Soy"];
         const PSR_AUTOFOCUS_MAP = new Map([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
         const liveOutput = document.getElementById('live-output');
         const textboxEditorModal = document.getElementById('textbox-editor-modal');
+		const viewHiddenToggleLabel = document.getElementById('view-hidden-toggle').parentElement;
+        const lockLayoutToggleLabel = document.getElementById('lock-layout-toggle').parentElement;
         // --- Helper Functions ---
 
 	// --- History Management Logic ---
@@ -3178,7 +3180,41 @@ importFromModalButton.addEventListener('click', () => {
    
            // --- UI & Event Handlers ---
 
-        // **** START OF REPLACEMENT JAVASCRIPT ****
+
+        /**
+         * Automatically calculates and sets the priority for a newly activated treatment plan category.
+         * Sets it to the next available lower priority level (max_existing_priority + 1), capped at 5.
+         */
+        const autoSetPriorityForCell = (textarea, prioritySelect) => {
+            const key = textarea.dataset.key;
+            const parts = key.split('-');
+            const className = parts[1]; // "CLASS 3", "CLASS 2", or "CLASS 1"
+            
+            const table = textarea.closest('table');
+            let maxPriority = 0;
+            
+            // Look at all other select dropdowns belonging to the same classification column
+            table.querySelectorAll(`.priority-select[data-key$="-${className}"]`).forEach(sel => {
+                if (sel === prioritySelect) return; // Skip our own cell
+                
+                const cell = sel.closest('.cell-content');
+                const txt = cell.querySelector('textarea').value.trim();
+                // Only count categories that currently have treatment text entered
+                if (txt !== '') {
+                    const pri = parseInt(sel.value, 10);
+                    if (pri > maxPriority) {
+                        maxPriority = pri;
+                    }
+                }
+            });
+            
+            const nextPriority = Math.min(maxPriority + 1, 5);
+            prioritySelect.value = String(nextPriority);
+        };
+
+
+
+
 
         // --- Textbox Selection-to-Treatment-Plan Logic ---
         const textboxEditorTextarea = document.getElementById('textbox-editor-textarea');
@@ -3196,11 +3232,35 @@ importFromModalButton.addEventListener('click', () => {
             }
 
             const state = getElementState(txPlanElement);
-            const key = `${targetClass}`; // removed Hardcoded to "Operative" row with `Operative-${targetClass}`
+            const key = `${targetClass}`;
 
             const existingEntry = state.txData[key] || { text: '', priority: 0 };
             const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
-            const newPriority = existingEntry.priority > 0 ? existingEntry.priority : 1; // Default to priority 1
+            
+            // --- AUTOMATIC PRIORITIZATION LOGIC ---
+            let newPriority;
+            if (existingEntry.priority > 0 && existingEntry.text.trim() !== '') {
+                // If this category already has treatment content, keep its current priority.
+                newPriority = existingEntry.priority;
+            } else {
+                // If it is a newly added category (was empty or didn't exist), set to the next available lower level.
+                const parts = key.split('-');
+                const className = parts[1]; // "CLASS 3", "CLASS 2", or "CLASS 1"
+                
+                let maxPriority = 0;
+                for (const k in state.txData) {
+                    if (k.endsWith(`-${className}`) && k !== key) {
+                        const entry = state.txData[k];
+                        if (entry && entry.text && entry.text.trim() !== '') {
+                            const pri = parseInt(entry.priority, 10);
+                            if (pri > maxPriority) {
+                                maxPriority = pri;
+                            }
+                        }
+                    }
+                }
+                newPriority = Math.min(maxPriority + 1, 5);
+            }
 
             state.txData[key] = { text: newText, priority: newPriority };
 
@@ -3208,9 +3268,10 @@ importFromModalButton.addEventListener('click', () => {
             updateTxPlanSummary(txPlanElement);
             updateLiveOutput();
             showFeedback("Copied to Treatment Plan!");
-			parseTreatmentPlanForHighlighting(); // Re-parse the updated plan
-			updateBackdropMirror();              // Repaint the highlights instantly
+            parseTreatmentPlanForHighlighting(); // Re-parse the updated plan
+            updateBackdropMirror();              // Repaint the highlights instantly
         };
+
         
         // Listen for clicks on any of our new action buttons
         selectionActionsDiv.addEventListener('click', (e) => {
@@ -3369,26 +3430,48 @@ document.getElementById('textbox-editor-replace-btn').click(); });
                 });
             });
 
-            // Snippet adding and has-content logic
+            // Snippet adding, has-content logic, and auto-prioritization
             tbody.addEventListener('change', e => {
                 if (e.target.classList.contains('snippet-select')) {
                     const select = e.target;
                     if (select.value) {
-                        const textarea = select.closest('.cell-content').querySelector('textarea');
+                        const cellContent = select.closest('.cell-content');
+                        const textarea = cellContent.querySelector('textarea');
+                        const prioritySelect = cellContent.querySelector('.priority-select');
+                        
+                        // Check if the cell was completely blank before this action
+                        const isPreviouslyEmpty = (textarea.value.trim() === '');
+                        
                         textarea.value += (textarea.value.trim() ? ', ' : '') + select.value;
                         textarea.classList.add('has-content'); // Add class when snippet is added
                         select.selectedIndex = 0;
+                        
+                        // Automatically set priority to next lower level if it was previously empty
+                        if (isPreviouslyEmpty) {
+                            autoSetPriorityForCell(textarea, prioritySelect);
+                        }
                     }
                 }
             });
 
-            // Change 3: Add input event listener to toggle the green border
+            // Input event listener to toggle the green border and auto-prioritize on typing
             tbody.addEventListener('input', e => {
                 if (e.target.tagName === 'TEXTAREA') {
-                    if (e.target.value.trim() !== '') {
-                        e.target.classList.add('has-content');
+                    const textarea = e.target;
+                    const cellContent = textarea.closest('.cell-content');
+                    const prioritySelect = cellContent.querySelector('.priority-select');
+                    
+                    // We check if it is a transition from empty to active
+                    const isPreviouslyEmpty = !textarea.classList.contains('has-content') && (textarea.value.trim() !== '');
+                    
+                    if (textarea.value.trim() !== '') {
+                        textarea.classList.add('has-content');
+                        // Automatically set priority to next lower level if this is a newly typed category
+                        if (isPreviouslyEmpty) {
+                            autoSetPriorityForCell(textarea, prioritySelect);
+                        }
                     } else {
-                        e.target.classList.remove('has-content');
+                        textarea.classList.remove('has-content');
                     }
                 }
             });
@@ -3711,7 +3794,7 @@ const listenForHistoryNotes = () => {
     console.log("DEBUG: Listening for archived history notes for doctor dashboard...");
     const historyNoteList = document.getElementById('history-note-list');
 
-    db.collection('history_notes').orderBy('timestamp', 'desc').limit(10).onSnapshot(snapshot => {
+    db.collection('history_notes').orderBy('timestamp', 'desc').limit(20).onSnapshot(snapshot => {
         historyNoteList.innerHTML = snapshot.empty ? '<li>No archived notes found.</li>' : '';
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -3751,6 +3834,37 @@ const listenForHistoryNotes = () => {
 };
 
 
+        /**
+         * Silently fetches the clinic template from Firestore or the local fallback
+         * and populates the in-memory lastLoadedState blueprint.
+         */
+        const fetchAndSetTemplateState = async (templateId) => {
+            console.log(`DEBUG: Silently fetching default template state for: "${templateId}"`);
+            try {
+                let templateState;
+                if (templateId === 'BUILT_IN') {
+                    templateState = JSON.parse(document.getElementById('default-json-data').textContent);
+                } else {
+                    const doc = await db.collection('clinic_templates').doc(templateId).get();
+                    if (doc.exists) {
+                        templateState = doc.data().templateData;
+                    } else {
+                        console.warn(`Template "${templateId}" not found in Firestore. Falling back to built-in template.`);
+                        templateState = JSON.parse(document.getElementById('default-json-data').textContent);
+                    }
+                }
+                lastLoadedState = JSON.parse(JSON.stringify(templateState));
+                console.log("DEBUG: lastLoadedState successfully restored in background.");
+            } catch (error) {
+                console.error("Error restoring default template for reset operations:", error);
+            }
+        };
+
+
+
+
+
+
 const startEditingSession = (noteId) => {
     console.log(`DEBUG: Starting editing session for note: "${noteId}"`);
     currentNoteId = noteId;
@@ -3759,28 +3873,32 @@ const startEditingSession = (noteId) => {
     showView('view-note-editor');
     const noteDocRef = db.collection('live_notes').doc(noteId);
     
-    unsubscribeFromNote = noteDocRef.onSnapshot(doc => {
-	
-	    // --- THIS IS THE  GUARD CLAUSE ---
-		// Check if any modal is currently visible on the page.
-		const isModalOpen = !!document.querySelector('.modal[style*="display: block"]');
+        unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
+        const isModalOpen = !!document.querySelector('.modal[style*="display: block"]');
     
-		if (isModalOpen) {
-        // If a modal is open, the user is actively editing. DO NOT apply
-        // any updates from the cloud to prevent overwriting their work.
-        console.log("DEBUG: A modal is open. Deferring real-time update to prevent data loss.");
-        return; // Stop right here.
-		}
-		// --- END OF  GUARD CLAUSE ---
-	
+        if (isModalOpen) {
+            console.log("DEBUG: A modal is open. Deferring real-time update to prevent data loss.");
+            return;
+        }
 	
         console.log(`DEBUG: Real-time update received for note "${noteId}".`);
         if (doc.exists) {
-		        // Set the flag to true BEFORE rendering.
-        isRenderingFromCloud = true;
-            reconcileState(doc.data());
-			    // Set the flag back to false immediately after.
-        isRenderingFromCloud = false;
+            const docData = doc.data();
+            const docTemplateId = docData.templateId || 'BUILT_IN';
+
+            // --- SELF-HEALING STATE RECOVERY ---
+            // If the local variable is null (e.g. from page reload, or doctor editing),
+            // silently restore the template in the background.
+            if (!lastLoadedState || activeTemplateId !== docTemplateId) {
+                activeTemplateId = docTemplateId;
+                await fetchAndSetTemplateState(docTemplateId);
+            }
+
+            // Set the flag to true BEFORE rendering.
+            isRenderingFromCloud = true;
+            reconcileState(docData);
+            // Set the flag back to false immediately after.
+            isRenderingFromCloud = false;
 			
         } else {
             console.log(`DEBUG: Note "${noteId}" does not exist. Creating it.`);
@@ -3809,6 +3927,12 @@ const syncStateToFirestore = (forceImmediate = false) => {
                 .querySelectorAll('.draggable-element').forEach(el => stateToSave[id].push(getElementState(el)));
         });
         stateToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
+        
+        // Preserve the session's active template ID metadata
+        if (activeTemplateId) {
+            stateToSave.templateId = activeTemplateId;
+        }
+        
         db.collection('live_notes').doc(currentNoteId).set(stateToSave, { merge: true });
     };
 
@@ -4260,6 +4384,8 @@ auth.onAuthStateChanged(user => {
         logoutButton.classList.remove('view-hidden');
         saveCopyButton.classList.remove('view-hidden');
 		document.getElementById('set-template-btn').classList.remove('view-hidden');
+		viewHiddenToggleLabel.classList.remove('view-hidden');
+        lockLayoutToggleLabel.classList.remove('view-hidden');
         showView('view-doctor-dashboard');
         listenForActiveNotes();
 		listenForHistoryNotes();
@@ -4267,6 +4393,8 @@ auth.onAuthStateChanged(user => {
         userStatusEmail.textContent = "Technician Mode";
         logoutButton.classList.add('view-hidden');
         saveCopyButton.classList.add('view-hidden');
+		viewHiddenToggleLabel.classList.add('view-hidden');
+        lockLayoutToggleLabel.classList.add('view-hidden');
        
         console.log("DEBUG: Pre-loading default template into lastLoadedState...");
         loadDefaults(); 
@@ -4444,7 +4572,11 @@ startDayButton.addEventListener('click', async () => {
         }
         
 		lastLoadedState = JSON.parse(JSON.stringify(templateState));
-		
+        activeTemplateId = selectedClinicId; // Keep track locally
+
+        // Inject the template ID as a metadata field inside the note document state
+        templateState.templateId = selectedClinicId;
+        
         // Generate a custom unique ID for the live session document
         const uniquePart = db.collection('live_notes').doc().id;
         const newCustomSessionId = `${techName}-${uniquePart}`;
