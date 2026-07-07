@@ -4828,58 +4828,84 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
         // ==========================================
-        // SF 603A PDF GENERATION (CALIBRATION PHASE)
+        // SF 603A PDF GENERATION (TARGETED CALIBRATION)
         // ==========================================
         const generateSF603ACalibration = async () => {
             try {
-                showFeedback("Generating Calibration PDF...", true);
+                showFeedback("Generating Targeted Calibration...", true);
                 
-                // 1. Fetch the blank SF603a PDF
-                // NOTE: The file must be named exactly 'SF603a.pdf' and be in the same folder.
                 const url = 'SF603a.pdf'; 
                 const existingPdfBytes = await fetch(url).then(res => {
-                    if (!res.ok) throw new Error("Could not find SF603a.pdf. Check the file name and location.");
+                    if (!res.ok) throw new Error("Could not find SF603a.pdf.");
                     return res.arrayBuffer();
                 });
 
-                // 2. Load the PDF Document
+                // Load PDF ignoring encryption/XFA flags
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                 const pages = pdfDoc.getPages();
                 const firstPage = pages[0];
-                const { width, height } = firstPage.getSize();
                 const rgb = PDFLib.rgb;
 
-                // 3. Draw the Calibration Grid
-                // We will print "X, Y" every 40 pixels. Origin (0,0) is BOTTOM-LEFT.
-                for (let x = 20; x < width; x += 40) {
-                    for (let y = 20; y < height; y += 40) {
-                        firstPage.drawText(`${x},${y}`, {
-                            x: x,
-                            y: y,
-                            size: 7, // Very small font so it doesn't overlap too much
-                            color: rgb(1, 0, 0), // Red color for high visibility
-                            opacity: 0.8,
-                        });
-                    }
+                // ==========================================
+                // 🎯 TUNING VARIABLES - ADJUST THESE 🎯
+                // ==========================================
+                const dateX = 45;         // Left edge of the DATE column
+                const treatmentX = 135;   // Left edge of the TREATMENT column
+                
+                const firstRowY = 630;    // The Y coordinate for the VERY FIRST row (under the header)
+                const rowSpacing = 22.5;  // The vertical distance between each line
+                const fontSize = 10;      // Text size
+                // ==========================================
+
+                // Loop exactly 24 times to fill the 24 physical rows on the SF603A
+                for (let i = 0; i < 24; i++) {
+                    const currentY = firstRowY - (i * rowSpacing);
+                    const rowNum = i + 1;
+
+                    // Draw in the DATE Column (Blue Text)
+                    firstPage.drawText(`12/01/26`, {
+                        x: dateX,
+                        y: currentY,
+                        size: fontSize,
+                        color: rgb(0, 0, 0.8), // Blue for visibility
+                    });
+
+                    // Draw in the TREATMENT Column (Red Text)
+                    firstPage.drawText(`Alignment test for Row ${rowNum}. If this drifts, adjust rowSpacing.`, {
+                        x: treatmentX,
+                        y: currentY,
+                        size: fontSize,
+                        color: rgb(0.8, 0, 0), // Red for visibility
+                    });
+                    
+                    // Draw a faint guide line exactly on the text baseline to check straightness
+                    firstPage.drawLine({
+                        start: { x: dateX, y: currentY },
+                        end: { x: 570, y: currentY },
+                        thickness: 0.5,
+                        color: rgb(0, 0.8, 0), // Faint green line
+                        opacity: 0.3
+                    });
                 }
 
-                // 4. Save and Trigger Download
+                // Save and Trigger Download
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `SF603A_Calibration_Grid.pdf`;
+                link.download = `SF603A_Targeted_Calibration.pdf`;
                 link.click();
                 
                 showFeedback("Calibration PDF Downloaded!");
 
             } catch (error) {
                 console.error("PDF Generation Error:", error);
-                alert("Error generating PDF: " + error.message + "\n\n(Make sure you are running this on a local server like VS Code Live Server, not just double-clicking the file.)");
+                alert("Error generating PDF: " + error.message);
             }
         };
 
-        // Attach the Event Listener to the new button
+
+        // Attach the Event Listener to the export button
         document.getElementById('export-sf603a-btn').addEventListener('click', generateSF603ACalibration);
 
 
