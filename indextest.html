@@ -4029,16 +4029,15 @@ const reconcileState = (newState) => {
         } else if (newStateItem.type === 'alert') {
             updateAlertElementUI(element); // You already have this!
         }
-		
+        else if (newStateItem.type === 'anesthetic') {
+            console.log(`DEBUG: Surgically updating Anesthetic summary (originalId: ${newStateItem.originalId})`);
+            updateAnestheticSummary(element);
+        }
 		else if (newStateItem.type === 'dropdown') {
         // For a dropdown, just update the selected value.
         element.querySelector('select').value = newStateItem.selected;
 		}
-		else if (newStateItem.type === 'anesthetic') {
-            // This tells the UI to refresh the anesthetic summary text
-            console.log(`DEBUG: Surgically updating Anesthetic summary (originalId: ${newStateItem.originalId})`);
-            updateAnestheticSummary(element);
-        }
+
 		else if (newStateItem.type === 'tx-plan') {
         // For the treatment plan, we just need to call the existing summary
         // update function. The dataset has already been updated above.
