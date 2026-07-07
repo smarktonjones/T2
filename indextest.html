@@ -4828,11 +4828,11 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
         // =================================================================
-        // SF 603A PDF GENERATION (REVISED TARGETED CALIBRATION)
+        // SF 603A PDF GENERATION (PAGE 1 & 2 CALIBRATION)
         // =================================================================
         const generateSF603ACalibration = async () => {
             try {
-                showFeedback("Generating Revised Calibration PDF...", true);
+                showFeedback("Generating 2-Page Calibration PDF...", true);
                 
                 const url = 'SF603a.pdf'; 
                 const existingPdfBytes = await fetch(url).then(res => {
@@ -4843,49 +4843,59 @@ techNameInput.addEventListener('keydown', (event) => {
                 // Load PDF ignoring encryption/XFA flags
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                 const pages = pdfDoc.getPages();
+                
+                // Get Page 1, and either grab Page 2 or create it if it doesn't exist
                 const firstPage = pages[0];
+                let secondPage;
+                if (pages.length > 1) {
+                    secondPage = pages[1];
+                } else {
+                    const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [0]);
+                    secondPage = pdfDoc.addPage(copiedPage);
+                }
+
                 const rgb = PDFLib.rgb;
 
                 // ==========================================
                 // 🎯 REVISED TUNING VARIABLES 🎯
                 // ==========================================
-                const dateX = 40;         // Nudged left.
-                const treatmentX = 130;   // Nudged left.
-                
-                const firstRowY = 448;    // Drastically lowered to start inside the first row.
-                const rowSpacing = 11.8;  // Squeezed by nearly half to fit all 24 rows.
-                const fontSize = 8;       // Reduced slightly to fit cleanly within the lines.
+                const dateX = 40;         // Left edge of the DATE column
+                const treatmentX = 130;   // Left edge of the TREATMENT column
+                const fontSize = 8;       // Text size
+                const rowSpacing = 12.2;  // Stretched slightly to fit perfectly!
+
+                // PAGE 1 variables
+                const page1FirstRowY = 436; // Moved down approx 1 full row
+                const page1RowCount = 24;   // 24 rows on the front page
+
+                // PAGE 2 variables
+                // The back page usually lacks the big header, so lines start higher
+                const page2FirstRowY = 730; // Guessed top-starting point for Page 2
+                const page2RowCount = 45;   // Drawing 45 rows to see how many fit!
                 // ==========================================
 
-                // Loop exactly 24 times to fill the 24 physical rows on the SF603A
-                for (let i = 0; i < 24; i++) {
-                    const currentY = firstRowY - (i * rowSpacing);
+                // ------------------------------------------
+                // DRAW PAGE 1 (Rows 1 to 24)
+                // ------------------------------------------
+                for (let i = 0; i < page1RowCount; i++) {
+                    const currentY = page1FirstRowY - (i * rowSpacing);
                     const rowNum = i + 1;
 
-                    // Draw in the DATE Column (Blue Text)
-                    firstPage.drawText(`12/01/26 (R${rowNum})`, {
-                        x: dateX,
-                        y: currentY,
-                        size: fontSize,
-                        color: rgb(0, 0, 0.8), // Blue for visibility
-                    });
+                    firstPage.drawText(`12/01/26`, { x: dateX, y: currentY, size: fontSize, color: rgb(0, 0, 0.8) });
+                    firstPage.drawText(`Page 1 - Row ${rowNum}. Spacing: ${rowSpacing}`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
+                    firstPage.drawLine({ start: { x: dateX, y: currentY }, end: { x: 570, y: currentY }, thickness: 0.5, color: rgb(0, 0.8, 0), opacity: 0.3 });
+                }
 
-                    // Draw in the TREATMENT Column (Red Text)
-                    firstPage.drawText(`Alignment test for Row ${rowNum}. If this drifts, adjust rowSpacing.`, {
-                        x: treatmentX,
-                        y: currentY,
-                        size: fontSize,
-                        color: rgb(0.8, 0, 0), // Red for visibility
-                    });
-                    
-                    // Draw a faint guide line exactly on the text baseline to check straightness
-                    firstPage.drawLine({
-                        start: { x: dateX, y: currentY },
-                        end: { x: 570, y: currentY },
-                        thickness: 0.5,
-                        color: rgb(0, 0.8, 0), // Faint green line
-                        opacity: 0.3
-                    });
+                // ------------------------------------------
+                // DRAW PAGE 2 (Rows 25 and onwards)
+                // ------------------------------------------
+                for (let i = 0; i < page2RowCount; i++) {
+                    const currentY = page2FirstRowY - (i * rowSpacing);
+                    const rowNum = page1RowCount + i + 1; // Starts at 25
+
+                    secondPage.drawText(`12/01/26`, { x: dateX, y: currentY, size: fontSize, color: rgb(0, 0, 0.8) });
+                    secondPage.drawText(`Page 2 - Row ${rowNum}. Spacing: ${rowSpacing}. Count how many lines fit before the bottom!`, { x: treatmentX, y: currentY, size: fontSize, color: rgb(0.8, 0, 0) });
+                    secondPage.drawLine({ start: { x: dateX, y: currentY }, end: { x: 570, y: currentY }, thickness: 0.5, color: rgb(0, 0.8, 0), opacity: 0.3 });
                 }
 
                 // Save and Trigger Download
@@ -4893,10 +4903,10 @@ techNameInput.addEventListener('keydown', (event) => {
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `SF603A_Revised_Calibration.pdf`;
+                link.download = `SF603A_Page1_and_2_Calibration.pdf`;
                 link.click();
                 
-                showFeedback("Revised Calibration PDF Downloaded!");
+                showFeedback("2-Page Calibration Downloaded!");
 
             } catch (error) {
                 console.error("PDF Generation Error:", error);
