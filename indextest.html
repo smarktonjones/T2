@@ -737,9 +737,10 @@ opacity: 0.4;
 		
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
 
-<button id="export-sf603a-btn" class="control-btn view-hidden" style="flex: 1; background: #2c3e50;">
-                <i class="fas fa-file-pdf"></i> Export SF 603A
-            </button>
+<button id="export-sf603a-btn" class="action-btn view-hidden" style="background-color: #27ae60; flex: 0 1 auto; padding: 6px 14px; font-size: 0.85em;">
+    <i class="fas fa-file-pdf"></i> Export SF 603A
+</button>
+
     </div>
 
 
@@ -4854,7 +4855,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                 
                 // Embed the standard Helvetica font for measuring and printing
-                const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Courier);
                 const rgb = PDFLib.rgb;
 
                 // ==========================================
