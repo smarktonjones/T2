@@ -4829,7 +4829,7 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
         // =================================================================
-        // SF 603A PDF GENERATION (PRODUCTION EXPORT)
+        // SF 603A PDF GENERATION (PRODUCTION EXPORT - MULTIPAGE FIX)
         // =================================================================
         const exportToSF603A = async () => {
             try {
@@ -4837,7 +4837,6 @@ techNameInput.addEventListener('keydown', (event) => {
                 
                 // 1. Get the text from the live output box
                 const outputElement = document.getElementById('live-output');
-                // --- THIS IS THE FIX: Use .value for a <textarea> ---
                 const clinicalText = outputElement.value;
                 
                 if (!clinicalText.trim()) {
@@ -4852,21 +4851,25 @@ techNameInput.addEventListener('keydown', (event) => {
                     return res.arrayBuffer();
                 });
 
+                // The active document we are drawing on
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                 
-                // Embed the standard Helvetica font for measuring and printing
-                const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Courier);
+                // NEW: A pristine "Blueprint" document kept safe in memory just for cloning blank pages!
+                const blueprintDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
+                
+                // Back to standard Helvetica font
+                const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
                 const rgb = PDFLib.rgb;
 
                 // ==========================================
                 // 🎯 FINAL TUNING VARIABLES 🎯
                 // ==========================================
                 const dateX = 40;
-                const treatmentX = 130;
+                const treatmentX = 130; // Shifted left by ~1 char width
                 const fontSize = 8;
                 
                 // Text Wrapping Calibration
-                const maxTextWidth = 430; 
+                const maxTextWidth = 420; // Reduced to force slightly earlier line wrapping on the right
 
                 // --- PAGE 1 ---
                 const page1FirstRowY = 436;      
@@ -4926,15 +4929,19 @@ techNameInput.addEventListener('keydown', (event) => {
                         if (pdfDoc.getPages().length > 1) {
                             currentPage = pdfDoc.getPages()[1];
                         } else {
-                            const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [0]);
+                            // Copy from pristine blueprint just in case
+                            const [copiedPage] = await pdfDoc.copyPages(blueprintDoc, [0]);
                             currentPage = pdfDoc.addPage(copiedPage);
                         }
                         startingY = page2FirstRowY;
                         maxLinesOnThisPage = page2RowCount;
                     } else {
-                        const sourcePageIndex = pdfDoc.getPages().length > 1 ? 1 : 0;
-                        const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [sourcePageIndex]);
+                        // PAGE 3+ (THE FIX)
+                        // Always copy from the pristine blueprintDoc so it has NO text on it
+                        const blueprintIndex = blueprintDoc.getPages().length > 1 ? 1 : 0;
+                        const [copiedPage] = await pdfDoc.copyPages(blueprintDoc, [blueprintIndex]);
                         currentPage = pdfDoc.addPage(copiedPage);
+                        
                         startingY = page2FirstRowY;
                         maxLinesOnThisPage = page2RowCount;
                     }
