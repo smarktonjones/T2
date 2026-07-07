@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 11JUN26 mgh -->
+<!-- version as of 07JUL26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -578,14 +578,15 @@ opacity: 0.4;
 	
 	
 <!-- ================================================================= -->
-<!-- SNIPPET #1: Add Firebase SDKs                                     -->
+<!-- Firebase SDKs                                     -->
 <!-- ================================================================= -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <!-- ================================================================= -->
 
-	
+<!-- PDF-Lib for SF 603A Generation -->
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>	
 	
 	
 	
@@ -735,6 +736,10 @@ opacity: 0.4;
 		
 		
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
+
+<button id="export-sf603a-btn" class="control-btn view-hidden" style="flex: 1; background: #2c3e50;">
+                <i class="fas fa-file-pdf"></i> Export SF 603A
+            </button>
     </div>
 
 
@@ -4384,6 +4389,9 @@ auth.onAuthStateChanged(user => {
         logoutButton.classList.remove('view-hidden');
         saveCopyButton.classList.remove('view-hidden');
 		document.getElementById('set-template-btn').classList.remove('view-hidden');
+		// Unhide the Export button for Doctors
+                const exportBtn = document.getElementById('export-sf603a-btn');
+                if (exportBtn) exportBtn.classList.remove('view-hidden');
 		viewHiddenToggleLabel.classList.remove('view-hidden');
         lockLayoutToggleLabel.classList.remove('view-hidden');
         showView('view-doctor-dashboard');
@@ -4819,6 +4827,60 @@ techNameInput.addEventListener('keydown', (event) => {
 
 
 
+        // ==========================================
+        // SF 603A PDF GENERATION (CALIBRATION PHASE)
+        // ==========================================
+        const generateSF603ACalibration = async () => {
+            try {
+                showFeedback("Generating Calibration PDF...", true);
+                
+                // 1. Fetch the blank SF603a PDF
+                // NOTE: The file must be named exactly 'SF603a.pdf' and be in the same folder.
+                const url = 'SF603a.pdf'; 
+                const existingPdfBytes = await fetch(url).then(res => {
+                    if (!res.ok) throw new Error("Could not find SF603a.pdf. Check the file name and location.");
+                    return res.arrayBuffer();
+                });
+
+                // 2. Load the PDF Document
+                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+                const pages = pdfDoc.getPages();
+                const firstPage = pages[0];
+                const { width, height } = firstPage.getSize();
+                const rgb = PDFLib.rgb;
+
+                // 3. Draw the Calibration Grid
+                // We will print "X, Y" every 40 pixels. Origin (0,0) is BOTTOM-LEFT.
+                for (let x = 20; x < width; x += 40) {
+                    for (let y = 20; y < height; y += 40) {
+                        firstPage.drawText(`${x},${y}`, {
+                            x: x,
+                            y: y,
+                            size: 7, // Very small font so it doesn't overlap too much
+                            color: rgb(1, 0, 0), // Red color for high visibility
+                            opacity: 0.8,
+                        });
+                    }
+                }
+
+                // 4. Save and Trigger Download
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `SF603A_Calibration_Grid.pdf`;
+                link.click();
+                
+                showFeedback("Calibration PDF Downloaded!");
+
+            } catch (error) {
+                console.error("PDF Generation Error:", error);
+                alert("Error generating PDF: " + error.message + "\n\n(Make sure you are running this on a local server like VS Code Live Server, not just double-clicking the file.)");
+            }
+        };
+
+        // Attach the Event Listener to the new button
+        document.getElementById('export-sf603a-btn').addEventListener('click', generateSF603ACalibration);
 
 
 
