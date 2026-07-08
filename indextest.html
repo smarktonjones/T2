@@ -2521,7 +2521,9 @@ const COLOR_PALETTE = [
         }
 
 
-/**
+
+		
+        /**
          * Checks if a documented presenting complaint has a corresponding diagnosis.
          * @param {string[]} lines - An array of all lines in the note text.
          * @returns {string|null} The warning string or null if the check passes.
@@ -2529,43 +2531,34 @@ const COLOR_PALETTE = [
         function checkComplaintDiagnosis(lines) {
             console.log("Evaluation: Checking Complaint/Diagnosis link...");
             
-            // Find the relevant lines in the note.
             const complaintLine = lines.find(line => line.trim().startsWith("PRESENTING COMPLAINT:"));
             const diagnosisLine = lines.find(line => line.trim().startsWith("DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT:"));
 
-            // If either line is missing, we can't perform the check.
             if (!complaintLine || !diagnosisLine) {
-                console.log("Evaluation: Complaint or Diagnosis line not found.");
                 return null;
             }
 
-            // Extract the actual content after the label.
             const complaintText = complaintLine.replace("PRESENTING COMPLAINT:", "").trim();
             const diagnosisText = diagnosisLine.replace("DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT:", "").trim();
-
-            console.log(`Evaluation: Complaint='${complaintText}', Diagnosis='${diagnosisText}'`);
             
-            // Apply the logic: If complaint is NOT "None" but the diagnosis IS "None".
-            // We use .toLowerCase() and .includes() to make the check robust against small variations like "none" or "None.".
+            // --- THIS IS THE FIX ---
+            // Find the element within this function's scope.
+            const ccElement = document.querySelector('[data-original-id="3-1"]');
+
             if (!complaintText.toLowerCase().includes('none') && diagnosisText.toLowerCase().includes('none')) {
                 console.log("Evaluation: Mismatch FOUND!");
-
-        		if (FindTheCCElement) { // Only try to add the class if the element was found
-            	FindTheCCElement.classList.add('bp-crisis');
-        		}
-
+                if (ccElement) { // Safely add the class if the element exists
+                    ccElement.classList.add('bp-crisis');
+                }
                 return "No Diagnosis for Presenting Complaint given";
-            } 
-			else {
-        // --- FIX ---
-        if (FindTheCCElement) { // Only try to remove the class if the element was found
-            FindTheCCElement.classList.remove('bp-crisis');
-        }
-        // --- END OF FIX ---
-   		 }
+            } else {
+                if (ccElement) { // Safely remove the class if the element exists
+                    ccElement.classList.remove('bp-crisis');
+                }
+            }
             
             console.log("Evaluation: Complaint/Diagnosis check passed.");
-            return null; // Check passed.
+            return null;
         }
 
 
@@ -2624,15 +2617,12 @@ const COLOR_PALETTE = [
             const lines = noteText.split('\n');
 
             // --- Complaint/Diagnosis Check (runs first) ---
+
             const complaintSuggestion = checkComplaintDiagnosis(lines);
-			const FindTheCCElement = document.querySelector('[data-original-id="3-1"]'); //the CC element
             if (complaintSuggestion) {
-                suggestions.push(complaintSuggestion); // Use push, we will sort later if needed.
-				//add a style to the missed suggestion Element
-				FindTheCCElement.classList.add('bp-crisis');
-            } else {
-				FindTheCCElement.classList.remove('bp-crisis');
-				}
+                suggestions.push(complaintSuggestion);
+            }
+
 
             // --- Caries Risk Evaluation and Cross-Check (NEW) ---
             const recommendedCariesRisk = evaluateCariesRisk(lines);
