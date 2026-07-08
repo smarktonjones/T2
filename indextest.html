@@ -2616,15 +2616,14 @@ const COLOR_PALETTE = [
             
             const lines = noteText.split('\n');
 
-            // --- Complaint/Diagnosis Check (runs first) ---
-
+            // --- Complaint/Diagnosis Check ---
+            // The checkComplaintDiagnosis function now handles its own highlighting internally and safely.
             const complaintSuggestion = checkComplaintDiagnosis(lines);
             if (complaintSuggestion) {
                 suggestions.push(complaintSuggestion);
             }
 
-
-            // --- Caries Risk Evaluation and Cross-Check (NEW) ---
+            // --- Caries Risk Evaluation and Cross-Check ---
             const recommendedCariesRisk = evaluateCariesRisk(lines);
             if (recommendedCariesRisk) {
                 const userSelectedCariesLine = lines.find(line => line.trim().startsWith("CARIES RISK:"));
@@ -2681,6 +2680,8 @@ const COLOR_PALETTE = [
             console.log("Evaluation complete. Suggestions:", suggestions);
             return suggestions;
         }
+
+		
         // **** END OF CODE: Note Evaluation Logic ****
 
 
