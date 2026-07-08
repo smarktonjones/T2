@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 11JUN26 mgh -->
+<!-- version as of 07JUL26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -578,14 +578,15 @@ opacity: 0.4;
 	
 	
 <!-- ================================================================= -->
-<!-- SNIPPET #1: Add Firebase SDKs                                     -->
+<!-- Firebase SDKs                                     -->
 <!-- ================================================================= -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <!-- ================================================================= -->
 
-	
+<!-- PDF-Lib for SF 603A Generation -->
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>	
 	
 	
 	
@@ -613,7 +614,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v4.82</p>
+    <p class="landing-version">v5</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -735,6 +736,11 @@ opacity: 0.4;
 		
 		
 <button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
+
+<button id="export-sf603a-btn" class="action-btn view-hidden" style="background-color: #27ae60; flex: 0 1 auto; padding: 6px 14px; font-size: 0.85em;">
+    <i class="fas fa-file-pdf"></i> Export SF 603A
+</button>
+
     </div>
 
 
@@ -2131,7 +2137,31 @@ const updateBPElementUI = (element) => { const s = parseInt(element.querySelecto
 		const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
         const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
         const padBox = (score) => `[${(score || '').padEnd(2)}]`;
-        const updateAlertElementUI = (element) => { const state = getElementState(element); const display = element.querySelector('.alert-display'); element.classList.remove('alert-blank', 'alert-none', 'alert-active'); if (state.alerts.length === 0) { display.textContent = "ALERT (Click to set)"; element.classList.add('alert-blank'); } else if (state.alerts.length === 1 && state.alerts[0] === 'None') { display.textContent = "No Known Allergies"; element.classList.add('alert-none'); } else { display.textContent = `ALERT: ${state.alerts.length} active`; element.classList.add('alert-active'); } };
+        const updateAlertElementUI = (element) => {
+            const state = getElementState(element);
+            const display = element.querySelector('.alert-display');
+
+            // --- A FIX ---
+            // If the inner display span doesn't exist, stop immediately to prevent a crash.
+            if (!display) {
+                console.warn("Could not find the '.alert-display' span inside an alert element. Skipping UI update.");
+                return;
+            }
+            // --- END OF FIX ---
+
+            element.classList.remove('alert-blank', 'alert-none', 'alert-active');
+            if (state.alerts.length === 0) {
+                display.textContent = "ALERT (Click to set)";
+                element.classList.add('alert-blank');
+            } else if (state.alerts.length === 1 && state.alerts[0] === 'None') {
+                display.textContent = "No Known Allergies";
+                element.classList.add('alert-none');
+            } else {
+                display.textContent = `ALERT: ${state.alerts.length} active`;
+                element.classList.add('alert-active');
+            }
+        };
+
         const updateAnestheticSummary = (element) => { const state = getElementState(element); const summarySpan = element.querySelector('.anesthetic-summary'); const usedCount = Object.values(state.anestheticValues).filter(v => v > 0).length; summarySpan.textContent = usedCount > 0 ? `Anesthetic: ${usedCount} Type(s) Used` : 'Click to set anesthetic'; };
         const updateEndoTestingSummary = (element) => { const state = getElementState(element); const summarySpan = element.querySelector('.endo-summary'); const teethCount = state.endoData.teeth.filter(t => t && t.trim() !== '').length; summarySpan.textContent = teethCount > 0 ? `Endo Testing: ${teethCount} Teeth` : 'Click to set Endo Tests'; };
 
@@ -2491,7 +2521,9 @@ const COLOR_PALETTE = [
         }
 
 
-/**
+
+		
+        /**
          * Checks if a documented presenting complaint has a corresponding diagnosis.
          * @param {string[]} lines - An array of all lines in the note text.
          * @returns {string|null} The warning string or null if the check passes.
@@ -2499,31 +2531,34 @@ const COLOR_PALETTE = [
         function checkComplaintDiagnosis(lines) {
             console.log("Evaluation: Checking Complaint/Diagnosis link...");
             
-            // Find the relevant lines in the note.
             const complaintLine = lines.find(line => line.trim().startsWith("PRESENTING COMPLAINT:"));
             const diagnosisLine = lines.find(line => line.trim().startsWith("DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT:"));
 
-            // If either line is missing, we can't perform the check.
             if (!complaintLine || !diagnosisLine) {
-                console.log("Evaluation: Complaint or Diagnosis line not found.");
                 return null;
             }
 
-            // Extract the actual content after the label.
             const complaintText = complaintLine.replace("PRESENTING COMPLAINT:", "").trim();
             const diagnosisText = diagnosisLine.replace("DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT:", "").trim();
-
-            console.log(`Evaluation: Complaint='${complaintText}', Diagnosis='${diagnosisText}'`);
             
-            // Apply the logic: If complaint is NOT "None" but the diagnosis IS "None".
-            // We use .toLowerCase() and .includes() to make the check robust against small variations like "none" or "None.".
+            // --- THIS IS THE FIX ---
+            // Find the element within this function's scope.
+            const ccElement = document.querySelector('[data-original-id="3-1"]');
+
             if (!complaintText.toLowerCase().includes('none') && diagnosisText.toLowerCase().includes('none')) {
                 console.log("Evaluation: Mismatch FOUND!");
+                if (ccElement) { // Safely add the class if the element exists
+                    ccElement.classList.add('bp-crisis');
+                }
                 return "No Diagnosis for Presenting Complaint given";
+            } else {
+                if (ccElement) { // Safely remove the class if the element exists
+                    ccElement.classList.remove('bp-crisis');
+                }
             }
             
             console.log("Evaluation: Complaint/Diagnosis check passed.");
-            return null; // Check passed.
+            return null;
         }
 
 
@@ -2581,18 +2616,14 @@ const COLOR_PALETTE = [
             
             const lines = noteText.split('\n');
 
-            // --- Complaint/Diagnosis Check (runs first) ---
+            // --- Complaint/Diagnosis Check ---
+            // The checkComplaintDiagnosis function now handles its own highlighting internally and safely.
             const complaintSuggestion = checkComplaintDiagnosis(lines);
-			const FindTheCCElement = document.querySelector('[data-original-id="3-1"]'); //the CC element
             if (complaintSuggestion) {
-                suggestions.push(complaintSuggestion); // Use push, we will sort later if needed.
-				//add a style to the missed suggestion Element
-				FindTheCCElement.classList.add('bp-crisis');
-            } else {
-				FindTheCCElement.classList.remove('bp-crisis');
-				}
+                suggestions.push(complaintSuggestion);
+            }
 
-            // --- Caries Risk Evaluation and Cross-Check (NEW) ---
+            // --- Caries Risk Evaluation and Cross-Check ---
             const recommendedCariesRisk = evaluateCariesRisk(lines);
             if (recommendedCariesRisk) {
                 const userSelectedCariesLine = lines.find(line => line.trim().startsWith("CARIES RISK:"));
@@ -2649,6 +2680,8 @@ const COLOR_PALETTE = [
             console.log("Evaluation complete. Suggestions:", suggestions);
             return suggestions;
         }
+
+		
         // **** END OF CODE: Note Evaluation Logic ****
 
 
@@ -4023,11 +4056,15 @@ const reconcileState = (newState) => {
         } else if (newStateItem.type === 'alert') {
             updateAlertElementUI(element); // You already have this!
         }
+        else if (newStateItem.type === 'anesthetic') {
+            console.log(`DEBUG: Surgically updating Anesthetic summary (originalId: ${newStateItem.originalId})`);
+            updateAnestheticSummary(element);
+        }
 		else if (newStateItem.type === 'dropdown') {
         // For a dropdown, just update the selected value.
         element.querySelector('select').value = newStateItem.selected;
 		}
-		
+
 		else if (newStateItem.type === 'tx-plan') {
         // For the treatment plan, we just need to call the existing summary
         // update function. The dataset has already been updated above.
@@ -4384,8 +4421,13 @@ auth.onAuthStateChanged(user => {
         logoutButton.classList.remove('view-hidden');
         saveCopyButton.classList.remove('view-hidden');
 		document.getElementById('set-template-btn').classList.remove('view-hidden');
+		// Unhide the Export button for Doctors
+                const exportBtn = document.getElementById('export-sf603a-btn');
+                if (exportBtn) exportBtn.classList.remove('view-hidden');
 		viewHiddenToggleLabel.classList.remove('view-hidden');
         lockLayoutToggleLabel.classList.remove('view-hidden');
+		document.getElementById('import-btn').classList.remove('element-hidden');
+        document.getElementById('export-btn').classList.remove('element-hidden');
         showView('view-doctor-dashboard');
         listenForActiveNotes();
 		listenForHistoryNotes();
@@ -4395,7 +4437,9 @@ auth.onAuthStateChanged(user => {
         saveCopyButton.classList.add('view-hidden');
 		viewHiddenToggleLabel.classList.add('view-hidden');
         lockLayoutToggleLabel.classList.add('view-hidden');
-       
+       		// Unhide the Export button for Techs
+                const exportBtn = document.getElementById('export-sf603a-btn');
+                if (exportBtn) exportBtn.classList.remove('view-hidden');
         console.log("DEBUG: Pre-loading default template into lastLoadedState...");
         loadDefaults(); 
 
@@ -4815,6 +4859,194 @@ techNameInput.addEventListener('keydown', (event) => {
         startDayButton.click(); // Programmatically click the button
     }
 });
+
+
+
+
+        // =================================================================
+        // SF 603A PDF GENERATION (PRODUCTION EXPORT - CONTINUATION LOGIC)
+        // =================================================================
+        const exportToSF603A = async () => {
+            try {
+                showFeedback("Generating SF 603A...", true);
+                
+                // 1. Get the text from the live output box
+                const outputElement = document.getElementById('live-output');
+                const clinicalText = outputElement.value;
+                
+                if (!clinicalText.trim()) {
+                    showFeedback("No clinical note to export!", false);
+                    return;
+                }
+
+                // 2. Fetch the blank template
+                const url = 'SF603a.pdf'; 
+                const existingPdfBytes = await fetch(url).then(res => {
+                    if (!res.ok) throw new Error("Could not find SF603a.pdf.");
+                    return res.arrayBuffer();
+                });
+
+                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
+                const blueprintDoc = await PDFLib.PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
+                
+                const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                const rgb = PDFLib.rgb;
+
+                // ==========================================
+                // 🎯 FINAL TUNING VARIABLES 🎯
+                // ==========================================
+                const dateX = 40;
+                const treatmentX = 125; 
+                const fontSize = 7;
+                
+                const maxTextWidth = 400; 
+                
+                // X coordinate for "Cont'd..." at bottom right (treatmentX + maxTextWidth + small gap)
+                const continuedBottomX = 540; 
+
+                // --- PAGE 1 ---
+                const page1FirstRowY = 436;      
+                const page1RowCount = 24;
+                const rowSpacing = 12; 
+                
+                // --- PAGE 2 (And all subsequent pages) ---
+                const page2FirstRowY = 472;      
+                const page2RowCount = 35;       
+                // ==========================================
+
+                // 3. Helper Function: Word-Wrap the text dynamically
+                const splitTextIntoLines = (text, maxWidth) => {
+                    const paragraphs = text.split('\n'); 
+                    let lines = [];
+                    for (const p of paragraphs) {
+                        if (p.trim() === '') {
+                            lines.push(''); 
+                            continue;
+                        }
+                        const words = p.split(' ');
+                        let currentLine = words[0] || '';
+                        
+                        for (let i = 1; i < words.length; i++) {
+                            const word = words[i];
+                            const width = font.widthOfTextAtSize(currentLine + " " + word, fontSize);
+                            if (width < maxWidth) {
+                                currentLine += " " + word;
+                            } else {
+                                lines.push(currentLine);
+                                currentLine = word;
+                            }
+                        }
+                        if (currentLine) lines.push(currentLine);
+                    }
+                    return lines;
+                };
+
+                const textLines = splitTextIntoLines(clinicalText.trim(), maxTextWidth);
+                const today = new Date().toLocaleDateString('en-US');
+
+                // 4. Pagination Engine
+                let currentLineIndex = 0;
+                let pageNumber = 1;
+
+                while (currentLineIndex < textLines.length) {
+                    let currentPage;
+                    let startingY;
+                    let maxLinesOnThisPage;
+
+                    if (pageNumber === 1) {
+                        currentPage = pdfDoc.getPages()[0];
+                        startingY = page1FirstRowY;
+                        maxLinesOnThisPage = page1RowCount;
+                    } else if (pageNumber === 2) {
+                        if (pdfDoc.getPages().length > 1) {
+                            currentPage = pdfDoc.getPages()[1];
+                        } else {
+                            const [copiedPage] = await pdfDoc.copyPages(blueprintDoc, [0]);
+                            currentPage = pdfDoc.addPage(copiedPage);
+                        }
+                        startingY = page2FirstRowY;
+                        maxLinesOnThisPage = page2RowCount;
+                    } else {
+                        const blueprintIndex = blueprintDoc.getPages().length > 1 ? 1 : 0;
+                        const [copiedPage] = await pdfDoc.copyPages(blueprintDoc, [blueprintIndex]);
+                        currentPage = pdfDoc.addPage(copiedPage);
+                        
+                        startingY = page2FirstRowY;
+                        maxLinesOnThisPage = page2RowCount;
+                    }
+
+                    // 5. Draw the lines for the current page
+                    let linesDrawn = 0;
+                    while (linesDrawn < maxLinesOnThisPage && currentLineIndex < textLines.length) {
+                        const currentY = startingY - (linesDrawn * rowSpacing);
+
+                        // --- DATE & CONTINUED LOGIC (LEFT COLUMN) ---
+                        if (pageNumber === 1 && currentLineIndex === 0) {
+                            // Print Date only on the very first entry of Page 1
+                            currentPage.drawText(today, { x: dateX, y: currentY, size: fontSize, font: font, color: rgb(0, 0, 0) });
+                        } else if (pageNumber > 1) {
+                            // On Page 2+, print Date on row 1, and "Continued" on row 2
+                            if (linesDrawn === 0) {
+                                currentPage.drawText(today, { x: dateX, y: currentY, size: fontSize, font: font, color: rgb(0, 0, 0) });
+                            } else if (linesDrawn === 1) {
+                                currentPage.drawText("Continued", { x: dateX, y: currentY, size: fontSize - 1, font: font, color: rgb(0, 0, 0) });
+                            }
+                        }
+
+                        // Print the clinical text line
+                        currentPage.drawText(textLines[currentLineIndex], { 
+                            x: treatmentX, 
+                            y: currentY, 
+                            size: fontSize, 
+                            font: font, 
+                            color: rgb(0, 0, 0) 
+                        });
+
+                        linesDrawn++;
+                        currentLineIndex++;
+                    }
+                    
+                    // --- BOTTOM RIGHT "CONTINUED..." LOGIC ---
+                    // If we finished drawing this page, but there are still lines left in our array...
+                    if (currentLineIndex < textLines.length) {
+                        // Calculate the Y coordinate of the very last line we just drew on this page
+                        const lastLineY = startingY - ((maxLinesOnThisPage - 1) * rowSpacing);
+                        
+                        // Print "Continued..." far to the right
+                        currentPage.drawText("Continued...", { 
+                            x: continuedBottomX, 
+                            y: lastLineY, 
+                            size: fontSize, 
+                            font: font, 
+                            color: rgb(0, 0, 0) 
+                        });
+                    }
+                    
+                    pageNumber++;
+                }
+
+                // 6. Save and Trigger Download
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `SF603A_Note_${today.replace(/\//g, '-')}.pdf`;
+                link.click();
+                
+                showFeedback("SF 603A Successfully Generated!");
+
+            } catch (error) {
+                console.error("PDF Generation Error:", error);
+                alert("Error generating PDF: " + error.message);
+            }
+        };
+
+
+        // Bind the new function to the export button
+        document.getElementById('export-sf603a-btn').addEventListener('click', exportToSF603A);
+
+
+
 
 
 
