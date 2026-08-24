@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<!-- version as of 24AUG26 mgh -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Note - MAKER</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5; --main-bg: #ffffff; --section-bg: #f9f9f9;
+            --section-border: #d9d9d9; --element-bg: #e6f7ff; --element-border: #91d5ff;
+            --element-shadow: 0 2px 4px rgba(0,0,0,0.1); --button-bg: #1890ff;
+            --button-text: #ffffff; --button-hover-bg: #40a9ff; --text-color: #333;
+            --modal-bg: rgba(0,0,0,0.5); --danger-color: #d93025;
+            --warning-color: #fd7e14; --success-color: #28a745; --success-color2: yellow; --success-hover: #218838;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
+ background-image: linear-gradient(to left, #fafafa, #e8e8e8); /* The gradient */
+ color: var(--text-color); margin: 0; padding: 20px; }
+        h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
+h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h4 { text-align: center; margin-top: 0; color: var(--text-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h5 { text-align: center; margin-top: 0; font-weight: light;}    
+        .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
+        .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); }
+		.section-extra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); background-color: black;  }
+        .section-extra-container { margin: auto; width: 50%; background-image: linear-gradient(to bottom, #f9f9f9, #f0f2f5); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column;  transform: scale(0.75); opacity: 0.8;}
+		.add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
+        
+        .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
+        .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  
+        
+
+
+
+
+
+
+
+  /* --- START ANIMATION CODE --- */
+
+  transition: box-shadow 0.5s ease-out;
+
+  /* 2. Nested hover state */
+  &:hover {
+    
+    animation: breathing-glow 2s infinite ease-in-out;
+    
+    /* Optional: keeps it on top of other elements while glowing */
+    z-index: 100;
+
+  /* --- END ANIMATION CODE --- */
+}
+        
+        
+        }
+        body.layout-locked .draggable-element {cursor: default;}
+
+        /* Styles for Hidden Elements and highlighted */
+.element-highlighted.element-highlighted {border-color: var(--success-color) !important; }
+.element-highlighted2 {border-color: var(--success-color2) !important; }
+        .element-hidden { display: none; }
+        body.show-hidden-elements .element-hidden { display: flex; border-style: dotted; border-color: var(--danger-color); }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: var(--modal-bg); overflow: auto; }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 900px; border-radius: 8px; display: flex; flex-direction: column; max-height: 85vh; }
+        .modal-body { flex-grow: 1; overflow: auto; position: relative; } .modal-footer { margin-top: 20px; flex-shrink: 0; display:flex; justify-content:flex-end; gap: 10px;}
+        
+        #context-menu { display: none; position: absolute; z-index: 2000; background-color: var(--main-bg); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 5px 0; min-width: 150px; }
+        #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
+        .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
+        .copy-btn-prominent:hover { background-color: var(--success-hover); }
+		        .import-btn-prominent { background-color: lightyellow; color: black; font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
+				.import-btn-prominent:hover { background-color: yellow; }
+        #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
+        .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
+        /* All other element-specific styles are here */
+        .endo-testing-element, .anesthetic-element, .enhanced-textbox, .alert-element { cursor: pointer; justify-content: center; }
+        .internal-label { font-size: 0.8em; font-weight: bold; color: #0050b3; margin-bottom: 4px; }
+        .enhanced-textbox-preview { font-style: italic; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .alert-element { padding: 10px; text-align: center; font-weight: bold; color: var(--button-text); resize: none; min-height: initial; }
+        .alert-blank { background-color: var(--warning-color); border-color: var(--warning-color)!important; }
+        .alert-none { background-color: var(--success-color); border-color: var(--success-color)!important; }
+        .alert-active { background-color: var(--danger-color); border-color: var(--danger-color)!important; }
+        .bp-element input[type="number"] { width: 45px; text-align: center; }
+        .bp-prior-tx-container { display: none; } .bp-prior-tx-container.visible { display: block; }
+        
+/* **** START OF MODIFIED CSS to take precedence over other colors **** */
+.bp-normal { border-color: var(--bp-normal) !important; } 
+.bp-elevated { border-color: #ffc107 !important; } 
+.bp-stage1 { border-color: var(--warning-color) !important; } 
+.bp-stage2 { border-color: var(--danger-color) !important; } 
+.bp-crisis { border-color: #8b0000 !important; animation: pulse 1.5s infinite; }
+/* **** END OF MODIFIED CSS **** */
+   
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--danger-color); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+        .psr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-family: monospace; }
+        .psr-sextant { text-align: center; } .psr-sextant label { font-size: 0.8em; color: #555; display: block; }
+        .psr-grid input[type="text"] { width: 100%; box-sizing: border-box; text-align: center; }
+        .psr-asterisk-note { display: none; width: 100%; } .psr-asterisk-note.visible { display: block; margin-top: 5px; }
+        .pain-scale-container { display: flex; align-items: center; gap: 10px; }
+        .pain-scale-container input[type=range] { flex-grow: 1; }
+        #textbox-editor-area { display: flex; flex-direction: column; gap: 10px; align-items: stretch; height: 100%; }
+
+
+
+        #textbox-editor-snippets { display: flex; align-items: center; gap: 10px; }
+        #textbox-editor-select { flex-grow: 1; }
+        #textbox-editor-buttons { display: flex; flex-direction: column; gap: 5px; }
+        #anesthetic-editor-list .anesthetic-row, #prop-anesthetic-types .prop-anesthetic-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; }
+        #prop-anesthetic-types .prop-anesthetic-row { grid-template-columns: 2fr 1fr 1fr auto; }
+        #prop-anesthetic-types .prop-anesthetic-row input { width: 100%; box-sizing: border-box; }
+        .remove-btn { color: var(--danger-color); cursor: pointer; font-weight: bold; }
+        #endo-table { border-collapse: collapse; width: 100%; }
+        #endo-table th, #endo-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        #endo-table input { width: 100%; box-sizing: border-box; border: none; background: transparent; }
+        #endo-editor-controls { display: flex; gap: 10px; padding: 10px 0; align-items: center; }
+
+
+        /* **** START OF NEW CSS **** */
+
+        /* Style for the "Priority Level" text */
+        #tx-plan-table .priority-label {
+            font-size: 0.8em;
+            color: #555;
+            display: block;
+        }
+
+        /* Style the row-header cells (Oral Hygiene, etc.) */
+        #tx-plan-table .tx-row-header {
+            background-color: #f2f2f2; /* Light gray background */
+            color: #0050b3;          /* Bold blue text */
+            font-weight: bold;
+        }
+
+        /* Style the textarea for a different default color */
+        #tx-plan-table textarea {
+            background-color: #f8f9fa; /* A very light gray */
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 5px;
+            transition: background-color 0.2s, border-color 0.2s; /* Smooth transition */
+        }
+        
+        /* Style the textarea when it has content */
+        #tx-plan-table textarea.has-content {
+            background-color: #fff;
+            border-color: var(--success-color); /* Green border */
+            outline: 2px solid transparent; /* Prevents default focus outline from clashing */
+        }
+
+        /* **** END OF NEW CSS **** */
+
+           /* **** START OF NEW CODE for tx plan copy/paste **** */
+        #text-selection-menu .selection-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        #text-selection-menu .selection-menu-item:hover {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+        }
+        #action-feedback.success { background-color: var(--success-color); }
+        #action-feedback.error { background-color: var(--danger-color); }
+        /* **** END OF NEW CODE **** */
+
+
+        /* **** logo CODE **** */
+    .logo {
+      position: relative;
+      width: 450px;
+      height: 300px;
+    }
+
+
+.logo-container {
+position: absolute;
+left: 0;
+transform: translateY(-55%) translateX(20%) scale(0.25, 0.3);
+transform-origin: left bottom;
+z-index: -1;
+opacity: 0.4;
+}
+
+    .quarter {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      border-top-left-radius: 210px 140px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .quarter::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.5), transparent 60%);
+      border-top-left-radius: 210px 140px;
+    }
+
+    .navy {
+      background: linear-gradient(135deg, lightgray, white);
+      top: 0;
+      left: 0;
+    }
+
+    .yellow {
+      background: linear-gradient(135deg, white, lightgray);
+      bottom: 0;
+      right: 0;
+      transform: rotate(180deg);
+    }
+
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60px;
+      height: 60px;
+      margin: -30px 0 0 -30px;
+      background: linear-gradient(145deg, white, lightgray);
+      border-radius: 50%;
+      box-shadow:
+        inset 0 5px 10px rgba(255, 255, 255, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .center::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.6), transparent 70%);
+      border-radius: 50%;
+    }
+
+    .text-top-right,
+    .text-bottom-left {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 60px;
+      padding: 10px;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6),
+                   -1px -1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Upper Right Text - Dental Note */
+    .text-top-right {
+      top: 0;
+      right: 0;
+      color: lightgray; /* blue */
+      font-weight: 700; /* bold */
+      justify-content: flex-end; /* right-align text within quadrant */
+      text-align: right;
+      line-height: .7;
+      padding-right: 40px;
+      padding-top: 30px;
+    }
+
+    /* Lower Left Text - Maker */
+    .text-bottom-left {
+      bottom: 0;
+      left: 0;
+      color: lightgray;
+      font-weight: 100; /* thin font */
+      font-style: normal;
+      justify-content: flex-start;
+      text-align: right;
+      line-height: .7;
+      padding-left: 20px;
+      padding-bottom: 20px;
+    }
+
+        /* **** END OF LOGO CODE **** */
+
+        /* **** style for charting CODE **** */
+        .container {
+            max-width: 850px; /* Wider to accommodate labels */
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chart-output {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            text-align: center;
+        }
+        /* SVG Styles */
+        svg {
+            border: 1px solid #eee;
+            background-color: #fcfcfc;
+            width: 100%;
+            max-width: 800px; /* Match container width for consistency */
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+        .tooth-outline {
+            fill: #e0e0e0;
+            stroke: #999;
+            stroke-width: 1;
+        }
+        .tooth-surface {
+            fill: #f0f0f0; /* Default surface color, slightly lighter */
+            stroke: #bbb;
+            stroke-width: 0.5;
+        }
+        .caries {
+            fill: red !important; /* Mark caries in red */
+        }
+        .tooth-label {
+            font-size: 7px; /* Labels for tooth numbers */
+            text-anchor: middle;
+            fill: #333;
+            font-weight: bold;
+        }
+        .arch-line {
+            stroke: #aaa;
+            stroke-width: 2;
+            fill: none;
+        }
+        .mouth-label {
+            font-size: 10px;
+            font-weight: bold;
+            fill: #555;
+            text-anchor: middle;
+        }
+        .label-line {
+            stroke: #ccc;
+            stroke-width: 1;
+            stroke-dasharray: 3 3;
+        }
+
+
+
+/* pulse with Base Style of the Object */
+
+@keyframes breathing-glow {
+  0% {
+    /* Soft, close shadow */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);  /*rgba(0, 0, 0, 0.1); */
+    /* If you want a colored glow, change rgba(0,0,0,0.1) to a color like rgba(0, 150, 255, 0.3) */
+  }
+  50% {
+    /* WIDER spread (4px) and SOFTER blur (15px) */
+    box-shadow: 0 0 20px 4px rgba(0, 191, 255, 0.5);
+  }
+  100% {
+    /* Back to start */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);
+  }
+}
+
+
+
+/* ================================================================= */
+/* START: CSS FOR IMPORT NOTE MODAL                                  */
+/* ================================================================= */
+.modal-hidden {
+    display: none;
+}
+
+#modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal-backdrop.modal-visible {
+    display: flex;
+}
+
+#import-note-modal {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close-button {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: #333;
+}
+
+.modal-content {
+    padding: 20px;
+    line-height: 1.5;
+}
+
+#paste-note-textarea {
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't add to width */
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 20px;
+    border-top: 1px solid #eee;
+}
+
+.modal-footer .primary-button {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.modal-footer .secondary-button {
+    background-color: orange;
+    color: white;
+    border-color: orange;
+}
+
+/* ================================================================= */
+/* END: CSS FOR IMPORT NOTE MODAL                                    */
+/* ================================================================= */
+
+
+.history-item {
+    background: #eee;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    transition: background 0.2s;
+}
+.history-item:hover {
+    background: var(--element-bg);
+    border-color: var(--button-bg);
+}
+
+/* ================================================================= */
+/* CSS FOR FIREBASE LOGIN NOTE MODAL                                    */
+/* ================================================================= */
+   
+
+.view-hidden {
+    display: none !important; /* Use !important to ensure this rule always wins */
+}
+      .container { padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; margin-top: 20px; }
+        #user-status { text-align: right; }
+        
+        /* Note List Styles */
+        #note-list { list-style-type: none; padding: 0; }
+		#note-list li, #history-note-list li { padding: 10px; border: 1px solid #eee; margin-top: -1px; cursor: pointer; }
+		#note-list li:hover, #history-note-list li:hover { background-color: #e8f0fe; }
+
+      #view-doctor-dashboard {
+    max-width: 75%; /* Sets the width to 75% of the screen */
+    margin: 25px auto; /* Keeps it centered horizontally with top margin */
+}
+   
+   
+   
+   /* ======== NEW LANDING PAGE STYLES ======== */
+.landing-title {
+    font-size: 3.5em; /* Larger, more impactful title */
+    font-weight: 300; /* A thinner, more modern font weight */
+    color: #2c3e50;
+    text-shadow: none;
+    margin-bottom: 0;
+	text-align: center;
+}
+.landing-version {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    margin-top: -10px;
+    margin-bottom: 30px;
+}
+.login-box {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    margin: 0 auto; /* Center the login box itself */
+    text-align: left;
+}
+.feature-showcase {
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    color: #ecf0f1;
+    padding: 40px 20px;
+    margin-top: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.feature-showcase h2 {
+    color: #ffffff;
+    text-shadow: none;
+    margin-top: 0;
+}
+.feature-rotator {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    padding: 10px 20px;
+    margin-top: 20px;
+    display: inline-block;
+    min-width: 300px;
+}
+#feature-text {
+    font-size: 1.1em;
+    transition: opacity 0.5s ease-in-out; /* This is for the fade effect */
+}
+.landing-footer {
+    margin-top: 40px;
+    font-size: 0.8em;
+    color: #95a5a6;
+}
+.landing-footer a {
+    color: #7f8c8d;
+    text-decoration: none;
+}
+.landing-footer a:hover {
+    text-decoration: underline;
+}
+#start-day-button {
+    font-size: 1.2em; /* Make the font larger */
+    font-weight: bold;
+    background-color: var(--success-color); /* Use the prominent green color */
+    border: none;
+}
+#start-day-button:hover {
+    background-color: var(--success-hover); /* Darken on hover */
+}
+   
+   
+    </style>
+	
+	
+<!-- ================================================================= -->
+<!-- Firebase SDKs                                     -->
+<!-- ================================================================= -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- ================================================================= -->
+
+<!-- PDF-Lib for SF 603A Generation -->
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>	
+	
+	
+	
+	
+	
+</head>
+<body>
+
+
+<!-- ================================================================= -->
+<!-- SNIPPET #2: Add New UI Views for Login and Dashboards             -->
+<!-- ================================================================= -->
+<div id="user-status" style="position: fixed; top: 10px; right: 20px; background: #fff; padding: 5px 10px; border-radius: 5px; box-shadow: var(--element-shadow); z-index: 100;">
+    <span id="user-email"></span>
+    <button id="logout-button" class="view-hidden">Logout</button>
+<!-- ================================================================= -->
+<!--  Doctor's "Save Final Copy or Go Back" Button                 -->
+<!-- ================================================================= -->
+<button id="save-copy-button" class="control-btn view-hidden" style="background-color: var(--success-color);">Save and Go Back</button>
+<!-- ================================================================= -->
+</div>
+
+<!-- ======== NEW LANDING PAGE / TECHNICIAN LOGIN ======== -->
+<div id="view-technician-start" class="container" style="max-width: 900px; text-align: center; border: none; background: transparent; box-shadow: none;">
+
+    <!-- 1. Title and Version Number -->
+    <h1 class="landing-title">Dental Note Maker</h1>
+    <p class="landing-version">v5</p>
+	
+
+    <!-- 2. The Login Box (contains the original functionality) -->
+    <div class="login-box">
+        <h2 style="color: #333; text-shadow: none;">Get Started</h2>
+        
+        <label for="clinic-select" style="display: block; margin-bottom: 5px; text-align: left;"><strong>1. Select Your Clinic Template:</strong></label>
+        <select id="clinic-select" style="width: 100%; padding: 8px; margin-bottom: 15px;">
+            <option value="--loading--">Loading Clinics...</option>
+        </select>
+
+        <label for="tech-name-input" style="display: block; margin-bottom: 5px; text-align: left;"><strong>2. Enter Your Name:</strong></label>
+        <input type="text" id="tech-name-input" placeholder="Enter Your Name..." style="width: 100%; box-sizing: border-box; padding: 8px;">
+
+        <button id="start-day-button" class="primary-button" style="width: 100%; margin-top: 15px; padding: 12px;">Start My Day</button>
+        
+        <p style="text-align: center; margin: 15px 0 0;">- or -</p>
+        <button id="show-doctor-login-btn" >Switch to Doctor Login</button>
+    </div>
+
+    <!-- 3. The Feature Showcase Section -->
+    <div class="feature-showcase">
+        <h2>A Collaborative Note-Making Tool</h2>
+        <p>Built for speed and teamwork, enabling seamless real-time updates between doctors and technicians.</p>
+        <div class="feature-rotator">
+            <span id="feature-text">Doctor-Tech real-time collaboration</span>
+        </div>
+    </div>
+
+    <!-- 4. The Disclaimer Footer -->
+    <div class="landing-footer">
+        <p>
+            This is a non-DoD, non-Navy affiliated website. The appearance of hyperlinks does not constitute endorsement. This website is provided as-is without any warranty of any kind. Users shall not enter, store, or transmit any Personally Identifiable Information (PII) or Protected Health Information (PHI).
+        </p>
+        <p>
+            For questions or support, contact the developer: <a href="mailto:mark.g.horning.civ@health.mil">mark.g.horning.civ@health.mil</a>
+        </p>
+    </div>
+
+</div>
+
+
+
+<!-- This view is for the Doctor to log in -->
+<div id="view-doctor-login" class="container view-hidden">
+    <!-- Wrap the inputs and button in a <form> for password manager compatibility -->
+    <form id="doctor-login-form">
+        <h2>Doctor Login</h2>
+        <input type="email" id="email-input" autocomplete="username" placeholder="Email">
+        <input type="password" id="password-input" autocomplete="current-password" placeholder="Password">
+        <button type="submit" id="login-button">Login</button>
+        <button type="button" id="signup-button">Sign Up</button>
+        <p id="login-error-message" style="color: red;"></p>
+    </form>
+</div>
+
+
+<!-- This view is the Doctor's dashboard to see all active and history notes -->
+<div id="view-doctor-dashboard" class="container view-hidden">
+    <div style="display: flex; gap: 20px;">
+
+        <!-- Column 1: Active Notes (Existing) -->
+        <div style="flex: 1;">
+            <h2>Active Notes Dashboard [LIVE editing with Technician]</h2>
+            <ul id="note-list" style="list-style-type: none; padding: 0;"></ul>
+        </div>
+
+        <!-- Column 2: History Notes (New) -->
+        <div style="flex: 1; border-left: 1px solid #ddd; padding-left: 20px;">
+            <h2>Archived Note History [Off-line]</h2>
+            <ul id="history-note-list" style="list-style-type: none; padding: 0;"></ul>
+        </div>
+
+    </div>
+</div>
+
+<!-- This new container will wrap your entire existing Dental Note Maker UI -->
+<div id="view-note-editor" class="view-hidden">
+<!-- ================================================================= -->
+
+
+
+
+
+<div class="logo-container" >
+  <div class="logo">
+    <!-- Stretched Shapes -->
+    <div class="quarter navy"></div>
+    <div class="quarter yellow"></div>
+
+    <!-- Center Circle -->
+    <div class="center"></div>
+
+    <!-- Text Labels -->
+    <div class="text-top-right">Dental Note</div>
+    <div class="text-bottom-left">Maker</div>
+  </div>
+
+</div>
+
+    <h1>ORAL EXAM</h1>
+
+    <div style="text-align: center; margin-bottom: 10px;"><button id="import-note-button" class="import-btn-prominent">Import Previous Note...</button><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
+    <!-- Layout and Modals -->
+    <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
+
+    <div class="controls">
+	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
+		<button id="import-btn" class="control-btn element-hidden">Import JSON File...</button>
+		<button id="set-template-btn" class="control-btn view-hidden" style="background-color: var(--warning-color);">Set as Clinic Default...</button>
+
+		
+        <button id="export-btn" class="control-btn element-hidden">Export JSON</button>
+        <label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="view-hidden-toggle"> View Hidden Elements</label>
+<label style="display:flex; align-items:center; gap: 5px;"><input type="checkbox" id="lock-layout-toggle" checked> Lock Layout</label>
+        <button id="reset-btn" class="control-btn">Reset Values & Archive Below</button>
+
+
+		
+		
+<button id="full-reset-btn" class="control-btn" style="background-color: var(--warning-color);">Full Reset</button>
+
+<button id="export-sf603a-btn" class="action-btn view-hidden" style="background-color: #27ae60; flex: 0 1 auto; padding: 6px 14px; font-size: 0.85em;">
+    <i class="fas fa-file-pdf"></i> Export SF 603A
+</button>
+
+    </div>
+
+
+
+    <div id="add-element-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Add New Element</h2><span class="close-btn" data-modal-id="add-element-modal">&times;</span></div><div class="modal-body element-type-list" style="display: flex; flex-direction: column; gap: 10px;">
+
+           <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
+   
+   <div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
+    <div id="properties-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="properties-title">Edit Properties</h2><span class="close-btn" data-modal-id="properties-modal">&times;</span></div><div class="modal-body" id="properties-body"></div><div class="modal-footer"><button id="properties-save-btn" class="control-btn">Save Changes</button></div></div></div>
+    <div id="context-menu"><div id="ctx-properties">Properties...</div><div id="ctx-delete">Delete Element</div></div>
+
+  
+
+    <!-- Feedback message toast -->
+    <div id="action-feedback" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 12000; transition: opacity 0.5s;"></div>
+    <!-- **** END OF NEW CODE **** -->
+
+    <div id="endo-testing-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Endo Testing Results</h2><span class="close-btn" data-modal-id="endo-testing-modal">&times;</span></div><div class="modal-body"><div id="endo-editor-controls"><input type="text" id="endo-range-input" placeholder="e.g., 3-6, 14, 18-19"><button id="endo-range-add-btn" class="control-btn">Add Teeth</button></div><div style="overflow-x:auto;"><table id="endo-table"><thead></thead><tbody></tbody></table></div></div><div class="modal-footer"><button id="endo-testing-save-btn" class="control-btn">Save & Close</button></div></div></div>
+    <div id="anesthetic-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Set Anesthetic Amounts</h2><span class="close-btn" data-modal-id="anesthetic-editor-modal">&times;</span></div><div class="modal-body"><div style="padding-bottom:15px; border-bottom:1px solid #eee; margin-bottom:15px;"><label><input type="checkbox" id="anesthetic-topical-check"> Include Topical Anesthetic</label></div><div id="anesthetic-editor-list"></div></div><div class="modal-footer"><button id="anesthetic-editor-save-btn" class="control-btn">Save & Close</button></div></div></div>
+    <div id="allergy-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Select Alerts</h2><span class="close-btn" data-modal-id="allergy-modal">&times;</span></div><div class="modal-body"><fieldset><legend>Common Alerts</legend><div id="allergy-list"></div></fieldset><hr><fieldset><legend>Custom Alert</legend><input type="text" id="custom-allergy-input" placeholder="e.g., Cats" style="width: 100%; box-sizing: border-box;"></fieldset></div><div class="modal-footer"><button id="allergy-save-btn" class="control-btn">Save Alerts</button></div></div></div>
+    <div id="textbox-editor-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Edit Text</h2><span class="close-btn" data-modal-id="textbox-editor-modal">&times;</span></div><div class="modal-body">
+   
+<!-- **** START OF MODIFIED HTML for class to tx plan **** -->
+<div id="textbox-editor-area">
+    <div class="backdrop-container">
+        <div id="backdrop-mirror"></div>
+    <textarea id="textbox-editor-textarea" spellcheck="true"></textarea>
+	</div>
+
+
+    <!-- Container for action buttons that appear on text selection -->
+    <div id="selection-actions" style="display: none; margin-top: 5px; padding: 5px; background: #f0f0f0; border-radius: 4px; text-align: center;">
+        <b>Send Selected Text To Treatment Plan Block:</b><br>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 3">Oper Class 3</button>
+        <button class="control-btn selection-action-btn" data-target-class="Operative-CLASS 2">Oper Class 2</button> -
+		<!-- remove the hardcoded operative -->
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 3">OMS Class 3</button>
+		<button class="control-btn selection-action-btn" data-target-class="Oral Surgery-CLASS 2">OMS Class 2</button> -
+		<button class="control-btn selection-action-btn" data-target-class="Endo-CLASS 3">Endo Class 3</button> -
+		<button class="control-btn selection-action-btn" data-target-class="Pros-CLASS 3">Pros Class 3</button>
+		<button class="control-btn selection-action-btn" data-target-class="Pros-CLASS 2">Pros Class 2</button>
+    </div>
+
+    <div id="textbox-editor-snippets">
+        <select id="textbox-editor-select" size="10"></select>
+        <div id="textbox-editor-buttons"> <!-- Added a wrapper div -->
+            <button id="textbox-editor-add-btn" class="control-btn">Add</button>
+            <button id="textbox-editor-replace-btn" class="control-btn">Replace</button>
+        </div>
+    </div>
+</div>
+<!-- **** END OF MODIFIED HTML **** -->
+    
+    </div><div class="modal-footer"><button id="textbox-editor-save-btn" class="control-btn">Save & Close (<i>shortcut: Shift + Enter</i>)</button></div></div></div>
+
+        <!-- **** START OF NEW CODE for tx plan**** -->
+    <div id="tx-plan-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Treatment Plan</h2><span class="close-btn" data-modal-id="tx-plan-modal">×</span></div>
+            <div class="modal-body">
+                <table id="tx-plan-table" style="width:100%; border-collapse: collapse;">
+                    <!-- Table content will be generated by JavaScript -->
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button id="tx-plan-save-btn" class="control-btn">Save & Close</button>
+            </div>
+        </div>
+    </div>
+    <!-- **** END OF NEW CODE **** -->
+<div id="extra-section" class="section-extra-container">
+    <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
+
+        <div class="chart-output">
+            <h4>Caries Charting Check</h4> <h5>Derived from Treatment Plan element - (to duplicate in Dentrix treatment plan)</h5>
+            <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+
+
+</div>
+</div>
+<div>
+
+<center><h6>-NAVMED 6600/13 JSON default-<br>
+Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
+<br><br>links<br>
+<a href="https://www.perio.org/wp-content/uploads/2019/08/Staging-and-Grading-Periodontitis.pdf" target="_blank">Perio Staging & Grading</a><br>
+<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9826047/table/iej13816-tbl-0003/" target="_blank">Endo Pulpal & Periradicular Diagnoses</a>
+</h6></center>
+</div>
+
+
+    <!-- **** insert JSON data here inside {} -->
+<script type="application/json" id="default-json-data">
+
+
+
+{
+  "header": [
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "0-0",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f0f0f0",
+      "options": [
+        "**PERIODIC ORAL EXAM (T-2)**",
+        "**INITIAL ORAL EXAM (T-1)**",
+        "**RETIREMENT EXAM (T-2)r**",
+        "**SEPARATION EXAM (T-2)s**  ",
+        "**SICK CALL / LIMITED EXAM (T-3)**"
+      ],
+      "selected": "**PERIODIC ORAL EXAM (T-2)**"
+    },
+    {
+      "type": "alert",
+      "required": true,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "0-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "alerts": [
+        "None"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-2",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": " Reviewed. PT ID X 2. Health History, Meds Reconciled in PowerChart. ",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": []
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "0-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f0f0f0",
+      "options": [
+        "LEARNING NEEDS:  Language: English. ",
+        "LEARNING NEEDS:  Language: ESOL. ",
+        "LEARNING NEEDS:  Language: Other. "
+      ],
+      "selected": "LEARNING NEEDS:  Language: English. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f0f0f0",
+      "options": [
+        "Learning Type: Written/Verbal. ",
+        "Learning Type: Written. ",
+	    "Learning Type: Visual. ",
+        "Learning Type: Verbal. "
+      ],
+      "selected": "Learning Type: Written/Verbal. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f0f0f0",
+      "options": [
+        "Impairments: None. ",
+        "Impairments: Hearing Aid. ",
+        "Impairments: Other. "
+      ],
+      "selected": "Impairments: None. "
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "0-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f0f0f0",
+      "options": [
+        "Cultural: None.",
+        "Cultural: Other."
+      ],
+      "selected": "Cultural: None."
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f0f0f0",
+      "options": [
+        "FLIGHT STATUS: N/A",
+        "FLIGHT STATUS: AVIATOR",
+        "FLIGHT STATUS: AC",
+        "FLIGHT STATUS: AW"
+      ],
+      "selected": "FLIGHT STATUS: N/A"
+    },
+    {
+      "type": "bloodpressure",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "0-8",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f0f0f0",
+      "systolic": "",
+      "diastolic": "",
+      "isPriorTxChecked": false,
+      "discussSystolic": "150",
+      "discussDiastolic": "95",
+      "checkboxSystolic": "160",
+      "checkboxDiastolic": "100"
+    }
+  ],
+  "subjective": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "1-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "S:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f9f0ff",
+      "content": "None",
+      "internalLabel": "Chief Concern:",
+      "prefixLabel": "PRESENTING COMPLAINT: ",
+      "defaultText": "None",
+      "dropdownOptions": []
+    },
+    {
+      "type": "painscale",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f9f0ff",
+      "value": "0"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "1-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f9f0ff",
+      "content": "None",
+      "internalLabel": "Tobacco / Vaping",
+      "prefixLabel": "TOBACCO/VAPING: ",
+      "defaultText": "None",
+      "dropdownOptions": [
+        "Vaping",
+        "Cigarettes",
+        "Smokeless Tobacco",
+        "Nicotine pouches",
+        "0.5 Pack Per Day",
+        "0.5 Can Per Day"
+      ]
+    }
+  ],
+  "objective": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "2-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "O:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": []
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "2-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "options": [
+        "BWX: TODAY",
+        "BWX: REVIEWED",
+        "BWX: N/A",
+        " "
+      ],
+      "selected": "BWX: TODAY"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "2-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "options": [
+        "PANO: REVIEWED",
+        "PANO: TODAY",
+        "PANO: N/A",
+        " "
+      ],
+      "selected": "PANO: REVIEWED"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "2-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": " ",
+      "internalLabel": "Radiographs Other",
+      "prefixLabel": "",
+      "defaultText": " ",
+      "dropdownOptions": [
+        "PA #: "
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "No Pathology Noted.",
+      "internalLabel": "Radiographic Findings",
+      "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
+      "defaultText": "No Pathology Noted.",
+      "dropdownOptions": [
+        "Antral Pseudocyst Maxillary Sinus",
+        "Periradicular Radiolucency #",
+        "Condensing Osteitis #",
+        "Retained Root Tip #",
+        "Periapical Cemento-Osseous Dysplasia",
+        "Idiopathic Osteosclerosis"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "100%",
+      "fillColor": "#d6eefb",
+      "content": "None.",
+      "internalLabel": "Caries / Defective",
+      "prefixLabel": "CARIES/DEFECTIVE RESTORATIONS: ",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "#"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "100%",
+      "fillColor": "#d6eefb",
+      "content": "None.",
+      "internalLabel": "Incipient",
+      "prefixLabel": "INCIPIENT CARIES: ",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "#",
+        "Generalized Facial White Spot Lesions",
+        "Overhang #"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "WNL.",
+      "internalLabel": "Soft Tissue / OCS",
+      "prefixLabel": "SOFT TISSUE / OCS: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Mandibular Tori",
+        "Apthous Ulcer",
+   "Tobacco Keratosis",
+"Nicotine Keratosis",
+        "Palatal Torus",
+        "Fibroma",
+        "Tonsillectomy",
+        "Geographic Tongue",
+        "Fissured Tongue"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-8",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "WNL.",
+      "internalLabel": "Periodontal",
+      "prefixLabel": "PERIO: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Radiographic Calculus",
+        "Heavy Calculus",
+        "OH--",
+        "Recession",
+        "Toothbrush Abrasion"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-9",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "WNL.",
+      "internalLabel": "Endodontic",
+      "prefixLabel": "ENDO: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "NSRCT# ",
+        "Asymptomatic",
+        "SRCT# ",
+        "Draining sinus tract area #"
+	  ]
+    },
+    {
+      "type": "endo-testing",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-10",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "endoTests": [
+        "Percussion",
+        "Palpation",
+        "Endo Ice",
+        "Tooth Slooth",
+        "Periodontal",
+        "Mobility",
+        "Transillumination"
+      ],
+      "endoData": {
+        "teeth": [
+          "",
+          ""
+        ],
+        "results": {
+          "Percussion": [
+            "",
+            ""
+          ],
+          "Palpation": [
+            "",
+            ""
+          ],
+          "Endo Ice": [
+            "",
+            ""
+          ],
+          "Tooth Slooth": [
+            "",
+            ""
+          ],
+          "Periodontal": [
+            "",
+            ""
+          ],
+          "Mobility": [
+            "",
+            ""
+          ],
+          "Transillumination": [
+            "",
+            ""
+          ]
+        }
+      }
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-11",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "WNL.",
+      "internalLabel": "TMJ",
+      "prefixLabel": "TMJ: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Bilateral Click",
+        "Nocturnal Bruxism",
+        "Daytime Clenching",
+        "Masseter Tenderness",
+        "Temporal Headaches"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-12",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "WNL.",
+      "internalLabel": "Occlusion",
+      "prefixLabel": "OCCLUSION: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Bonded Retainer 22-27",
+        "Bonded Retainer 6-11",
+        "Crossbite ",
+        "Anterior Open Bite",
+        "Crowding"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-13",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "40%",
+      "fillColor": "",
+      "content": "WNL.",
+      "internalLabel": "Oral Surgery",
+      "prefixLabel": "ORAL SURGERY: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Missing: 1,16,17,32",
+        "1,16,17,32 Present",
+        "Unerupted - ",
+        "Partially erupted - ",
+        "Communicating - "
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-14",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "40%",
+      "fillColor": "",
+      "content": "WNL.",
+      "internalLabel": "Other Findings",
+      "prefixLabel": "OTHER FINDINGS: ",
+      "defaultText": "WNL.",
+      "dropdownOptions": [
+        "Toothbrush Abrasion",
+        "Heavy Occlusal Wear"
+      ]
+    },
+    {
+      "type": "psr",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "2-15",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "scores": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "asterisks": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "asteriskNote": ""
+    }
+  ],
+  "assessment": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "A:",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#fafafa",
+      "content": "None.",
+      "internalLabel": "Diagnosis of Chief Concern",
+      "prefixLabel": "DIAGNOSIS OF FINDINGS AND/OR PRESENTING COMPLAINT: ",
+      "defaultText": "None.",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#fafafa",
+      "content": "Gingivitis Generalized",
+      "internalLabel": "Perio Diagnosis",
+      "prefixLabel": "PERIO DIAGNOSIS: ",
+      "defaultText": "Gingivitis Generalized",
+      "dropdownOptions": [
+        "Gingivitis Localized",
+        "Gingivitis Generalized",
+        "Healthy",
+        "Periodontitis Stage I",
+        "Periodontitis Stage II",
+        "Periodontitis Stage III",
+        "Periodontitis Stage IV",
+        "Grade A",
+        "Grade B",
+        "Grade C"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-3",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#fafafa",
+      "content": "None.",
+      "internalLabel": "Endo Diagnosis",
+      "prefixLabel": "ENDO DIAGNOSIS",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "None",
+        "Normal Apical Tissues",
+        "Symptomatic Apical Periodontitis",
+        "Asymptomatic Apical Periodontitis",
+        "Chronic Apical Abscess",
+        "Acute Apical Abscess",
+        "Condensing Osteitis",
+        "Reversible Pulpitis",
+        "Symptomatic Irreversible Pulpitis",
+        "Asymptomatic Irreversible Pulpitis",
+        "Pulpal Necrosis",
+        "Previously Treated"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-4",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#fafafa",
+      "content": "None.",
+      "internalLabel": "Oral Surgery Diagnosis",
+      "prefixLabel": "ORAL SURGERY DIAGNOSIS: ",
+      "defaultText": "None.",
+      "dropdownOptions": [
+        "Non-functional",
+        "Non-restorable",
+        "Insufficient Arch Length"
+      ]
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-5",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#e8e8e8",
+      "options": [
+        "CARIES RISK: Low",
+        "CARIES RISK: Moderate",
+        "CARIES RISK: High"
+      ],
+      "selected": "CARIES RISK: Low"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-6",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#e8e8e8",
+      "options": [
+        "PERIO RISK: Low",
+        "PERIO RISK: Moderate",
+        "PERIO RISK: High"
+      ],
+      "selected": "PERIO RISK: Low"
+    },
+    {
+      "type": "dropdown",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-7",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#e8e8e8",
+      "options": [
+        "CANCER RISK: Low",
+        "CANCER RISK: Moderate",
+        "CANCER RISK: High"
+      ],
+      "selected": "CANCER RISK: Low"
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "3-8",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "Findings reviewed / Patient informed and consents to Treatment Plan.",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": []
+    }
+  ],
+  "plan": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "4-0",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "content": "P:   CHARTING OF TREATMENT PLAN IN DENTRIX",
+      "internalLabel": "",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": []
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": true,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "4-1",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "#f6ffed",
+      "content": "",
+      "internalLabel": "Caries Risk Management",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": [
+        "Caries Risk Management: OHI",
+        "Caries Risk Management: Fluoride Treatments x 4",
+        "Caries Risk Management: Prevident 5000: 2 Tubes. 2 Refills. Use as directed.",
+        "Caries Risk Management: Peridex Rinse: 1 bottle. Swish with 15ml BID for 2 weeks."
+      ]
+    },
+    {
+      "type": "tx-plan",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": true,
+      "originalId": "4-2",
+      "isHidden": false,
+      "doNotReset": false,
+      "width": "66%",
+      "fillColor": "#d9f7be",
+      "txRows": [
+        "Operative",
+        "Oral Hygiene",
+        "Perio",
+        "Oral Surgery",
+        "Endo",
+        "Pros",
+        "Other"
+      ],
+      "txSnippets": [
+        "RDH",
+        "SRP",
+        "RECALL"
+      ],
+      "txData": {
+        "Oral Hygiene-CLASS 2": {
+          "text": "RDH",
+          "priority": 1
+        } }
+    }
+  ],
+  "footer": [
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "5-0",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "fillColor": "#fffbe6",
+      "content": "",
+      "internalLabel": "Dental Technician Name",
+      "prefixLabel": "DENTAL TECHNICIAN: ",
+      "defaultText": "",
+      "dropdownOptions": [
+        "SANDERSON",
+        "LEONARDSON",
+        "DUPREY",
+        "PHILLIPS",
+        "BYRD",
+        "MITCHELL",
+        "STEWART",
+        "MORRIS",
+        "BABCOCK",
+        "VILLANUEVA",
+        "TURNER",
+        "HARDEN",
+        "FERGUSON",
+        "CISSE"
+      ]
+    },
+    {
+      "type": "formatter",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": false,
+      "originalId": "5-1",
+      "isHidden": true,
+      "doNotReset": false,
+      "width": "",
+      "fillColor": "",
+      "formatType": "newline",
+      "customChars": ""
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": false,
+      "suffixNewline": true,
+      "originalId": "5-2",
+      "isHidden": false,
+      "doNotReset": true,
+      "width": "",
+      "fillColor": "#fffbe6",
+      "content": "",
+      "internalLabel": "Dentist Block",
+      "prefixLabel": "DENTAL OFFICER: ",
+      "defaultText": "",
+      "dropdownOptions": [
+        "TP FLEMING",
+        "JA HOGAN",
+        "RJ ALOVA",
+        "MG HORNING DDS  1912969445",
+        "CL ROBERTS",
+        "RA NARDELLA",
+        "FC BERGER",
+	    "CJ COBB"
+      ]
+    },
+    {
+      "type": "enhanced-textbox",
+      "required": false,
+      "prefixTab": false,
+      "prefixNewline": true,
+      "suffixNewline": false,
+      "originalId": "5-3",
+      "isHidden": true,
+      "doNotReset": true,
+      "width": "",
+      "fillColor": "#fffbe6",
+      "content": "    .  . .   . ____ .  .    _   _    _    _  .  .  _   \n   /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n  / | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      ",
+      "internalLabel": "Signature Block",
+      "prefixLabel": "",
+      "defaultText": "",
+      "dropdownOptions": [
+        "  .  . .   . ____ .  .    _   _    _    _  .  .  _    ",
+        " /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  ",
+        "/ | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      "
+      ]
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+</script>
+
+<!-- Mechanical split: original main inline application script moved to external file -->
+<script src="./app.js"></script>
+
+<!-- ================================================================= -->
+<!-- START: HTML FOR IMPORT NOTE MODAL                               -->
+
+<!-- ================================================================= -->
+<div id="modal-backdrop" class="modal-hidden">
+    <div id="import-note-modal">
+        <div class="modal-header">
+            <h3>Import Note by Pasting Text</h3>
+            <span id="close-modal-button" class="close-button">&times;</span>
+        </div>
+        <div class="modal-content">
+            <p>Paste the full text of your previously generated note into the box below.<br>Applicable fields will populate into Objective Section of your new note.</p>
+            <textarea id="paste-note-textarea" rows="15" placeholder="Paste your note here..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button id="paste-from-clipboard-button">Paste from Clipboard</button>
+			<button id="clear-modal-button" class="secondary-button">Clear</button>
+            <button id="cancel-modal-button">Cancel</button>
+            <button id="import-from-modal-button" class="primary-button">Import Text</button>
+        </div>
+    </div>
+</div>
+<!-- ================================================================= -->
+<!-- END: HTML FOR IMPORT NOTE MODAL                                 -->
+<!-- ================================================================= -->
+
+
+<div class="section-container" style="margin-top: 30px; border-style: solid;">
+    <h2 style="color: #555;">Note History</h2>
+    <div id="history-list" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px;">
+        <!-- Clickable timestamps will appear here -->
+    </div>
+</div>
+
+</div>
+
+
+<!-- ======== TEMPLATE SAVER MODAL ======== -->
+<div id="save-template-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Save as Clinic Default Template</h2>
+            <span class="close-btn" data-modal-id="save-template-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>You can save the current note configuration as a new clinic template or overwrite an existing one.</p>
+            
+            <fieldset style="margin-top: 15px;">
+                <legend>Option 1: Overwrite an Existing Clinic</legend>
+                <select id="existing-clinics-select" style="width: 100%; padding: 8px;">
+                    <option value="">-- Select a clinic to overwrite --</option>
+                </select>
+            </fieldset>
+
+            <p style="text-align: center; margin: 10px 0; font-weight: bold;">- OR -</p>
+
+            <fieldset>
+                <legend>Option 2: Save as a New Clinic</legend>
+                <input type="text" id="new-clinic-name-input" placeholder="Enter New Clinic Name..." style="width: 100%; box-sizing: border-box; padding: 8px;">
+            </fieldset>
+
+            <p id="template-modal-error" style="color: red; text-align: center; margin-top: 10px;"></p>
+        </div>
+        <div class="modal-footer">
+            <button id="cancel-template-save-btn" class="control-btn">Cancel</button>
+            <button id="confirm-template-save-btn" class="control-btn" style="background-color: var(--success-color);">Save Template</button>
+        </div>
+    </div>
+</div>
+
+<!-- Mechanical split: original secondary inline script (suggester/charting) moved to external file -->
+<script src="./extras.js"></script>
+
+</body>
+</html>
