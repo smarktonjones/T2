@@ -1,0 +1,568 @@
+        :root {
+            --bg-color: #f0f2f5; --main-bg: #ffffff; --section-bg: #f9f9f9;
+            --section-border: #d9d9d9; --element-bg: #e6f7ff; --element-border: #91d5ff;
+            --element-shadow: 0 2px 4px rgba(0,0,0,0.1); --button-bg: #1890ff;
+            --button-text: #ffffff; --button-hover-bg: #40a9ff; --text-color: #333;
+            --modal-bg: rgba(0,0,0,0.5); --danger-color: #d93025;
+            --warning-color: #fd7e14; --success-color: #28a745; --success-color2: yellow; --success-hover: #218838;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
+ background-image: linear-gradient(to left, #fafafa, #e8e8e8); /* The gradient */
+ color: var(--text-color); margin: 0; padding: 20px; }
+        h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
+h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h4 { text-align: center; margin-top: 0; color: var(--text-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
+h5 { text-align: center; margin-top: 0; font-weight: light;}    
+        .layout-container, .main-body-container { display: flex; flex-direction: column; gap: 15px; }
+        .section-container { background-color: var(--main-bg); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); }
+		.section-extra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--section-border); background-color: black;  }
+        .section-extra-container { margin: auto; width: 50%; background-image: linear-gradient(to bottom, #f9f9f9, #f0f2f5); border: 2px dashed var(--section-border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column;  transform: scale(0.75); opacity: 0.8;}
+		.add-element-btn { background-color: var(--button-bg); color: var(--button-text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; font-weight: bold; cursor: pointer; line-height: 30px; text-align: center; }
+        
+        .dropzone { flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 50px; }
+        .draggable-element { background-color: var(--element-bg); border: 2px solid var(--element-border); border-radius: 4px; cursor: grab; box-shadow: var(--element-shadow); resize: both; overflow: auto; min-width: 180px; min-height: 50px; padding: 10px; display: flex; flex-direction: column; gap: 8px;  
+        
+
+
+
+
+
+
+
+  /* --- START ANIMATION CODE --- */
+
+  transition: box-shadow 0.5s ease-out;
+
+  /* 2. Nested hover state */
+  &:hover {
+    
+    animation: breathing-glow 2s infinite ease-in-out;
+    
+    /* Optional: keeps it on top of other elements while glowing */
+    z-index: 100;
+
+  /* --- END ANIMATION CODE --- */
+}
+        
+        
+        }
+        body.layout-locked .draggable-element {cursor: default;}
+
+        /* Styles for Hidden Elements and highlighted */
+.element-highlighted.element-highlighted {border-color: var(--success-color) !important; }
+.element-highlighted2 {border-color: var(--success-color2) !important; }
+        .element-hidden { display: none; }
+        body.show-hidden-elements .element-hidden { display: flex; border-style: dotted; border-color: var(--danger-color); }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: var(--modal-bg); overflow: auto; }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 900px; border-radius: 8px; display: flex; flex-direction: column; max-height: 85vh; }
+        .modal-body { flex-grow: 1; overflow: auto; position: relative; } .modal-footer { margin-top: 20px; flex-shrink: 0; display:flex; justify-content:flex-end; gap: 10px;}
+        
+        #context-menu { display: none; position: absolute; z-index: 2000; background-color: var(--main-bg); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 5px 0; min-width: 150px; }
+        #properties-body { padding: 10px 0; } #properties-body fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
+        .copy-btn-prominent { background-color: var(--success-color); font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
+        .copy-btn-prominent:hover { background-color: var(--success-hover); }
+		        .import-btn-prominent { background-color: lightyellow; color: black; font-size: 18px; padding: 12px 24px; font-weight: bold; border-radius: 4px;}
+				.import-btn-prominent:hover { background-color: yellow; }
+        #reset-btn { background-color: var(--danger-color); font-size: 18px; padding: 12px 24px; font-weight: bold; }
+        .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; align-items: center; }
+        /* All other element-specific styles are here */
+        .endo-testing-element, .anesthetic-element, .enhanced-textbox, .alert-element { cursor: pointer; justify-content: center; }
+        .internal-label { font-size: 0.8em; font-weight: bold; color: #0050b3; margin-bottom: 4px; }
+        .enhanced-textbox-preview { font-style: italic; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .alert-element { padding: 10px; text-align: center; font-weight: bold; color: var(--button-text); resize: none; min-height: initial; }
+        .alert-blank { background-color: var(--warning-color); border-color: var(--warning-color)!important; }
+        .alert-none { background-color: var(--success-color); border-color: var(--success-color)!important; }
+        .alert-active { background-color: var(--danger-color); border-color: var(--danger-color)!important; }
+        .bp-element input[type="number"] { width: 45px; text-align: center; }
+        .bp-prior-tx-container { display: none; } .bp-prior-tx-container.visible { display: block; }
+        
+/* **** START OF MODIFIED CSS to take precedence over other colors **** */
+.bp-normal { border-color: var(--bp-normal) !important; } 
+.bp-elevated { border-color: #ffc107 !important; } 
+.bp-stage1 { border-color: var(--warning-color) !important; } 
+.bp-stage2 { border-color: var(--danger-color) !important; } 
+.bp-crisis { border-color: #8b0000 !important; animation: pulse 1.5s infinite; }
+/* **** END OF MODIFIED CSS **** */
+   
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--danger-color); } 70% { box-shadow: 0 0 5px 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+        .psr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-family: monospace; }
+        .psr-sextant { text-align: center; } .psr-sextant label { font-size: 0.8em; color: #555; display: block; }
+        .psr-grid input[type="text"] { width: 100%; box-sizing: border-box; text-align: center; }
+        .psr-asterisk-note { display: none; width: 100%; } .psr-asterisk-note.visible { display: block; margin-top: 5px; }
+        .pain-scale-container { display: flex; align-items: center; gap: 10px; }
+        .pain-scale-container input[type=range] { flex-grow: 1; }
+        #textbox-editor-area { display: flex; flex-direction: column; gap: 10px; align-items: stretch; height: 100%; }
+
+
+
+        #textbox-editor-snippets { display: flex; align-items: center; gap: 10px; }
+        #textbox-editor-select { flex-grow: 1; }
+        #textbox-editor-buttons { display: flex; flex-direction: column; gap: 5px; }
+        #anesthetic-editor-list .anesthetic-row, #prop-anesthetic-types .prop-anesthetic-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; }
+        #prop-anesthetic-types .prop-anesthetic-row { grid-template-columns: 2fr 1fr 1fr auto; }
+        #prop-anesthetic-types .prop-anesthetic-row input { width: 100%; box-sizing: border-box; }
+        .remove-btn { color: var(--danger-color); cursor: pointer; font-weight: bold; }
+        #endo-table { border-collapse: collapse; width: 100%; }
+        #endo-table th, #endo-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        #endo-table input { width: 100%; box-sizing: border-box; border: none; background: transparent; }
+        #endo-editor-controls { display: flex; gap: 10px; padding: 10px 0; align-items: center; }
+
+
+        /* **** START OF NEW CSS **** */
+
+        /* Style for the "Priority Level" text */
+        #tx-plan-table .priority-label {
+            font-size: 0.8em;
+            color: #555;
+            display: block;
+        }
+
+        /* Style the row-header cells (Oral Hygiene, etc.) */
+        #tx-plan-table .tx-row-header {
+            background-color: #f2f2f2; /* Light gray background */
+            color: #0050b3;          /* Bold blue text */
+            font-weight: bold;
+        }
+
+        /* Style the textarea for a different default color */
+        #tx-plan-table textarea {
+            background-color: #f8f9fa; /* A very light gray */
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 5px;
+            transition: background-color 0.2s, border-color 0.2s; /* Smooth transition */
+        }
+        
+        /* Style the textarea when it has content */
+        #tx-plan-table textarea.has-content {
+            background-color: #fff;
+            border-color: var(--success-color); /* Green border */
+            outline: 2px solid transparent; /* Prevents default focus outline from clashing */
+        }
+
+        /* **** END OF NEW CSS **** */
+
+           /* **** START OF NEW CODE for tx plan copy/paste **** */
+        #text-selection-menu .selection-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        #text-selection-menu .selection-menu-item:hover {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+        }
+        #action-feedback.success { background-color: var(--success-color); }
+        #action-feedback.error { background-color: var(--danger-color); }
+        /* **** END OF NEW CODE **** */
+
+
+        /* **** logo CODE **** */
+    .logo {
+      position: relative;
+      width: 450px;
+      height: 300px;
+    }
+
+
+.logo-container {
+position: absolute;
+left: 0;
+transform: translateY(-55%) translateX(20%) scale(0.25, 0.3);
+transform-origin: left bottom;
+z-index: -1;
+opacity: 0.4;
+}
+
+    .quarter {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      border-top-left-radius: 210px 140px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .quarter::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.5), transparent 60%);
+      border-top-left-radius: 210px 140px;
+    }
+
+    .navy {
+      background: linear-gradient(135deg, lightgray, white);
+      top: 0;
+      left: 0;
+    }
+
+    .yellow {
+      background: linear-gradient(135deg, white, lightgray);
+      bottom: 0;
+      right: 0;
+      transform: rotate(180deg);
+    }
+
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60px;
+      height: 60px;
+      margin: -30px 0 0 -30px;
+      background: linear-gradient(145deg, white, lightgray);
+      border-radius: 50%;
+      box-shadow:
+        inset 0 5px 10px rgba(255, 255, 255, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .center::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.6), transparent 70%);
+      border-radius: 50%;
+    }
+
+    .text-top-right,
+    .text-bottom-left {
+      position: absolute;
+      width: 210px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 60px;
+      padding: 10px;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6),
+                   -1px -1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Upper Right Text - Dental Note */
+    .text-top-right {
+      top: 0;
+      right: 0;
+      color: lightgray; /* blue */
+      font-weight: 700; /* bold */
+      justify-content: flex-end; /* right-align text within quadrant */
+      text-align: right;
+      line-height: .7;
+      padding-right: 40px;
+      padding-top: 30px;
+    }
+
+    /* Lower Left Text - Maker */
+    .text-bottom-left {
+      bottom: 0;
+      left: 0;
+      color: lightgray;
+      font-weight: 100; /* thin font */
+      font-style: normal;
+      justify-content: flex-start;
+      text-align: right;
+      line-height: .7;
+      padding-left: 20px;
+      padding-bottom: 20px;
+    }
+
+        /* **** END OF LOGO CODE **** */
+
+        /* **** style for charting CODE **** */
+        .container {
+            max-width: 850px; /* Wider to accommodate labels */
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chart-output {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            text-align: center;
+        }
+        /* SVG Styles */
+        svg {
+            border: 1px solid #eee;
+            background-color: #fcfcfc;
+            width: 100%;
+            max-width: 800px; /* Match container width for consistency */
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+        .tooth-outline {
+            fill: #e0e0e0;
+            stroke: #999;
+            stroke-width: 1;
+        }
+        .tooth-surface {
+            fill: #f0f0f0; /* Default surface color, slightly lighter */
+            stroke: #bbb;
+            stroke-width: 0.5;
+        }
+        .caries {
+            fill: red !important; /* Mark caries in red */
+        }
+        .tooth-label {
+            font-size: 7px; /* Labels for tooth numbers */
+            text-anchor: middle;
+            fill: #333;
+            font-weight: bold;
+        }
+        .arch-line {
+            stroke: #aaa;
+            stroke-width: 2;
+            fill: none;
+        }
+        .mouth-label {
+            font-size: 10px;
+            font-weight: bold;
+            fill: #555;
+            text-anchor: middle;
+        }
+        .label-line {
+            stroke: #ccc;
+            stroke-width: 1;
+            stroke-dasharray: 3 3;
+        }
+
+
+
+/* pulse with Base Style of the Object */
+
+@keyframes breathing-glow {
+  0% {
+    /* Soft, close shadow */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);  /*rgba(0, 0, 0, 0.1); */
+    /* If you want a colored glow, change rgba(0,0,0,0.1) to a color like rgba(0, 150, 255, 0.3) */
+  }
+  50% {
+    /* WIDER spread (4px) and SOFTER blur (15px) */
+    box-shadow: 0 0 20px 4px rgba(0, 191, 255, 0.5);
+  }
+  100% {
+    /* Back to start */
+    box-shadow: 0 0 5px 0px rgba(0, 191, 255, 0.5);
+  }
+}
+
+
+
+/* ================================================================= */
+/* START: CSS FOR IMPORT NOTE MODAL                                  */
+/* ================================================================= */
+.modal-hidden {
+    display: none;
+}
+
+#modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal-backdrop.modal-visible {
+    display: flex;
+}
+
+#import-note-modal {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close-button {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: #333;
+}
+
+.modal-content {
+    padding: 20px;
+    line-height: 1.5;
+}
+
+#paste-note-textarea {
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't add to width */
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 20px;
+    border-top: 1px solid #eee;
+}
+
+.modal-footer .primary-button {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.modal-footer .secondary-button {
+    background-color: orange;
+    color: white;
+    border-color: orange;
+}
+
+/* ================================================================= */
+/* END: CSS FOR IMPORT NOTE MODAL                                    */
+/* ================================================================= */
+
+
+.history-item {
+    background: #eee;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    transition: background 0.2s;
+}
+.history-item:hover {
+    background: var(--element-bg);
+    border-color: var(--button-bg);
+}
+
+/* ================================================================= */
+/* CSS FOR FIREBASE LOGIN NOTE MODAL                                    */
+/* ================================================================= */
+   
+
+.view-hidden {
+    display: none !important; /* Use !important to ensure this rule always wins */
+}
+      .container { padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; margin-top: 20px; }
+        #user-status { text-align: right; }
+        
+        /* Note List Styles */
+        #note-list { list-style-type: none; padding: 0; }
+		#note-list li, #history-note-list li { padding: 10px; border: 1px solid #eee; margin-top: -1px; cursor: pointer; }
+		#note-list li:hover, #history-note-list li:hover { background-color: #e8f0fe; }
+
+      #view-doctor-dashboard {
+    max-width: 75%; /* Sets the width to 75% of the screen */
+    margin: 25px auto; /* Keeps it centered horizontally with top margin */
+}
+   
+   
+   
+   /* ======== NEW LANDING PAGE STYLES ======== */
+.landing-title {
+    font-size: 3.5em; /* Larger, more impactful title */
+    font-weight: 300; /* A thinner, more modern font weight */
+    color: #2c3e50;
+    text-shadow: none;
+    margin-bottom: 0;
+	text-align: center;
+}
+.landing-version {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    margin-top: -10px;
+    margin-bottom: 30px;
+}
+.login-box {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    margin: 0 auto; /* Center the login box itself */
+    text-align: left;
+}
+.feature-showcase {
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    color: #ecf0f1;
+    padding: 40px 20px;
+    margin-top: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.feature-showcase h2 {
+    color: #ffffff;
+    text-shadow: none;
+    margin-top: 0;
+}
+.feature-rotator {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    padding: 10px 20px;
+    margin-top: 20px;
+    display: inline-block;
+    min-width: 300px;
+}
+#feature-text {
+    font-size: 1.1em;
+    transition: opacity 0.5s ease-in-out; /* This is for the fade effect */
+}
+.landing-footer {
+    margin-top: 40px;
+    font-size: 0.8em;
+    color: #95a5a6;
+}
+.landing-footer a {
+    color: #7f8c8d;
+    text-decoration: none;
+}
+.landing-footer a:hover {
+    text-decoration: underline;
+}
+#start-day-button {
+    font-size: 1.2em; /* Make the font larger */
+    font-weight: bold;
+    background-color: var(--success-color); /* Use the prominent green color */
+    border: none;
+}
+#start-day-button:hover {
+    background-color: var(--success-hover); /* Darken on hover */
+}
+   
+   
