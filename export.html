@@ -2,23 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Firestore History Exporter</title>
+    <title>Secure Firestore History Exporter</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        button { font-size: 1.2em; padding: 10px 20px; cursor: pointer; }
-        pre { background-color: #f0f0f0; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; padding: 20px; line-height: 1.6; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; }
+        .hidden { display: none !important; }
+        input { width: calc(100% - 20px); padding: 8px; margin-bottom: 10px; font-size: 1em; }
+        button { font-size: 1.1em; padding: 10px 20px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #user-status { text-align: right; margin-bottom: 20px; }
+        #log-output { background-color: #e9ecef; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; min-height: 50px; }
+        #error-message { color: #d93025; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>DentalNoteMaker - Firestore History Exporter</h1>
-    <p>Click the button below to fetch all documents from the 'history_notes' collection and download them as a single JSON file.</p>
-    <button id="export-btn">Export History Data</button>
-    <hr>
-    <h3>Log:</h3>
-    <pre id="log-output">Waiting to start...</pre>
+
+    <h1>DentalNoteMaker - Secure History Exporter</h1>
+
+    <!-- View for Logged-In Users -->
+    <div id="exporter-view" class="container hidden">
+        <div id="user-status">
+            Logged in as: <b id="user-email"></b> | <a href="#" id="logout-btn">Logout</a>
+        </div>
+        <p>Click the button below to fetch all documents from the 'history_notes' collection and download them as a single JSON file.</p>
+        <button id="export-btn">Export History Data</button>
+        <hr>
+        <h3>Log:</h3>
+        <pre id="log-output">Waiting to start...</pre>
+    </div>
+
+    <!-- View for Logged-Out Users -->
+    <div id="login-view" class="container">
+        <h2>Please Log In</h2>
+        <p>You must be authenticated to export data.</p>
+        <input type="email" id="email-input" placeholder="Enter your email">
+        <input type="password" id="password-input" placeholder="Enter your password">
+        <button id="login-btn">Login</button>
+        <p id="error-message"></p>
+    </div>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <script>
@@ -35,30 +60,65 @@
         // --- 2. Initialize Firebase ---
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        // --- 3. The Export Logic ---
-        const exportButton = document.getElementById('export-btn');
+        // --- 3. UI Element References ---
+        const loginView = document.getElementById('login-view');
+        const exporterView = document.getElementById('exporter-view');
+        const userEmailDisplay = document.getElementById('user-email');
+        const errorMessage = document.getElementById('error-message');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const exportBtn = document.getElementById('export-btn');
         const logOutput = document.getElementById('log-output');
 
+        // --- 4. Authentication Logic ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                loginView.classList.add('hidden');
+                exporterView.classList.remove('hidden');
+                userEmailDisplay.textContent = user.email;
+            } else {
+                // User is signed out
+                exporterView.classList.add('hidden');
+                loginView.classList.remove('hidden');
+                userEmailDisplay.textContent = '';
+            }
+        });
+
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            errorMessage.textContent = '';
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    console.error("Login failed:", error);
+                    errorMessage.textContent = error.message;
+                });
+        });
+
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut();
+        });
+
+        // --- 5. The Export Logic ---
         const exportHistoryToJSON = async () => {
             logOutput.textContent = "Connecting to Firestore and fetching 'history_notes' collection...";
-            exportButton.disabled = true;
+            exportBtn.disabled = true;
 
             try {
-                // This is where the database reads happen (1 read per document)
                 const snapshot = await db.collection('history_notes').get();
-                
                 const historyData = [];
                 snapshot.forEach(doc => {
                     historyData.push(doc.data());
                 });
 
                 logOutput.textContent = `Successfully fetched ${historyData.length} documents. Preparing download...`;
-
-                // Convert the array of objects into a nicely formatted JSON string
                 const jsonString = JSON.stringify(historyData, null, 2);
-                
-                // Create a downloadable file from the JSON string
                 const blob = new Blob([jsonString], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 
@@ -70,17 +130,17 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                logOutput.textContent += "\n\nExport complete! Check your downloads folder for 'firestore_history_export.json'.";
+                logOutput.textContent += "\n\nExport complete! Check your downloads folder.";
 
             } catch (error) {
                 console.error("Export failed:", error);
-                logOutput.textContent = `Error: Export failed. Check the browser console for details.\n\nMessage: ${error.message}`;
+                logOutput.textContent = `Error: Export failed. You may not have permission to read this collection.\n\nMessage: ${error.message}`;
             } finally {
-                exportButton.disabled = false;
+                exportBtn.disabled = false;
             }
         };
 
-        exportButton.addEventListener('click', exportHistoryToJSON);
+        exportBtn.addEventListener('click', exportHistoryToJSON);
     </script>
 </body>
 </html>
