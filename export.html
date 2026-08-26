@@ -24,7 +24,14 @@
         <div id="user-status">
             Logged in as: <b id="user-email"></b> | <a href="#" id="logout-btn">Logout</a>
         </div>
-        <p>Click the button below to fetch all documents from the 'history_notes' collection and download them as a single JSON file.</p>
+        
+        <p>This tool will fetch the most recent notes from your 'history_notes' collection.</p>
+        
+        <!-- THIS IS THE NEW PART -->
+        <label for="limit-input"><b>Number of recent notes to export:</b></label>
+        <input type="number" id="limit-input" value="500" min="1" max="5000">
+        <!-- END OF NEW PART -->
+
         <button id="export-btn">Export History Data</button>
         <hr>
         <h3>Log:</h3>
@@ -47,7 +54,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <script>
-        // --- 1. Your Firebase Project Configuration ---
         const firebaseConfig = {
           apiKey: "AIzaSyAlNh7VeqECL0vYM-1eeHGsRtln2d8AqT8",
           authDomain: "dentalnotemaker.firebaseapp.com",
@@ -57,12 +63,10 @@
           appId: "1:402426997147:web:35c60dbbfe96390f79593e"
         };
 
-        // --- 2. Initialize Firebase ---
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // --- 3. UI Element References ---
         const loginView = document.getElementById('login-view');
         const exporterView = document.getElementById('exporter-view');
         const userEmailDisplay = document.getElementById('user-email');
@@ -73,16 +77,14 @@
         const logoutBtn = document.getElementById('logout-btn');
         const exportBtn = document.getElementById('export-btn');
         const logOutput = document.getElementById('log-output');
+        const limitInput = document.getElementById('limit-input');
 
-        // --- 4. Authentication Logic ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                // User is signed in
                 loginView.classList.add('hidden');
                 exporterView.classList.remove('hidden');
                 userEmailDisplay.textContent = user.email;
             } else {
-                // User is signed out
                 exporterView.classList.add('hidden');
                 loginView.classList.remove('hidden');
                 userEmailDisplay.textContent = '';
@@ -90,51 +92,53 @@
         });
 
         loginBtn.addEventListener('click', () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            errorMessage.textContent = '';
-            auth.signInWithEmailAndPassword(email, password)
-                .catch(error => {
-                    console.error("Login failed:", error);
-                    errorMessage.textContent = error.message;
-                });
+            auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
+                .catch(error => errorMessage.textContent = error.message);
         });
 
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            auth.signOut();
-        });
+        logoutBtn.addEventListener('click', (e) => { e.preventDefault(); auth.signOut(); });
 
-        // --- 5. The Export Logic ---
         const exportHistoryToJSON = async () => {
-            logOutput.textContent = "Connecting to Firestore and fetching 'history_notes' collection...";
+            const limit = parseInt(limitInput.value, 10);
+            if (!limit || limit <= 0) {
+                logOutput.textContent = "Error: Please enter a valid number of notes to export.";
+                return;
+            }
+
+            logOutput.textContent = `Connecting to Firestore and fetching the latest ${limit} documents...`;
             exportBtn.disabled = true;
 
             try {
-                const snapshot = await db.collection('history_notes').get();
+                // --- THIS IS THE KEY CHANGE ---
+                // We order by timestamp and apply the user's limit.
+                const snapshot = await db.collection('history_notes')
+                                         .orderBy('timestamp', 'desc')
+                                         .limit(limit)
+                                         .get();
+                // -----------------------------
+                
                 const historyData = [];
-                snapshot.forEach(doc => {
-                    historyData.push(doc.data());
-                });
+                snapshot.forEach(doc => historyData.push(doc.data()));
 
                 logOutput.textContent = `Successfully fetched ${historyData.length} documents. Preparing download...`;
+
                 const jsonString = JSON.stringify(historyData, null, 2);
                 const blob = new Blob([jsonString], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'firestore_history_export.json';
+                a.download = `firestore_history_export_${limit}_notes.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                logOutput.textContent += "\n\nExport complete! Check your downloads folder.";
+                logOutput.textContent += "\n\nExport complete!";
 
             } catch (error) {
                 console.error("Export failed:", error);
-                logOutput.textContent = `Error: Export failed. You may not have permission to read this collection.\n\nMessage: ${error.message}`;
+                logOutput.textContent = `Error: Export failed. Check console for details.\n\nMessage: ${error.message}`;
             } finally {
                 exportBtn.disabled = false;
             }
