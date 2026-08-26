@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Firestore History Exporter</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        button { font-size: 1.2em; padding: 10px 20px; cursor: pointer; }
+        pre { background-color: #f0f0f0; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>DentalNoteMaker - Firestore History Exporter</h1>
+    <p>Click the button below to fetch all documents from the 'history_notes' collection and download them as a single JSON file.</p>
+    <button id="export-btn">Export History Data</button>
+    <hr>
+    <h3>Log:</h3>
+    <pre id="log-output">Waiting to start...</pre>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <script>
+        // --- 1. Your Firebase Project Configuration ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyAlNh7VeqECL0vYM-1eeHGsRtln2d8AqT8",
+          authDomain: "dentalnotemaker.firebaseapp.com",
+          projectId: "dentalnotemaker",
+          storageBucket: "dentalnotemaker.firebasestorage.app",
+          messagingSenderId: "402426997147",
+          appId: "1:402426997147:web:35c60dbbfe96390f79593e"
+        };
+
+        // --- 2. Initialize Firebase ---
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- 3. The Export Logic ---
+        const exportButton = document.getElementById('export-btn');
+        const logOutput = document.getElementById('log-output');
+
+        const exportHistoryToJSON = async () => {
+            logOutput.textContent = "Connecting to Firestore and fetching 'history_notes' collection...";
+            exportButton.disabled = true;
+
+            try {
+                // This is where the database reads happen (1 read per document)
+                const snapshot = await db.collection('history_notes').get();
+                
+                const historyData = [];
+                snapshot.forEach(doc => {
+                    historyData.push(doc.data());
+                });
+
+                logOutput.textContent = `Successfully fetched ${historyData.length} documents. Preparing download...`;
+
+                // Convert the array of objects into a nicely formatted JSON string
+                const jsonString = JSON.stringify(historyData, null, 2);
+                
+                // Create a downloadable file from the JSON string
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'firestore_history_export.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                logOutput.textContent += "\n\nExport complete! Check your downloads folder for 'firestore_history_export.json'.";
+
+            } catch (error) {
+                console.error("Export failed:", error);
+                logOutput.textContent = `Error: Export failed. Check the browser console for details.\n\nMessage: ${error.message}`;
+            } finally {
+                exportButton.disabled = false;
+            }
+        };
+
+        exportButton.addEventListener('click', exportHistoryToJSON);
+    </script>
+</body>
+</html>
