@@ -5122,12 +5122,42 @@ techNameInput.addEventListener('keydown', (event) => {
         let modalTeethData = {}; // SVG element refs for modal
         let pendingClassifyToken = null; // token currently being classified via context menu
 
-        const SURFACE_ORDER = ['M', 'O', 'D', 'B', 'F', 'L', 'I'];
+        // Fallback linear order for surfaces that are not a special MOD/MID compound.
+        // M > D > O > I > F > B > L  → yields MO, DO (not OD), OL, OF, etc.
+        const SURFACE_ORDER = ['M', 'D', 'O', 'I', 'F', 'B', 'L'];
 
         // Anterior teeth use Incisal (I); posterior use Occlusal (O)
         function isAnteriorTooth(toothNum) {
             const n = parseInt(toothNum, 10);
             return (n >= 6 && n <= 11) || (n >= 22 && n <= 27);
+        }
+
+        /**
+         * Order surfaces the way clinicians write them:
+         *  - 1 surface: that letter
+         *  - 2 surfaces: M>D>O>I>F>B>L  → MO, DO (not OD), OL, OF, ML, …
+         *  - 3 surfaces with M+O+D: always MOD (adjacent M-O-D), not MDO
+         *  - 3 surfaces with M+I+D: always MID
+         *  - Extra surfaces (F/B/L) appended after the core compound in SURFACE_ORDER
+         */
+        function orderSurfaces(surfaceSet) {
+            const set = surfaceSet instanceof Set ? surfaceSet : new Set(surfaceSet);
+            const has = (s) => set.has(s);
+            const extras = () => SURFACE_ORDER.filter(s => has(s) && !['M', 'O', 'D', 'I'].includes(s));
+
+            // Prefer F over B when both present (same facial/buccal surface clinically)
+            if (has('F') && has('B')) set.delete('B');
+
+            // Three-surface MOD / MID — keep adjacent order
+            if (has('M') && has('O') && has('D')) {
+                return ['M', 'O', 'D', ...extras()];
+            }
+            if (has('M') && has('I') && has('D')) {
+                return ['M', 'I', 'D', ...extras()];
+            }
+
+            // Everything else: linear priority M > D > O > I > F > B > L
+            return SURFACE_ORDER.filter(s => has(s));
         }
 
         function normalizeSurfaces(surfStr, toothNum) {
@@ -5153,7 +5183,10 @@ techNameInput.addEventListener('keydown', (event) => {
                 }
             }
 
-            return Array.from(set).sort((a, b) => SURFACE_ORDER.indexOf(a) - SURFACE_ORDER.indexOf(b));
+            // Prefer F over B
+            if (set.has('F') && set.has('B')) set.delete('B');
+
+            return orderSurfaces(set);
         }
 
         function makeToken(tooth, surfaces) {
@@ -5180,7 +5213,7 @@ techNameInput.addEventListener('keydown', (event) => {
             const parts = [];
             const sortedTeeth = Array.from(map.keys()).sort((a, b) => a - b);
             for (const t of sortedTeeth) {
-                const surfs = Array.from(map.get(t)).sort((a, b) => SURFACE_ORDER.indexOf(a) - SURFACE_ORDER.indexOf(b));
+                const surfs = orderSurfaces(map.get(t));
                 if (surfs.length > 0) {
                     parts.push(`#${t}(${surfs.join('')})`);
                 }
@@ -5216,8 +5249,7 @@ techNameInput.addEventListener('keydown', (event) => {
             const newTokens = [];
             const sortedTeeth = Array.from(chartingSelections.keys()).sort((a, b) => a - b);
             for (const t of sortedTeeth) {
-                const surfs = Array.from(chartingSelections.get(t))
-                    .sort((a, b) => SURFACE_ORDER.indexOf(a) - SURFACE_ORDER.indexOf(b));
+                const surfs = orderSurfaces(chartingSelections.get(t));
                 if (surfs.length === 0) continue;
                 const tok = `#${t}(${surfs.join('')})`;
                 const note = tokenNotes.get(tok.toUpperCase()) || '';
