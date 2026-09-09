@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 07JUL26 mgh -->
+<!-- version as of 09SEP26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -614,7 +614,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5</p>
+    <p class="landing-version">v5.5</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -749,7 +749,7 @@ opacity: 0.4;
 
            <div class="element-type" data-type="tx-plan"><h3>Treatment Plan</h3></div>
    
-   <div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
+   <div class="element-type" data-type="endo-testing"><h3>Endo Testing Table</h3></div><div class="element-type" data-type="anesthetic"><h3>Anesthetic Calculator</h3></div><div class="element-type" data-type="enhanced-textbox"><h3>Pop-up Text Box</h3></div><div class="element-type" data-type="charting"><h3>Charting (Interactive Tooth Chart)</h3></div><div class="element-type" data-type="alert"><h3>Allergy/Alert Selector</h3></div><div class="element-type" data-type="painscale"><h3>Pain Scale</h3></div><div class="element-type" data-type="bloodpressure"><h3>Blood Pressure</h3></div><div class="element-type" data-type="psr"><h3>PSR</h3></div><hr><div class="element-type" data-type="dropdown"><h3>Simple Dropdown</h3></div><div class="element-type" data-type="checkbox"><h3>Checkbox</h3></div><div class="element-type" data-type="formatter"><h3>Formatter</h3></div><hr><div class="element-type" data-type="label-red"><h3>Red Label</h3></div><div class="element-type" data-type="label-black"><h3>Black Label</h3></div></div></div></div>
     <div id="properties-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="properties-title">Edit Properties</h2><span class="close-btn" data-modal-id="properties-modal">&times;</span></div><div class="modal-body" id="properties-body"></div><div class="modal-footer"><button id="properties-save-btn" class="control-btn">Save Changes</button></div></div></div>
     <div id="context-menu"><div id="ctx-properties">Properties...</div><div id="ctx-delete">Delete Element</div></div>
 
@@ -812,6 +812,63 @@ opacity: 0.4;
         </div>
     </div>
     <!-- **** END OF NEW CODE **** -->
+
+    <!-- **** START: Charting Element Modal **** -->
+    <div id="charting-editor-modal" class="modal">
+        <div class="modal-content" style="max-width: 950px;">
+            <div class="modal-header">
+                <h2>Charting Editor</h2>
+                <span class="close-btn" data-modal-id="charting-editor-modal">&times;</span>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Interactive Tooth Chart -->
+                <div style="text-align: center; background: #fcfcfc; border: 1px solid #eee; border-radius: 6px; padding: 8px;">
+                    <svg id="charting-modal-svg" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet" style="width: 100%; max-width: 820px; height: auto; display: block; margin: 0 auto;"></svg>
+                </div>
+
+                <!-- Text Entry with highlighting support -->
+                <div>
+                    <label style="font-weight: bold; display: block; margin-bottom: 4px;">Charting · Right click to set Class 1/2/3 caries</label>
+                    <div class="charting-backdrop-container" style="position: relative; width: 100%; height: 120px; margin-bottom: 4px;">
+                        <div id="charting-backdrop-mirror" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 20px 8px 8px 8px; box-sizing: border-box; font-family: monospace; font-size: 14px; line-height: 1.9; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; color: transparent; background-color: #fff; z-index: 1; pointer-events: none;"></div>
+                        <textarea id="charting-editor-textarea" spellcheck="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 20px 8px 8px 8px; box-sizing: border-box; font-family: monospace; font-size: 14px; line-height: 1.9; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; background-color: transparent; color: #333; z-index: 2; resize: none; caret-color: #333;"></textarea>
+                    </div>
+                    <p style="font-size: 0.75em; color: #888; margin: 2px 0 0;">Type e.g. 3mo , 14-DO , #19 M or click the chart. Auto-corrects to #3(MO). Right-click a surface or token to classify. Select text then use buttons below to send to Treatment Plan.</p>
+                </div>
+
+                <!-- Send-to-Treatment-Plan buttons (replaces old snippets) -->
+                <div id="charting-selection-actions" style="margin-top: 4px; padding: 8px; background: #f0f0f0; border-radius: 4px; text-align: center; font-size: 0.9em;">
+                    <b>Send Selected Text To Treatment Plan:</b><br style="margin-bottom:4px;">
+                    <button class="control-btn charting-send-btn" data-target-class="Operative-CLASS 3" style="margin:2px; padding:4px 8px; font-size:0.85em;">Oper Class 3</button>
+                    <button class="control-btn charting-send-btn" data-target-class="Operative-CLASS 2" style="margin:2px; padding:4px 8px; font-size:0.85em;">Oper Class 2</button>
+                    <button class="control-btn charting-send-btn" data-target-class="Operative-CLASS 1" style="margin:2px; padding:4px 8px; font-size:0.85em;">Oper Class 1</button>
+                    &nbsp;-&nbsp;
+                    <button class="control-btn charting-send-btn" data-target-class="Oral Surgery-CLASS 3" style="margin:2px; padding:4px 8px; font-size:0.85em;">OMS Class 3</button>
+                    <button class="control-btn charting-send-btn" data-target-class="Oral Surgery-CLASS 2" style="margin:2px; padding:4px 8px; font-size:0.85em;">OMS Class 2</button>
+                    &nbsp;-&nbsp;
+                    <button class="control-btn charting-send-btn" data-target-class="Endo-CLASS 3" style="margin:2px; padding:4px 8px; font-size:0.85em;">Endo Class 3</button>
+                    &nbsp;-&nbsp;
+                    <button class="control-btn charting-send-btn" data-target-class="Pros-CLASS 3" style="margin:2px; padding:4px 8px; font-size:0.85em;">Pros Class 3</button>
+                    <button class="control-btn charting-send-btn" data-target-class="Pros-CLASS 2" style="margin:2px; padding:4px 8px; font-size:0.85em;">Pros Class 2</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="charting-editor-save-btn" class="control-btn">Save & Close (<i>Shift + Enter</i>)</button>
+            </div>
+        </div>
+    </div>
+    <!-- **** END: Charting Element Modal **** -->
+
+    <!-- Mini classification context menu for Charting -->
+    <div id="charting-classify-menu" style="display:none; position:fixed; z-index:3000; background:#fff; border:1px solid #ccc; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.2); padding:6px 0; min-width:160px; font-size:14px;">
+        <div style="padding:4px 12px; font-weight:bold; color:#555; border-bottom:1px solid #eee;">Classify Caries</div>
+        <div class="classify-item" data-class="1" style="padding:8px 16px; cursor:pointer;">Class 1 <span style="color:#28a745; font-weight:bold;">●</span></div>
+        <div class="classify-item" data-class="2" style="padding:8px 16px; cursor:pointer;">Class 2 <span style="color:#ffc107; font-weight:bold;">●</span></div>
+        <div class="classify-item" data-class="3" style="padding:8px 16px; cursor:pointer;">Class 3 <span style="color:#d93025; font-weight:bold;">●</span></div>
+        <div style="border-top:1px solid #eee; margin-top:4px;"></div>
+        <div class="classify-item" data-class="0" style="padding:8px 16px; cursor:pointer; color:#666;">Clear classification and treatment plan</div>
+    </div>
+
 <div id="extra-section" class="section-extra-container">
     <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
 
@@ -1178,7 +1235,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       ]
     },
     {
-      "type": "enhanced-textbox",
+      "type": "charting",
       "required": false,
       "prefixTab": true,
       "prefixNewline": true,
@@ -1197,7 +1254,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       ]
     },
     {
-      "type": "enhanced-textbox",
+      "type": "charting",
       "required": false,
       "prefixTab": true,
       "prefixNewline": true,
@@ -2193,7 +2250,7 @@ const updateLiveOutput = (forceImmediate = false) => {
     let outputParts = [];
     document.querySelectorAll('.draggable-element').forEach(el => {
         const state = getElementState(el); let content = '';
-        if (state.type === 'enhanced-textbox') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
+        if (state.type === 'enhanced-textbox' || state.type === 'charting') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
         else if (state.type === 'tx-plan') {
             const classOrder = ["CLASS 3", "CLASS 2", "CLASS 1"];
             let planParts = [];
@@ -2300,7 +2357,7 @@ const createDraggableContainer = (type, data) => {
 
 
 if (data.prefixTab) draggable.dataset.prefixTab = 'true'; if (data.prefixNewline) draggable.dataset.prefixNewline = 'true'; if (data.suffixNewline) draggable.dataset.suffixNewline = 'true';
-            if (type === 'enhanced-textbox') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || ""; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
+            if (type === 'enhanced-textbox' || type === 'charting') { draggable.dataset.internalLabel = data.internalLabel || ''; draggable.dataset.prefixLabel = data.prefixLabel || ''; draggable.dataset.defaultText = data.defaultText || ""; draggable.dataset.dropdownOptions = JSON.stringify(data.dropdownOptions || []); draggable.dataset.content = data.content || data.defaultText; }
             else if (type === 'alert') { draggable.dataset.alerts = JSON.stringify(data.alerts || []); }
             else if (type === 'bloodpressure') { draggable.dataset.discussSystolic = data.discussSystolic || '130'; draggable.dataset.discussDiastolic = data.discussDiastolic || '80'; draggable.dataset.checkboxSystolic = data.checkboxSystolic || '140'; draggable.dataset.checkboxDiastolic = data.checkboxDiastolic || '90'; }   
    else if (type === 'anesthetic') { draggable.dataset.anestheticTypes = JSON.stringify(data.anestheticTypes || [ { name: '2% Lidocaine', mg: 34, epi: 17 }, { name: '4% Septocaine', mg: 68, epi: 17 }, { name: '0.5% Marcaine', mg: 9, epi: 9 } ]); draggable.dataset.anestheticValues = JSON.stringify(data.anestheticValues || {}); draggable.dataset.includeTopical = data.includeTopical === false ? 'false' : 'true';}
@@ -2333,10 +2390,16 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
 
         const createElement = (type, data = {}) => {
             const draggable = createDraggableContainer(type, data);
-            if (!['enhanced-textbox', 'alert', 'anesthetic', 'endo-testing', 'label-red', 'label-black', 'formatter'].includes(type)) {
+            if (!['enhanced-textbox', 'charting', 'alert', 'anesthetic', 'endo-testing', 'label-red', 'label-black', 'formatter'].includes(type)) {
                  draggable.addEventListener('input', updateLiveOutput);
             }
             if (type === 'enhanced-textbox') { draggable.classList.add('enhanced-textbox'); const internalLabelHtml = data.internalLabel ? `<div class="internal-label">${data.internalLabel}</div>` : ''; draggable.innerHTML = `${internalLabelHtml}<div class="enhanced-textbox-preview">${data.content || data.defaultText || ''}</div>`; draggable.addEventListener('click', () => openTextboxEditor(draggable)); }
+            else if (type === 'charting') { 
+                draggable.classList.add('charting-element', 'enhanced-textbox'); 
+                const internalLabelHtml = data.internalLabel ? `<div class="internal-label">${data.internalLabel}</div>` : ''; 
+                draggable.innerHTML = `${internalLabelHtml}<div class="enhanced-textbox-preview">${data.content || data.defaultText || ''}</div>`; 
+                draggable.addEventListener('click', () => openChartingEditor(draggable)); 
+            }
             else if (type === 'alert') { draggable.classList.add('alert-element'); draggable.innerHTML = `<span class="alert-display"></span>`; draggable.addEventListener('click', () => openAllergyModal(draggable)); updateAlertElementUI(draggable); }
             else if (type === 'anesthetic') { draggable.classList.add('anesthetic-element'); draggable.innerHTML = `<span class="anesthetic-summary"></span>`; updateAnestheticSummary(draggable); draggable.addEventListener('click', () => openAnestheticEditor(draggable)); }
 
@@ -2420,7 +2483,7 @@ draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEv
 
         const getElementState = (element) => {
             const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
-            if (type === 'enhanced-textbox') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions); }
+            if (type === 'enhanced-textbox' || type === 'charting') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions || '[]'); }
 
             // **** START OF NEW CODE for tx plan****
             else if (type === 'tx-plan') {
@@ -3603,7 +3666,7 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
         const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(); endoModal.style.display = 'none'; };
         const openPropertiesModal = (element) => {
             const state = getElementState(element); const body = document.getElementById('properties-body'); let mainPropsHtml = '', formattingHtml = '', generalPropsHtml = '';
-            if (state.type === 'enhanced-textbox') { mainPropsHtml = `<fieldset><legend>Labels & Text</legend><label for="prop-internal-label">Internal Label (for maker only)</label><input type="text" id="prop-internal-label" value="${state.internalLabel}"><label for="prop-prefix-label">Prefix Label (for note output)</label><input type="text" id="prop-prefix-label" value="${state.prefixLabel}"><label for="prop-default-text">Default Text</label><input type="text" id="prop-default-text" value="${state.defaultText}"></fieldset><fieldset><legend>Dropdown Phrases</legend><label for="prop-dropdown-options">(one per line)</label><textarea id="prop-dropdown-options" rows="6">${state.dropdownOptions.join('\n')}</textarea></fieldset>`; }
+            if (state.type === 'enhanced-textbox' || state.type === 'charting') { mainPropsHtml = `<fieldset><legend>Labels & Text</legend><label for="prop-internal-label">Internal Label (for maker only)</label><input type="text" id="prop-internal-label" value="${state.internalLabel}"><label for="prop-prefix-label">Prefix Label (for note output)</label><input type="text" id="prop-prefix-label" value="${state.prefixLabel}"><label for="prop-default-text">Default Text</label><input type="text" id="prop-default-text" value="${state.defaultText}"></fieldset><fieldset><legend>Dropdown Phrases / Snippets</legend><label for="prop-dropdown-options">(one per line)</label><textarea id="prop-dropdown-options" rows="6">${(state.dropdownOptions || []).join('\n')}</textarea></fieldset>`; }
             else if (state.type === 'anesthetic') { mainPropsHtml = `<fieldset><legend>Anesthetic Types</legend><div id="prop-anesthetic-types"></div><button id="prop-add-anesthetic-type" class="control-btn" style="margin-top:10px;">+ Add Type</button></fieldset>`; }
 
             // **** START OF NEW CODE for tx plan****
@@ -3666,7 +3729,7 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
         };
         const saveProperties = (element) => {
             const oldState = getElementState(element); const newState = { ...oldState };
-            if (newState.type === 'enhanced-textbox') { newState.internalLabel = document.getElementById('prop-internal-label').value; newState.prefixLabel = document.getElementById('prop-prefix-label').value; newState.defaultText = document.getElementById('prop-default-text').value; newState.dropdownOptions = document.getElementById('prop-dropdown-options').value.split('\n').filter(Boolean); if (oldState.content === oldState.defaultText) { newState.content = newState.defaultText; } }
+            if (newState.type === 'enhanced-textbox' || newState.type === 'charting') { newState.internalLabel = document.getElementById('prop-internal-label').value; newState.prefixLabel = document.getElementById('prop-prefix-label').value; newState.defaultText = document.getElementById('prop-default-text').value; newState.dropdownOptions = document.getElementById('prop-dropdown-options').value.split('\n').filter(Boolean); if (oldState.content === oldState.defaultText) { newState.content = newState.defaultText; } }
             else if (newState.type === 'anesthetic') { const newTypes = []; document.querySelectorAll('#prop-anesthetic-types .prop-anesthetic-row').forEach(row => { const name = row.querySelector('.prop-anesthetic-name').value.trim(); const mg = parseFloat(row.querySelector('.prop-anesthetic-mg').value); const epi = parseFloat(row.querySelector('.prop-anesthetic-epi').value); if (name && !isNaN(mg) && !isNaN(epi)) { newTypes.push({ name, mg, epi }); } }); newState.anestheticTypes = newTypes; newState.anestheticValues = {}; }
 
             // **** START OF NEW CODE for tx plan****
@@ -4002,7 +4065,7 @@ const reconcileState = (newState) => {
         }
         // Now, call the specific UI refresh function for this element type.
         // This is the key to updating the view without destroying the element.
-        if (newStateItem.type === 'enhanced-textbox') {
+        if (newStateItem.type === 'enhanced-textbox' || newStateItem.type === 'charting') {
             updateEnhancedTextboxUI(element); // We'll create this small helper
         } 
 		
@@ -4706,6 +4769,7 @@ document.addEventListener('keydown', (event) => {
    const allergyModal = document.getElementById('allergy-modal');
    const txPlanModal = document.getElementById('tx-plan-modal');
    const propsModal = document.getElementById('properties-modal');
+   const chartingModal = document.getElementById('charting-editor-modal');
 
    // Check which modal is open
    const isAnesOpen = getComputedStyle(anesModal).display !== 'none';
@@ -4714,8 +4778,9 @@ document.addEventListener('keydown', (event) => {
    const isAllergyOpen = getComputedStyle(allergyModal).display !== 'none';
    const isTxPlanOpen = getComputedStyle(txPlanModal).display !== 'none';
    const isPropsOpen = getComputedStyle(propsModal).display !== 'none';
+   const isChartingOpen = chartingModal && getComputedStyle(chartingModal).display !== 'none';
 
-   const isModalOpen = isAnesOpen || isTextOpen || isEndoOpen || isAllergyOpen || isTxPlanOpen || isPropsOpen;
+   const isModalOpen = isAnesOpen || isTextOpen || isEndoOpen || isAllergyOpen || isTxPlanOpen || isPropsOpen || isChartingOpen;
 
    // If any modal is open, we need to handle it.
    if (isModalOpen) {
@@ -4737,6 +4802,8 @@ document.addEventListener('keydown', (event) => {
            document.getElementById('tx-plan-save-btn').click();
        } else if (isPropsOpen) {
            document.getElementById('properties-save-btn').click();
+       } else if (isChartingOpen) {
+           document.getElementById('charting-editor-save-btn').click();
        }
    }
    // If NO modal is open, perform the global copy action.
@@ -5043,6 +5110,795 @@ techNameInput.addEventListener('keydown', (event) => {
 
         // Bind the new function to the export button
         document.getElementById('export-sf603a-btn').addEventListener('click', exportToSF603A);
+
+
+        // =================================================================
+        // CHARTING ELEMENT - Interactive two-way tooth chart editor
+        // Schema: tooth + surfaces[] + optional classification (1|2|3)
+        // Classification drives: chart badge, surface color, auto-send to Operative-CLASS N
+        // =================================================================
+        let chartingSelections = new Map(); // toothNum -> Set of surface letters
+        let chartingClassifications = new Map(); // key = "#3(MO)" -> 1|2|3
+        let modalTeethData = {}; // SVG element refs for modal
+        let pendingClassifyToken = null; // token currently being classified via context menu
+
+        const SURFACE_ORDER = ['M', 'O', 'D', 'B', 'F', 'L', 'I'];
+
+        // Anterior teeth use Incisal (I); posterior use Occlusal (O)
+        function isAnteriorTooth(toothNum) {
+            const n = parseInt(toothNum, 10);
+            return (n >= 6 && n <= 11) || (n >= 22 && n <= 27);
+        }
+
+        function normalizeSurfaces(surfStr, toothNum) {
+            const s = (surfStr || '').toUpperCase().replace(/[^MODIBFL]/g, '');
+            const set = new Set();
+            if (s.includes('MOD')) { set.add('M'); set.add('O'); set.add('D'); }
+            else {
+                if (s.includes('MO')) { set.add('M'); set.add('O'); }
+                if (s.includes('DO')) { set.add('D'); set.add('O'); }
+                if (s.includes('MI')) { set.add('M'); set.add('I'); }
+                if (s.includes('DI')) { set.add('D'); set.add('I'); }
+            }
+            for (const c of s) {
+                if ('MODIBFL'.includes(c)) set.add(c);
+            }
+
+            // Enforce correct center surface letter by tooth type
+            if (toothNum != null && !isNaN(toothNum)) {
+                if (isAnteriorTooth(toothNum)) {
+                    if (set.has('O')) { set.delete('O'); set.add('I'); }
+                } else {
+                    if (set.has('I')) { set.delete('I'); set.add('O'); }
+                }
+            }
+
+            return Array.from(set).sort((a, b) => SURFACE_ORDER.indexOf(a) - SURFACE_ORDER.indexOf(b));
+        }
+
+        function makeToken(tooth, surfaces) {
+            // Ensure the surface letters are correct for this tooth before joining
+            const corrected = normalizeSurfaces(Array.from(surfaces).join(''), tooth);
+            return `#${tooth}(${corrected.join('')})`;
+        }
+
+        function parseChartingTextToSelections(text) {
+            const map = new Map();
+            const regex = /#?(\d{1,2})\s*[- ]?\s*\(?\s*([MODIBFLmodibfl]+)\s*\)?/g;
+            let match;
+            while ((match = regex.exec(text || '')) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                const surfs = normalizeSurfaces(match[2], tooth);
+                if (!map.has(tooth)) map.set(tooth, new Set());
+                surfs.forEach(s => map.get(tooth).add(s));
+            }
+            return map;
+        }
+
+        function selectionsToText(map) {
+            const parts = [];
+            const sortedTeeth = Array.from(map.keys()).sort((a, b) => a - b);
+            for (const t of sortedTeeth) {
+                const surfs = Array.from(map.get(t)).sort((a, b) => SURFACE_ORDER.indexOf(a) - SURFACE_ORDER.indexOf(b));
+                if (surfs.length > 0) {
+                    parts.push(`#${t}(${surfs.join('')})`);
+                }
+            }
+            return parts.join(', ');
+        }
+
+        /**
+         * Rebuild only the structured #N(SURF) tokens from chartingSelections,
+         * but preserve any free-text notes the user typed after each token
+         * or anywhere else in the textarea.
+         */
+        function updateTextareaTokensPreservingNotes() {
+            const ta = document.getElementById('charting-editor-textarea');
+            if (!ta) return;
+            const original = ta.value;
+
+            // Capture notes that currently sit after each token
+            // e.g. "#3(MO) deep near pulp, #14(DO)" → note for #3(MO) = " deep near pulp"
+            const tokenNotes = new Map(); // token → trailing note (including leading space)
+            const tokenRegex = /(#\d{1,2}\([MODIBFL]+\))([^\n,#]*)/gi;
+            let m;
+            while ((m = tokenRegex.exec(original)) !== null) {
+                const tok = m[1];
+                const note = m[2] || '';
+                // Only keep non-empty notes that are not just another token fragment
+                if (note.trim() && !/^[\s,]*#?\d/.test(note)) {
+                    tokenNotes.set(tok.toUpperCase(), note);
+                }
+            }
+
+            // Build the new token list from current chartingSelections
+            const newTokens = [];
+            const sortedTeeth = Array.from(chartingSelections.keys()).sort((a, b) => a - b);
+            for (const t of sortedTeeth) {
+                const surfs = Array.from(chartingSelections.get(t))
+                    .sort((a, b) => SURFACE_ORDER.indexOf(a) - SURFACE_ORDER.indexOf(b));
+                if (surfs.length === 0) continue;
+                const tok = `#${t}(${surfs.join('')})`;
+                const note = tokenNotes.get(tok.toUpperCase()) || '';
+                newTokens.push(tok + note);
+            }
+
+            // Preserve any free-text that appears before the first token
+            let leading = '';
+            const firstTokenMatch = original.match(/#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+/);
+            if (firstTokenMatch && firstTokenMatch.index > 0) {
+                leading = original.substring(0, firstTokenMatch.index).replace(/,\s*$/, '').trim();
+                if (leading) leading += ' ';
+            }
+
+            // If there are no charting selections left, keep the original free text
+            if (newTokens.length === 0) {
+                const cleaned = original.replace(/#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+\s*\)?/gi, '')
+                    .replace(/^[,\s]+|[,\s]+$/g, '')
+                    .trim();
+                ta.value = cleaned;
+            } else {
+                ta.value = leading + newTokens.join(', ');
+            }
+        }
+
+        // Color map for classified surfaces
+        const CLASS_COLORS = {
+            1: '#28a745', // green
+            2: '#ffc107', // yellow/amber
+            3: '#d93025'  // red
+        };
+
+        function updateModalChartVisuals() {
+            // Clear previous surface colors + badges
+            Object.values(modalTeethData).forEach(toothSurfs => {
+                Object.values(toothSurfs).forEach(path => {
+                    if (path && path.classList) {
+                        path.classList.remove('caries');
+                        path.style.fill = '';
+                    }
+                });
+            });
+            // Remove old class badges
+            const svg = document.getElementById('charting-modal-svg');
+            if (svg) {
+                svg.querySelectorAll('.class-badge').forEach(b => b.remove());
+            }
+
+            // Apply current selections + classification colors
+            chartingSelections.forEach((surfSet, tooth) => {
+                const data = modalTeethData[tooth];
+                if (!data) return;
+                // Determine highest class on this tooth (for badge)
+                let highestClass = 0;
+                surfSet.forEach(s => {
+                    const token = makeToken(tooth, [s]); // try single
+                    // also try full group token
+                    const fullToken = makeToken(tooth, surfSet);
+                    const cls = chartingClassifications.get(fullToken) || chartingClassifications.get(token) || 0;
+                    if (cls > highestClass) highestClass = cls;
+
+                    const path = data[s];
+                    if (path) {
+                        path.classList.add('caries');
+                        if (cls) {
+                            path.style.fill = CLASS_COLORS[cls] || '#d93025';
+                        }
+                    }
+                });
+
+                // Red "3" (or 2 / 1) badge above the tooth if classified
+                if (highestClass > 0 && data['O']) {
+                    const cx = parseFloat(data['O'].getAttribute('x')) + parseFloat(data['O'].getAttribute('width')) / 2;
+                    // Approximate tooth center Y from the outer circle if available
+                    const group = document.getElementById(`modal-tooth-group-${tooth}`);
+                    let cy = 80;
+                    if (group) {
+                        const circle = group.querySelector('circle');
+                        if (circle) cy = parseFloat(circle.getAttribute('cy')) - 22;
+                    }
+                    const badge = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    badge.setAttribute("x", cx);
+                    badge.setAttribute("y", cy);
+                    badge.setAttribute("class", "class-badge");
+                    badge.setAttribute("text-anchor", "middle");
+                    badge.setAttribute("font-size", "11");
+                    badge.setAttribute("font-weight", "bold");
+                    badge.setAttribute("fill", CLASS_COLORS[highestClass] || '#d93025');
+                    badge.textContent = String(highestClass);
+                    if (svg) svg.appendChild(badge);
+                }
+            });
+        }
+
+        function createModalTooth(toothNum, x, y, size = 18, isUpper = true, quadrant) {
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group.setAttribute("id", `modal-tooth-group-${toothNum}`);
+
+            const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            outerCircle.setAttribute("cx", x);
+            outerCircle.setAttribute("cy", y);
+            outerCircle.setAttribute("r", size);
+            outerCircle.setAttribute("class", "tooth-outline");
+            group.appendChild(outerCircle);
+
+            modalTeethData[toothNum] = {};
+            const smallSize = size * 0.7;
+            const offset = size * 0.6;
+            const isRightQuadrant = (quadrant === 1 || quadrant === 4);
+            const mesialXOffset = isRightQuadrant ? offset : -offset;
+            const distalXOffset = isRightQuadrant ? -offset : offset;
+            const buccalFacialYOffset = isUpper ? -offset : offset;
+            const lingualYOffset = isUpper ? offset : -offset;
+
+            const makeSurface = (surfKey, px, py) => {
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", px - smallSize / 2);
+                rect.setAttribute("y", py - smallSize / 2);
+                rect.setAttribute("width", smallSize);
+                rect.setAttribute("height", smallSize);
+                rect.setAttribute("class", "tooth-surface");
+                rect.setAttribute("id", `modal-tooth-${toothNum}-${surfKey}`);
+                rect.setAttribute("data-tooth", toothNum);
+                rect.setAttribute("data-surface", surfKey);
+                rect.style.cursor = "pointer";
+
+                // Left click = toggle
+                rect.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const t = parseInt(rect.dataset.tooth, 10);
+                    const s = rect.dataset.surface;
+                    if (!chartingSelections.has(t)) chartingSelections.set(t, new Set());
+                    const set = chartingSelections.get(t);
+                    if (set.has(s)) {
+                        set.delete(s);
+                        if (set.size === 0) chartingSelections.delete(t);
+                        // clear classification for the old full token
+                        chartingClassifications.delete(makeToken(t, new Set([s])));
+                    } else {
+                        set.add(s);
+                    }
+                    // Smart text update: only rewrite tokens, preserve free-text notes
+                    updateTextareaTokensPreservingNotes();
+                    updateModalChartVisuals();
+                    if (typeof updateChartingBackdropMirror === 'function') updateChartingBackdropMirror();
+                });
+
+                // Right click = classify
+                rect.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const t = parseInt(rect.dataset.tooth, 10);
+                    const s = rect.dataset.surface;
+                    // Ensure the surface is selected so we have a token
+                    if (!chartingSelections.has(t)) chartingSelections.set(t, new Set());
+                    const set = chartingSelections.get(t);
+                    if (!set.has(s)) set.add(s);
+                    const token = makeToken(t, set);
+                    pendingClassifyToken = token;
+                    // Smart text update – keep notes
+                    updateTextareaTokensPreservingNotes();
+                    updateModalChartVisuals();
+                    if (typeof updateChartingBackdropMirror === 'function') updateChartingBackdropMirror();
+                    showClassifyMenu(e.clientX, e.clientY);
+                });
+
+                group.appendChild(rect);
+                modalTeethData[toothNum][surfKey] = rect;
+                return rect;
+            };
+
+            makeSurface('M', x + mesialXOffset, y);
+            makeSurface('D', x + distalXOffset, y);
+            makeSurface('F', x, y + buccalFacialYOffset);
+            modalTeethData[toothNum]['B'] = modalTeethData[toothNum]['F'];
+            makeSurface('L', x, y + lingualYOffset);
+            // Center surface: Incisal (I) for anteriors 6-11 / 22-27, Occlusal (O) for posteriors
+            const centerKey = isAnteriorTooth(toothNum) ? 'I' : 'O';
+            makeSurface(centerKey, x, y);
+            // Alias the other letter so lookups still work either way
+            if (centerKey === 'I') {
+                modalTeethData[toothNum]['O'] = modalTeethData[toothNum]['I'];
+            } else {
+                modalTeethData[toothNum]['I'] = modalTeethData[toothNum]['O'];
+            }
+
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("x", x);
+            label.setAttribute("y", isUpper ? y + size + 8 : y - size - 4);
+            label.setAttribute("class", "tooth-label");
+            label.textContent = toothNum;
+            group.appendChild(label);
+
+            return group;
+        }
+
+        function initializeModalChart() {
+            const svg = document.getElementById('charting-modal-svg');
+            if (!svg) return;
+            svg.innerHTML = '';
+            modalTeethData = {};
+
+            const addLabel = (text, x, y) => {
+                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                t.setAttribute("x", x); t.setAttribute("y", y); t.setAttribute("class", "mouth-label"); t.textContent = text;
+                svg.appendChild(t);
+            };
+            const addLine = (x1, y1, x2, y2) => {
+                const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2); l.setAttribute("class", "label-line");
+                svg.appendChild(l);
+            };
+            addLabel("Facial", 425, 30); addLine(20, 40, 780, 40);
+            addLabel("Lingual", 425, 170); addLine(20, 180, 780, 180);
+            addLabel("Lingual", 425, 230); addLine(20, 240, 780, 240);
+            addLabel("Facial", 425, 370); addLine(20, 380, 780, 380);
+
+            const upperArch = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            upperArch.setAttribute("d", "M 20 120 C 200 60, 600 60, 830 120");
+            upperArch.setAttribute("class", "arch-line");
+            svg.appendChild(upperArch);
+            const lowerArch = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            lowerArch.setAttribute("d", "M 20 280 C 200 340, 600 340, 830 280");
+            lowerArch.setAttribute("class", "arch-line");
+            svg.appendChild(lowerArch);
+
+            const positions = (typeof toothPositions !== 'undefined') ? toothPositions : {
+                1:{x:50,y:100,isUpper:true,quadrant:1},2:{x:100,y:100,isUpper:true,quadrant:1},3:{x:150,y:100,isUpper:true,quadrant:1},4:{x:200,y:100,isUpper:true,quadrant:1},
+                5:{x:250,y:100,isUpper:true,quadrant:1},6:{x:300,y:100,isUpper:true,quadrant:1},7:{x:350,y:100,isUpper:true,quadrant:1},8:{x:400,y:100,isUpper:true,quadrant:1},
+                9:{x:450,y:100,isUpper:true,quadrant:2},10:{x:500,y:100,isUpper:true,quadrant:2},11:{x:550,y:100,isUpper:true,quadrant:2},12:{x:600,y:100,isUpper:true,quadrant:2},
+                13:{x:650,y:100,isUpper:true,quadrant:2},14:{x:700,y:100,isUpper:true,quadrant:2},15:{x:750,y:100,isUpper:true,quadrant:2},16:{x:800,y:100,isUpper:true,quadrant:2},
+                32:{x:50,y:300,isUpper:false,quadrant:4},31:{x:100,y:300,isUpper:false,quadrant:4},30:{x:150,y:300,isUpper:false,quadrant:4},29:{x:200,y:300,isUpper:false,quadrant:4},
+                28:{x:250,y:300,isUpper:false,quadrant:4},27:{x:300,y:300,isUpper:false,quadrant:4},26:{x:350,y:300,isUpper:false,quadrant:4},25:{x:400,y:300,isUpper:false,quadrant:4},
+                24:{x:450,y:300,isUpper:false,quadrant:3},23:{x:500,y:300,isUpper:false,quadrant:3},22:{x:550,y:300,isUpper:false,quadrant:3},21:{x:600,y:300,isUpper:false,quadrant:3},
+                20:{x:650,y:300,isUpper:false,quadrant:3},19:{x:700,y:300,isUpper:false,quadrant:3},18:{x:750,y:300,isUpper:false,quadrant:3},17:{x:800,y:300,isUpper:false,quadrant:3}
+            };
+
+            for (let i = 1; i <= 16; i++) {
+                const pos = positions[i];
+                if (pos) svg.appendChild(createModalTooth(i, pos.x, pos.y, 18, pos.isUpper, pos.quadrant));
+            }
+            for (let i = 32; i >= 17; i--) {
+                const pos = positions[i];
+                if (pos) svg.appendChild(createModalTooth(i, pos.x, pos.y, 18, pos.isUpper, pos.quadrant));
+            }
+        }
+
+        // ---- Classification menu helpers ----
+        function showClassifyMenu(clientX, clientY) {
+            const menu = document.getElementById('charting-classify-menu');
+            if (!menu) return;
+            menu.style.display = 'block';
+            // Keep on screen
+            const w = menu.offsetWidth || 160;
+            const h = menu.offsetHeight || 160;
+            let left = clientX;
+            let top = clientY;
+            if (left + w > window.innerWidth) left = window.innerWidth - w - 8;
+            if (top + h > window.innerHeight) top = window.innerHeight - h - 8;
+            menu.style.left = left + 'px';
+            menu.style.top = top + 'px';
+        }
+
+        function hideClassifyMenu() {
+            const menu = document.getElementById('charting-classify-menu');
+            if (menu) menu.style.display = 'none';
+            pendingClassifyToken = null;
+        }
+
+        // Click outside closes the menu
+        document.addEventListener('mousedown', (e) => {
+            const menu = document.getElementById('charting-classify-menu');
+            if (menu && menu.style.display === 'block' && !menu.contains(e.target)) {
+                hideClassifyMenu();
+            }
+        });
+
+        // Menu item clicks
+        document.getElementById('charting-classify-menu').addEventListener('click', (e) => {
+            const item = e.target.closest('.classify-item');
+            if (!item || !pendingClassifyToken) return;
+            const cls = parseInt(item.dataset.class, 10);
+            applyClassification(pendingClassifyToken, cls);
+            hideClassifyMenu();
+        });
+
+        /**
+         * Remove a token from comma-separated text in a Tx Plan cell.
+         * Handles optional leading/trailing commas and extra spaces; case-insensitive.
+         */
+        function stripTokenFromText(text, token) {
+            if (!text || !token) return text || '';
+            const parts = text.split(',').map(p => p.trim()).filter(Boolean);
+            const tokenUpper = token.toUpperCase();
+            const kept = parts.filter(p => p.toUpperCase() !== tokenUpper);
+            return kept.join(', ');
+        }
+
+        /**
+         * Remove the token from every Operative-CLASS 1/2/3 entry in the Treatment Plan.
+         * Returns true if a Tx Plan element existed and was updated.
+         */
+        function removeTokenFromAllOperativeClasses(token) {
+            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            if (!txPlanElement) return false;
+            const state = getElementState(txPlanElement);
+            let changed = false;
+            for (const cls of [1, 2, 3]) {
+                const key = `Operative-CLASS ${cls}`;
+                if (!state.txData[key]) continue;
+                const before = state.txData[key].text || '';
+                const after = stripTokenFromText(before, token);
+                if (after !== before) {
+                    state.txData[key].text = after;
+                    // If cell is now empty, clear priority so auto-prioritize can re-run later
+                    if (!after.trim()) state.txData[key].priority = 0;
+                    changed = true;
+                }
+            }
+            if (changed) {
+                txPlanElement.dataset.txData = JSON.stringify(state.txData);
+                updateTxPlanSummary(txPlanElement);
+                updateLiveOutput();
+            }
+            return true;
+        }
+
+        function applyClassification(token, classNum) {
+            if (!token) return;
+
+            // Always remove the token from all Operative CLASS columns first
+            // (so a re-classify moves it, and a clear deletes it)
+            removeTokenFromAllOperativeClasses(token);
+
+            if (classNum === 0) {
+                chartingClassifications.delete(token);
+            } else {
+                chartingClassifications.set(token, classNum);
+                // Add only to the new Operative CLASS N
+                sendTokenToTxPlan(token, classNum);
+            }
+
+            updateModalChartVisuals();
+            // Persist meta on the active element
+            if (activeElementForEditor) {
+                activeElementForEditor.dataset.chartingMeta = JSON.stringify({
+                    classifications: Object.fromEntries(chartingClassifications)
+                });
+            }
+            // Refresh highlighters
+            if (typeof parseTreatmentPlanForHighlighting === 'function') parseTreatmentPlanForHighlighting();
+            if (typeof updateBackdropMirror === 'function') updateBackdropMirror();
+            if (typeof updateChartingBackdropMirror === 'function') updateChartingBackdropMirror();
+
+            if (classNum === 0) {
+                showFeedback(`Cleared classification and removed ${token} from Treatment Plan`, true);
+            } else {
+                showFeedback(`Classified ${token} as Class ${classNum} → Operative CLASS ${classNum}`, true);
+            }
+        }
+
+        function sendTokenToTxPlan(token, classNum) {
+            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            if (!txPlanElement) {
+                showFeedback("No Treatment Plan element found", false);
+                return;
+            }
+            const targetClass = `Operative-CLASS ${classNum}`;
+            const state = getElementState(txPlanElement);
+            const key = targetClass;
+            const existingEntry = state.txData[key] || { text: '', priority: 0 };
+
+            // Avoid duplicate if already present in this cell
+            const existingText = (existingEntry.text || '').toUpperCase();
+            if (existingText.includes(token.toUpperCase())) {
+                return; // already there (e.g. after a no-op re-classify)
+            }
+
+            const newText = existingEntry.text ? `${existingEntry.text}, ${token}` : token;
+
+            // Automatic prioritization (same logic as existing function)
+            let newPriority;
+            if (existingEntry.priority > 0 && existingEntry.text.trim() !== '') {
+                newPriority = existingEntry.priority;
+            } else {
+                const className = `CLASS ${classNum}`;
+                let maxPriority = 0;
+                for (const k in state.txData) {
+                    if (k.endsWith(`-${className}`) && k !== key) {
+                        const entry = state.txData[k];
+                        if (entry && entry.text && entry.text.trim() !== '') {
+                            const pri = parseInt(entry.priority, 10);
+                            if (pri > maxPriority) maxPriority = pri;
+                        }
+                    }
+                }
+                newPriority = Math.min(maxPriority + 1, 5);
+            }
+
+            state.txData[key] = { text: newText, priority: newPriority };
+            txPlanElement.dataset.txData = JSON.stringify(state.txData);
+            updateTxPlanSummary(txPlanElement);
+            updateLiveOutput();
+            // Keep highlighters in sync
+            if (typeof parseTreatmentPlanForHighlighting === 'function') parseTreatmentPlanForHighlighting();
+            if (typeof updateBackdropMirror === 'function') updateBackdropMirror();
+            if (typeof updateChartingBackdropMirror === 'function') updateChartingBackdropMirror();
+        }
+
+        // Right-click on the textarea: detect token under cursor
+        function getTokenAtPosition(text, pos) {
+            // Expand left/right to nearest token matching our pattern
+            const regex = /#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+\s*\)?/gi;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                if (pos >= match.index && pos <= match.index + match[0].length) {
+                    // Normalize it
+                    const parsed = parseChartingTextToSelections(match[0]);
+                    if (parsed.size > 0) {
+                        const t = Array.from(parsed.keys())[0];
+                        return makeToken(t, parsed.get(t));
+                    }
+                }
+            }
+            return null;
+        }
+
+        // ---- Charting backdrop highlighter (reuses global txPlanPhrasesMap) ----
+        function updateChartingBackdropMirror() {
+            const ta = document.getElementById('charting-editor-textarea');
+            const mirror = document.getElementById('charting-backdrop-mirror');
+            if (!ta || !mirror) return;
+
+            // Make sure we have the latest Tx Plan phrases
+            if (typeof parseTreatmentPlanForHighlighting === 'function') {
+                parseTreatmentPlanForHighlighting();
+            }
+
+            let html = ta.value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            // Apply Class 3 / 2 / 1 highlights (longer phrases first to avoid partial overlaps)
+            const applyClass = (phrases, cls) => {
+                // Sort by length descending so longer tokens win
+                const sorted = [...phrases].filter(Boolean).sort((a, b) => b.length - a.length);
+                sorted.forEach(phrase => {
+                    const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const re = new RegExp(escaped, 'gi');
+                    html = html.replace(re, match => `<span class="match-${cls}">${match}</span>`);
+                });
+            };
+
+            if (typeof txPlanPhrasesMap !== 'undefined') {
+                applyClass(txPlanPhrasesMap.class3 || [], 'class3');
+                applyClass(txPlanPhrasesMap.class2 || [], 'class2');
+                applyClass(txPlanPhrasesMap.class1 || [], 'class1');
+            }
+
+            // Also highlight tokens that were classified via the right-click menu
+            // (even if not yet reflected in the global map for some reason)
+            chartingClassifications.forEach((cls, token) => {
+                if (!cls) return;
+                const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const re = new RegExp(escaped, 'gi');
+                const spanClass = cls === 3 ? 'class3' : (cls === 2 ? 'class2' : 'class1');
+                html = html.replace(re, match => {
+                    // Avoid double-wrapping
+                    if (match.includes('match-class')) return match;
+                    return `<span class="match-${spanClass}">${match}</span>`;
+                });
+            });
+
+            mirror.innerHTML = html + '\n'; // trailing newline helps alignment
+        }
+
+        // Generalized send from Charting textarea (mirrors the standard textbox function)
+        function sendChartingSelectionToTxPlan(targetClass) {
+            const ta = document.getElementById('charting-editor-textarea');
+            if (!ta) return;
+            const selectedText = ta.value.substring(ta.selectionStart, ta.selectionEnd).trim();
+            if (!selectedText) {
+                showFeedback("Select some text first", false);
+                return;
+            }
+
+            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            if (!txPlanElement) {
+                showFeedback("No Treatment Plan element available", false);
+                return;
+            }
+
+            const state = getElementState(txPlanElement);
+            const key = targetClass;
+            const existingEntry = state.txData[key] || { text: '', priority: 0 };
+
+            // Avoid exact duplicate
+            const existingUpper = (existingEntry.text || '').toUpperCase();
+            if (existingUpper.includes(selectedText.toUpperCase())) {
+                showFeedback("Already in Treatment Plan", true);
+                updateChartingBackdropMirror();
+                return;
+            }
+
+            const newText = existingEntry.text ? `${existingEntry.text}, ${selectedText}` : selectedText;
+
+            // Automatic prioritization (identical to existing logic)
+            let newPriority;
+            if (existingEntry.priority > 0 && existingEntry.text.trim() !== '') {
+                newPriority = existingEntry.priority;
+            } else {
+                const parts = key.split('-');
+                const className = parts[1]; // "CLASS 3" etc.
+                let maxPriority = 0;
+                for (const k in state.txData) {
+                    if (k.endsWith(`-${className}`) && k !== key) {
+                        const entry = state.txData[k];
+                        if (entry && entry.text && entry.text.trim() !== '') {
+                            const pri = parseInt(entry.priority, 10);
+                            if (pri > maxPriority) maxPriority = pri;
+                        }
+                    }
+                }
+                newPriority = Math.min(maxPriority + 1, 5);
+            }
+
+            state.txData[key] = { text: newText, priority: newPriority };
+            txPlanElement.dataset.txData = JSON.stringify(state.txData);
+            updateTxPlanSummary(txPlanElement);
+            updateLiveOutput();
+
+            // If this was an Operative CLASS, also record the classification for chart badges
+            if (targetClass.startsWith('Operative-CLASS')) {
+                const clsNum = parseInt(targetClass.replace('Operative-CLASS ', ''), 10);
+                // Try to normalize the selected text into our token format
+                const parsed = parseChartingTextToSelections(selectedText);
+                if (parsed.size > 0) {
+                    parsed.forEach((surfs, tooth) => {
+                        const token = makeToken(tooth, surfs);
+                        chartingClassifications.set(token, clsNum);
+                    });
+                    if (activeElementForEditor) {
+                        activeElementForEditor.dataset.chartingMeta = JSON.stringify({
+                            classifications: Object.fromEntries(chartingClassifications)
+                        });
+                    }
+                    updateModalChartVisuals();
+                }
+            }
+
+            showFeedback(`Sent to ${targetClass}`);
+            // Refresh both highlighters
+            if (typeof parseTreatmentPlanForHighlighting === 'function') parseTreatmentPlanForHighlighting();
+            if (typeof updateBackdropMirror === 'function') updateBackdropMirror();
+            updateChartingBackdropMirror();
+        }
+
+        const openChartingEditor = (element) => {
+            activeElementForEditor = element;
+            const state = getElementState(element);
+            const textarea = document.getElementById('charting-editor-textarea');
+			
+
+			
+			
+            initializeModalChart();
+
+            // Load the full stored content (tokens + any notes the user typed)
+            textarea.value = state.content || '';
+            chartingSelections = parseChartingTextToSelections(textarea.value);
+
+            // Restore classifications if previously saved
+            chartingClassifications = new Map();
+            try {
+                if (element.dataset.chartingMeta) {
+                    const meta = JSON.parse(element.dataset.chartingMeta);
+                    if (meta.classifications) {
+                        Object.entries(meta.classifications).forEach(([k, v]) => chartingClassifications.set(k, v));
+                    }
+                }
+            } catch (err) { /* ignore */ }
+
+            updateModalChartVisuals();
+            updateChartingBackdropMirror();
+
+            document.getElementById('charting-editor-modal').style.display = 'block';
+            textarea.focus();
+            // Same behavior as the regular textbox editor:
+            // only select the text when it is still the default value
+            if (textarea.value === (activeElementForEditor.dataset.defaultText || '')) {
+                textarea.select();
+            }
+
+        };
+
+        // Custom autocorrect + live highlight for charting textarea
+        const chartingTA = document.getElementById('charting-editor-textarea');
+        if (chartingTA) {
+            chartingTA.addEventListener('input', (e) => {
+                const ta = e.target;
+                const full = ta.value;
+                const cursor = ta.selectionStart;
+                const before = full.substring(0, cursor);
+                const lastChar = before.slice(-1);
+
+                if (lastChar === ' ' || lastChar === ',' || lastChar === '.') {
+                    const tokenMatch = before.match(/(?:^|[\s,])(#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+\s*\)?)$/i);
+                    if (tokenMatch) {
+                        const raw = tokenMatch[1];
+                        const parsed = parseChartingTextToSelections(raw);
+                        if (parsed.size > 0) {
+                            const normalized = selectionsToText(parsed);
+                            const startIdx = before.lastIndexOf(raw);
+                            const newBefore = before.substring(0, startIdx) + normalized + lastChar;
+                            const after = full.substring(cursor);
+                            ta.value = newBefore + after;
+                            const newPos = newBefore.length;
+                            ta.setSelectionRange(newPos, newPos);
+                        }
+                    }
+                }
+
+                chartingSelections = parseChartingTextToSelections(ta.value);
+                updateModalChartVisuals();
+                updateChartingBackdropMirror();
+            });
+
+            // Keep mirror scrolled in sync
+            chartingTA.addEventListener('scroll', () => {
+                const mirror = document.getElementById('charting-backdrop-mirror');
+                if (mirror) mirror.scrollTop = chartingTA.scrollTop;
+            });
+
+            // Right-click on textarea text → classify that token
+            chartingTA.addEventListener('contextmenu', (e) => {
+                const ta = e.target;
+                const pos = ta.selectionStart;
+                const token = getTokenAtPosition(ta.value, pos);
+                if (token) {
+                    e.preventDefault();
+                    pendingClassifyToken = token;
+                    showClassifyMenu(e.clientX, e.clientY);
+                }
+            });
+        }
+
+        // Wire the new "Send Selected Text To Treatment Plan" buttons
+        document.querySelectorAll('.charting-send-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.targetClass;
+                if (target) sendChartingSelectionToTxPlan(target);
+            });
+        });
+
+        document.getElementById('charting-editor-save-btn').onclick = () => {
+            if (!activeElementForEditor) return;
+            isRenderingFromCloud = true;
+            const ta = document.getElementById('charting-editor-textarea');
+            // Keep the full text the user sees (tokens + notes). Only normalize pure tokens in place.
+            chartingSelections = parseChartingTextToSelections(ta.value);
+            // Light pass: make sure any raw shorthand still gets normalized, but do not strip notes
+            updateTextareaTokensPreservingNotes();
+            const finalText = ta.value.trim();
+            activeElementForEditor.dataset.content = finalText;
+            // Persist classifications
+            activeElementForEditor.dataset.chartingMeta = JSON.stringify({
+                classifications: Object.fromEntries(chartingClassifications)
+            });
+            if (typeof updateEnhancedTextboxUI === 'function') updateEnhancedTextboxUI(activeElementForEditor);
+            else {
+                const preview = activeElementForEditor.querySelector('.enhanced-textbox-preview');
+                if (preview) preview.textContent = finalText;
+            }
+            updateLiveOutput();
+            document.getElementById('charting-editor-modal').style.display = 'none';
+            isRenderingFromCloud = false;
+            showFeedback("Charting saved.", true);
+        };
+
+
 
 
 
