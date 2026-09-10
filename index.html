@@ -829,9 +829,11 @@ opacity: 0.4;
                 <!-- Text Entry with highlighting support -->
                 <div>
                     <label style="font-weight: bold; display: block; margin-bottom: 4px;">Charting · Right click to set Class 1/2/3 caries</label>
-                    <div class="charting-backdrop-container" style="position: relative; width: 100%; height: 120px; margin-bottom: 4px;">
+                    <div class="charting-backdrop-container" id="charting-text-wrap" style="position: relative; width: 100%; height: 120px; margin-bottom: 4px;">
                         <div id="charting-backdrop-mirror" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 20px 8px 8px 8px; box-sizing: border-box; font-family: monospace; font-size: 14px; line-height: 1.9; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; color: transparent; background-color: #fff; z-index: 1; pointer-events: none;"></div>
                         <textarea id="charting-editor-textarea" spellcheck="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 20px 8px 8px 8px; box-sizing: border-box; font-family: monospace; font-size: 14px; line-height: 1.9; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; background-color: transparent; color: #333; z-index: 2; resize: none; caret-color: #333;"></textarea>
+                        <!-- Transparent layer: only captures right-clicks so classify menu works on GitHub Pages / hardened browsers -->
+                        <div id="charting-rclick-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; background: transparent;"></div>
                     </div>
                     <p style="font-size: 0.75em; color: #888; margin: 2px 0 0;">Type e.g. 3mo , 14-DO , #19 M or click the chart. Auto-corrects to #3(MO). Right-click a surface or token to classify. Select text then use buttons below to send to Treatment Plan.</p>
                 </div>
@@ -5943,27 +5945,71 @@ techNameInput.addEventListener('keydown', (event) => {
                 if (mirror) mirror.scrollTop = chartingTA.scrollTop;
             });
 
-            // Right-click on textarea text → classify that token
-            // Government / locked-down browsers often do NOT move the caret on
-            // right-click before contextmenu fires, so selectionStart is stale.
-            // We estimate the character under the mouse from coordinates instead.
-            chartingTA.addEventListener('contextmenu', (e) => {
-                const ta = e.target;
-                // 1) Prefer coordinate-based estimate (reliable across browsers)
-                let pos = estimateTextareaCaretFromPoint(ta, e.clientX, e.clientY);
+            // ------------------------------------------------------------------
+            // Right-click classification on the TEXT AREA
+            // GitHub Pages + many government browsers refuse to let a <textarea>
+            // suppress the system context menu. Work-around:
+            //   1. On right-mousedown, temporarily enable a transparent overlay
+            //      that sits above the textarea.
+            //   2. The overlay receives the subsequent contextmenu event and can
+            //      reliably call preventDefault + show our classify menu.
+            //   3. Overlay is disabled again immediately after.
+            // Left-clicks and typing are never blocked (overlay stays pointer-events:none).
+            // ------------------------------------------------------------------
+            const chartingWrap = document.getElementById('charting-text-wrap') || chartingTA.parentElement;
+            const rclickLayer = document.getElementById('charting-rclick-layer');
+
+            function resolveTokenUnderPointer(clientX, clientY) {
+                const ta = document.getElementById('charting-editor-textarea');
+                if (!ta) return null;
+                // 1) Coordinate estimate (caret often does not move on right-click)
+                let pos = estimateTextareaCaretFromPoint(ta, clientX, clientY);
                 let token = getTokenAtPosition(ta.value, pos);
-
-                // 2) Fallback: current selectionStart / selection range
+                // 2) Fallback: current caret
                 if (!token) {
-                    pos = ta.selectionStart;
-                    token = getTokenAtPosition(ta.value, pos);
+                    token = getTokenAtPosition(ta.value, ta.selectionStart);
                 }
-                // 3) Fallback: if user had a selection, try the midpoint
+                // 3) Fallback: midpoint of an existing selection
                 if (!token && ta.selectionStart !== ta.selectionEnd) {
-                    pos = Math.floor((ta.selectionStart + ta.selectionEnd) / 2);
-                    token = getTokenAtPosition(ta.value, pos);
+                    const mid = Math.floor((ta.selectionStart + ta.selectionEnd) / 2);
+                    token = getTokenAtPosition(ta.value, mid);
                 }
+                return token;
+            }
 
+            function armRclickLayer() {
+                if (rclickLayer) rclickLayer.style.pointerEvents = 'auto';
+            }
+            function disarmRclickLayer() {
+                if (rclickLayer) rclickLayer.style.pointerEvents = 'none';
+            }
+
+            // Arm the overlay on right-mouse-down (capture so we run early)
+            if (chartingWrap) {
+                chartingWrap.addEventListener('mousedown', (e) => {
+                    if (e.button === 2) armRclickLayer();
+                }, true);
+            }
+
+            // Primary handler: overlay receives contextmenu after being armed
+            if (rclickLayer) {
+                rclickLayer.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    disarmRclickLayer();
+                    const token = resolveTokenUnderPointer(e.clientX, e.clientY);
+                    if (token) {
+                        pendingClassifyToken = token;
+                        showClassifyMenu(e.clientX, e.clientY);
+                    }
+                });
+                rclickLayer.addEventListener('mouseup', disarmRclickLayer);
+                rclickLayer.addEventListener('mouseleave', disarmRclickLayer);
+            }
+
+            // Fallback: still try on the textarea itself (works locally / civilian browsers)
+            chartingTA.addEventListener('contextmenu', (e) => {
+                const token = resolveTokenUnderPointer(e.clientX, e.clientY);
                 if (token) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -5972,17 +6018,26 @@ techNameInput.addEventListener('keydown', (event) => {
                 }
             });
 
-            // Belt-and-suspenders: some hardened environments fire auxclick / mousedown
-            // for button 2 more reliably than contextmenu on textareas.
-            chartingTA.addEventListener('mousedown', (e) => {
-                if (e.button !== 2) return;
-                // Pre-compute token under the pointer so contextmenu has it ready
-                const pos = estimateTextareaCaretFromPoint(chartingTA, e.clientX, e.clientY);
-                const token = getTokenAtPosition(chartingTA.value, pos);
+            // Extra safety net: document capture phase while the charting modal is open.
+            // Runs before the event reaches the textarea; often the only path that can
+            // suppress the system menu on hardened / GitHub-Pages environments.
+            document.addEventListener('contextmenu', (e) => {
+                const modal = document.getElementById('charting-editor-modal');
+                if (!modal || getComputedStyle(modal).display === 'none') return;
+                const ta = document.getElementById('charting-editor-textarea');
+                if (!ta) return;
+                const rect = ta.getBoundingClientRect();
+                const inside = e.clientX >= rect.left && e.clientX <= rect.right &&
+                               e.clientY >= rect.top  && e.clientY <= rect.bottom;
+                if (!inside) return;
+                const token = resolveTokenUnderPointer(e.clientX, e.clientY);
                 if (token) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     pendingClassifyToken = token;
+                    showClassifyMenu(e.clientX, e.clientY);
                 }
-            });
+            }, true);
         }
 
         // Wire the new "Send Selected Text To Treatment Plan" buttons
