@@ -5661,20 +5661,79 @@ techNameInput.addEventListener('keydown', (event) => {
 
         // Right-click on the textarea: detect token under cursor
         function getTokenAtPosition(text, pos) {
-            // Expand left/right to nearest token matching our pattern
+            // Prefer exact hit, then nearest token within a small tolerance
+            // (government browsers often leave selectionStart at the previous caret)
             const regex = /#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+\s*\)?/gi;
+            let best = null;
+            let bestDist = Infinity;
             let match;
             while ((match = regex.exec(text)) !== null) {
-                if (pos >= match.index && pos <= match.index + match[0].length) {
-                    // Normalize it
+                const start = match.index;
+                const end = match.index + match[0].length;
+                if (pos >= start && pos <= end) {
                     const parsed = parseChartingTextToSelections(match[0]);
                     if (parsed.size > 0) {
                         const t = Array.from(parsed.keys())[0];
                         return makeToken(t, parsed.get(t));
                     }
                 }
+                // Track nearest token (within 3 chars of either edge)
+                const dist = pos < start ? start - pos : pos - end;
+                if (dist < bestDist && dist <= 3) {
+                    bestDist = dist;
+                    best = match[0];
+                }
+            }
+            if (best) {
+                const parsed = parseChartingTextToSelections(best);
+                if (parsed.size > 0) {
+                    const t = Array.from(parsed.keys())[0];
+                    return makeToken(t, parsed.get(t));
+                }
             }
             return null;
+        }
+
+        /**
+         * Estimate character index in a monospace textarea from mouse coordinates.
+         * Used when selectionStart is stale (common on locked-down / government browsers
+         * that do not move the caret on right-click before contextmenu fires).
+         */
+        function estimateTextareaCaretFromPoint(textarea, clientX, clientY) {
+            const rect = textarea.getBoundingClientRect();
+            const style = window.getComputedStyle(textarea);
+            const paddingLeft = parseFloat(style.paddingLeft) || 0;
+            const paddingTop = parseFloat(style.paddingTop) || 0;
+            let lineHeight = parseFloat(style.lineHeight);
+            if (!lineHeight || isNaN(lineHeight)) {
+                lineHeight = (parseFloat(style.fontSize) || 14) * 1.9;
+            }
+
+            // Measure one monospace character width
+            const probe = document.createElement('span');
+            probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${style.font};font-size:${style.fontSize};font-family:${style.fontFamily};`;
+            probe.textContent = 'M';
+            document.body.appendChild(probe);
+            const charWidth = probe.offsetWidth || 8.4;
+            document.body.removeChild(probe);
+
+            const x = clientX - rect.left - paddingLeft + textarea.scrollLeft;
+            const y = clientY - rect.top - paddingTop + textarea.scrollTop;
+
+            const lineIdx = Math.max(0, Math.floor(y / lineHeight));
+            const colIdx = Math.max(0, Math.round(x / charWidth));
+
+            const lines = textarea.value.split('\n');
+            let index = 0;
+            for (let i = 0; i < lineIdx && i < lines.length; i++) {
+                index += lines[i].length + 1; // +1 for the newline
+            }
+            if (lineIdx < lines.length) {
+                index += Math.min(colIdx, lines[lineIdx].length);
+            } else {
+                index = textarea.value.length;
+            }
+            return Math.max(0, Math.min(index, textarea.value.length));
         }
 
         // ---- Charting backdrop highlighter (reuses global txPlanPhrasesMap) ----
@@ -5885,14 +5944,43 @@ techNameInput.addEventListener('keydown', (event) => {
             });
 
             // Right-click on textarea text → classify that token
+            // Government / locked-down browsers often do NOT move the caret on
+            // right-click before contextmenu fires, so selectionStart is stale.
+            // We estimate the character under the mouse from coordinates instead.
             chartingTA.addEventListener('contextmenu', (e) => {
                 const ta = e.target;
-                const pos = ta.selectionStart;
-                const token = getTokenAtPosition(ta.value, pos);
+                // 1) Prefer coordinate-based estimate (reliable across browsers)
+                let pos = estimateTextareaCaretFromPoint(ta, e.clientX, e.clientY);
+                let token = getTokenAtPosition(ta.value, pos);
+
+                // 2) Fallback: current selectionStart / selection range
+                if (!token) {
+                    pos = ta.selectionStart;
+                    token = getTokenAtPosition(ta.value, pos);
+                }
+                // 3) Fallback: if user had a selection, try the midpoint
+                if (!token && ta.selectionStart !== ta.selectionEnd) {
+                    pos = Math.floor((ta.selectionStart + ta.selectionEnd) / 2);
+                    token = getTokenAtPosition(ta.value, pos);
+                }
+
                 if (token) {
                     e.preventDefault();
+                    e.stopPropagation();
                     pendingClassifyToken = token;
                     showClassifyMenu(e.clientX, e.clientY);
+                }
+            });
+
+            // Belt-and-suspenders: some hardened environments fire auxclick / mousedown
+            // for button 2 more reliably than contextmenu on textareas.
+            chartingTA.addEventListener('mousedown', (e) => {
+                if (e.button !== 2) return;
+                // Pre-compute token under the pointer so contextmenu has it ready
+                const pos = estimateTextareaCaretFromPoint(chartingTA, e.clientX, e.clientY);
+                const token = getTokenAtPosition(chartingTA.value, pos);
+                if (token) {
+                    pendingClassifyToken = token;
                 }
             });
         }
