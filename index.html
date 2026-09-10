@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 10SEP26 mgh -->
+<!-- version as of 09SEP26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -614,7 +614,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.56</p>
+    <p class="landing-version">v5.5</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -5307,6 +5307,16 @@ techNameInput.addEventListener('keydown', (event) => {
                 surfs.forEach(s => map.get(tooth).add(s));
             }
 
+            // Pass 3b: trailing note after glued form — "3mo extra text" → note on tooth 3
+            const gluedNoteRe = /#?(\d{1,2})([MODIBFLmodibfl]+)\b\s+([^,#\n]+)/gi;
+            while ((match = gluedNoteRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                if (!isPureSurfaceToken(match[2])) continue;
+                const rest = (match[3] || '').trim();
+                if (rest) notes.set(tooth, rest);
+            }
+
             // Pass 4: per-tooth trailing notes after a structured token
             // "#5(MO) deep caries, #14 crown" → notes for 5 and 14
             const noteRe = /#(\d{1,2})(?:\([MODIBFL]+\))?([^\n,#]*)/gi;
@@ -5383,6 +5393,8 @@ techNameInput.addEventListener('keydown', (event) => {
                 const patterns = [
                     new RegExp(`#?${t}\\s*\\(\\s*[A-Za-z]+\\s*\\)([^,#\\n]*)`, 'gi'),
                     new RegExp(`#?${t}(?:\\s*-\\s*|\\s+)[A-Za-z][^,#\\n]*`, 'gi'),
+                    // Glued form WITH optional trailing note: "3mo extra text"
+                    new RegExp(`#?${t}[MODIBFLmodibfl]+\\b\\s+[^,#\\n]*`, 'gi'),
                     new RegExp(`#?${t}[MODIBFLmodibfl]+\\b`, 'gi'),
                     new RegExp(`#?${t}\\b`, 'gi')
                 ];
@@ -5425,6 +5437,16 @@ techNameInput.addEventListener('keydown', (event) => {
                 if (isPureSurfaceToken(firstWord)) {
                     rest = rest.substring(firstWord.length).trim();
                 }
+                if (rest) notes.set(tooth, rest);
+            }
+
+            // Glued form with trailing note: "3mo extra text" → note "extra text" on tooth 3
+            const gluedNoteRe = /#?(\d{1,2})([MODIBFLmodibfl]+)\b\s+([^,#\n]+)/gi;
+            while ((match = gluedNoteRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                if (!isPureSurfaceToken(match[2])) continue;
+                const rest = (match[3] || '').trim();
                 if (rest) notes.set(tooth, rest);
             }
 
@@ -6169,8 +6191,12 @@ techNameInput.addEventListener('keydown', (event) => {
                 const lastChar = before.slice(-1);
 
                 if (lastChar === ' ' || lastChar === ',' || lastChar === '.') {
-                    // --- A) Pure surface codes: "5 MO " / "5mod " → "#5(MO) "
-                    const surfMatch = before.match(/(?:^|[\s,])(#?\d{1,2}\s*\(\s*[A-Za-z]+\s*\)|#?\d{1,2}(?:\s*-\s*|\s+)[A-Za-z]+|#?\d{1,2}[MODIBFLmodibfl]+)$/i);
+                    // Match against text WITHOUT the trailing delimiter, otherwise
+                    // the $ anchor never sees "3mo" (it sees "3mo ") and glued form fails.
+                    const textBeforeTrigger = before.slice(0, -1);
+
+                    // --- A) Pure surface codes: "3mo " / "5 MO " / "5-DO " → "#3(MO) "
+                    const surfMatch = textBeforeTrigger.match(/(?:^|[\s,])(#?\d{1,2}\s*\(\s*[A-Za-z]+\s*\)|#?\d{1,2}(?:\s*-\s*|\s+)[A-Za-z]+|#?\d{1,2}[MODIBFLmodibfl]+)$/i);
                     if (surfMatch) {
                         const raw = surfMatch[1];
                         const paren = raw.match(/\(\s*([A-Za-z]+)\s*\)/);
@@ -6182,8 +6208,8 @@ techNameInput.addEventListener('keydown', (event) => {
                             const ordered = normalizeSurfaces(letterPart, toothNum);
                             if (ordered.length) {
                                 const normalized = `#${toothNum}(${ordered.join('')})`;
-                                const startIdx = before.lastIndexOf(raw);
-                                const newBefore = before.substring(0, startIdx) + normalized + lastChar;
+                                const startIdx = textBeforeTrigger.lastIndexOf(raw);
+                                const newBefore = textBeforeTrigger.substring(0, startIdx) + normalized + lastChar;
                                 const after = full.substring(cursor);
                                 ta.value = newBefore + after;
                                 ta.setSelectionRange(newBefore.length, newBefore.length);
@@ -6193,8 +6219,7 @@ techNameInput.addEventListener('keydown', (event) => {
 
                     // --- B) Tooth + note (non-surface words): "6 postfix." → "#6 postfix."
                     //     Replaces in place so "prefix 6 postfix." becomes "prefix, #6 postfix."
-                    //     (not "prefix 6 postfix., #6 postfix.")
-                    const noteMatch = before.match(/(?:^|[\s,])(#?\d{1,2})\s+([A-Za-z][A-Za-z0-9 \-]*?)$/i);
+                    const noteMatch = textBeforeTrigger.match(/(?:^|[\s,])(#?\d{1,2})\s+([A-Za-z][A-Za-z0-9 \-]*?)$/i);
                     if (noteMatch) {
                         const toothRaw = noteMatch[1];
                         const noteRaw = noteMatch[2].trim();
@@ -6203,10 +6228,9 @@ techNameInput.addEventListener('keydown', (event) => {
                         if (firstWord && !isPureSurfaceToken(noteRaw.replace(/\s+/g, ''))) {
                             const toothNum = parseInt(toothRaw.replace('#', ''), 10);
                             if (toothNum >= 1 && toothNum <= 32) {
-                                // Find the start of this "N note" span
                                 const span = noteMatch[0].replace(/^[\s,]/, '');
-                                const startIdx = before.lastIndexOf(span);
-                                const prefix = before.substring(0, startIdx).replace(/[\s,]+$/, '');
+                                const startIdx = textBeforeTrigger.lastIndexOf(span);
+                                const prefix = textBeforeTrigger.substring(0, startIdx).replace(/[\s,]+$/, '');
                                 const normalized = `#${toothNum} ${noteRaw}`;
                                 const joiner = prefix ? ', ' : '';
                                 const newBefore = prefix + joiner + normalized + lastChar;
