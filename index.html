@@ -614,7 +614,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.55</p>
+    <p class="landing-version">v5.56</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -5445,9 +5445,23 @@ techNameInput.addEventListener('keydown', (event) => {
         }
 
         /**
+         * True when the textarea still holds only the placeholder default
+         * (usually "None." for the Caries / Incipient charting blocks).
+         */
+        function isChartingDefaultText(text) {
+            const t = (text || '').trim();
+            if (!t || /^none\.?$/i.test(t)) return true;
+            const def = (activeElementForEditor && activeElementForEditor.dataset.defaultText) || '';
+            return def && t === def.trim();
+        }
+
+        /**
          * Rebuild textarea from chartingSelections + notes.
          * Original raw tooth text is stripped so it is not duplicated alongside
          * the normalized "#N …" form.
+         * When the user charts via the SVG and the text is still the default
+         * placeholder ("None."), that placeholder is cleared so it does not
+         * remain next to the new tooth tokens.
          */
         function updateTextareaTokensPreservingNotes() {
             const ta = document.getElementById('charting-editor-textarea');
@@ -5468,7 +5482,7 @@ techNameInput.addEventListener('keydown', (event) => {
             });
             chartingToothNotes = nextNotes;
 
-            const freeParts = harvested.freeParts;
+            let freeParts = harvested.freeParts;
 
             // Build structured entries
             const structured = [];
@@ -5484,10 +5498,34 @@ techNameInput.addEventListener('keydown', (event) => {
                 structured.push(formatToothEntry(t, surfs, note));
             }
 
+            // If the user has charted teeth/surfaces, drop the placeholder default
+            // ("None." / "None" / element defaultText) so it does not stay as free text.
+            if (structured.length > 0) {
+                const def = ((activeElementForEditor && activeElementForEditor.dataset.defaultText) || 'None.').trim();
+                freeParts = freeParts.filter(p => {
+                    const t = (p || '').trim();
+                    if (!t) return false;
+                    if (/^none\.?$/i.test(t)) return false;
+                    if (def && t === def) return false;
+                    return true;
+                });
+            } else if (isChartingDefaultText(original) && structured.length === 0) {
+                // Nothing charted and still on default — leave default as-is
+                ta.value = original;
+                return;
+            }
+
             const parts = [];
             if (freeParts.length) parts.push(...freeParts);
             if (structured.length) parts.push(...structured);
-            ta.value = parts.join(', ');
+
+            // If everything was cleared, restore the element's default text
+            if (parts.length === 0) {
+                const def = (activeElementForEditor && activeElementForEditor.dataset.defaultText) || 'None.';
+                ta.value = def;
+            } else {
+                ta.value = parts.join(', ');
+            }
         }
 
         // Color map for classified surfaces
