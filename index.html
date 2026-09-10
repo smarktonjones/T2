@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 09SEP26 mgh -->
+<!-- version as of 10SEP26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -614,7 +614,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.5</p>
+    <p class="landing-version">v5.55</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -2637,23 +2637,33 @@ const COLOR_PALETTE = [
             const defectiveLine = lines.find(line => line.trim().startsWith("CARIES/DEFECTIVE RESTORATIONS:"));
             const incipientLine = lines.find(line => line.trim().startsWith("INCIPIENT CARIES:"));
 
-            // If we can't find the lines, we can't make a recommendation.
             if (!defectiveLine || !incipientLine) {
                 console.log("Evaluation: Caries/Incipient lines not found.");
                 return null;
             }
 
-            // Use a regex to find all sequences of digits (\d+) globally (g).
-            // The '|| []' ensures that if no numbers are found, we get an empty array instead of null.
-            const defectiveMatches = defectiveLine.match(/\d+/g) || [];
-            const incipientMatches = incipientLine.match(/\d+/g) || [];
-            
-            const defectiveCount = defectiveMatches.length;
-            const incipientCount = incipientMatches.length;
+            // Count unique tooth numbers (1-32) — same helper used by the live dropdown
+            const countTeeth = (line) => {
+                if (typeof countUniqueTeethInText === 'function') {
+                    // Strip the label prefix so only the findings are counted
+                    const body = line.replace(/^[^:]+:\s*/, '');
+                    return countUniqueTeethInText(body);
+                }
+                const nums = [];
+                const re = /#?(\d{1,2})\b/g;
+                let m;
+                while ((m = re.exec(line)) !== null) {
+                    const n = parseInt(m[1], 10);
+                    if (n >= 1 && n <= 32) nums.push(n);
+                }
+                return new Set(nums).size;
+            };
+
+            const defectiveCount = countTeeth(defectiveLine);
+            const incipientCount = countTeeth(incipientLine);
 
             console.log(`Evaluation: Found ${defectiveCount} defective/carious teeth and ${incipientCount} incipient lesions.`);
 
-            // Apply the risk logic you defined.
             if (defectiveCount > 2 || incipientCount > 4) {
                 console.log("Evaluation: Result -> HIGH risk");
                 return "HIGH";
@@ -2780,33 +2790,46 @@ const updateCariesRiskDropdown = (riskLevel) => {
 };
 
 /**
- * Reads the content of the caries text boxes and triggers the dropdown update.
- */
+ * Count unique tooth numbers (1-32) in charting text.
+ * Handles "#3(MO), #14 deep, 19" and ignores non-tooth digits.
+ */
+const countUniqueTeethInText = (text) => {
+    if (!text || !text.trim() || /^none\.?$/i.test(text.trim())) return 0;
+    const nums = [];
+    const re = /#?(\d{1,2})\b/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+        const n = parseInt(m[1], 10);
+        if (n >= 1 && n <= 32) nums.push(n);
+    }
+    return new Set(nums).size;
+};
+
+/**
+ * Reads the content of the caries charting blocks and sets the Caries Risk dropdown.
+ * Wired to both the regular textbox save and the charting-editor save (ids 2-5 / 2-6).
+ */
 const checkAndSetCariesRisk = () => {
-    // 1. Find the two relevant enhanced-textbox elements by their unique IDs.
-    const defectiveElement = document.querySelector('[data-original-id="2-5"]');
-    const incipientElement = document.querySelector('[data-original-id="2-6"]');
+    const defectiveElement = document.querySelector('[data-original-id="2-5"]');
+    const incipientElement = document.querySelector('[data-original-id="2-6"]');
+    if (!defectiveElement || !incipientElement) return;
 
-    // If either element isn't on the page, we can't proceed.
-    if (!defectiveElement || !incipientElement) return;
+    const defectiveText = defectiveElement.dataset.content || "";
+    const incipientText = incipientElement.dataset.content || "";
 
-    // 2. Get the text content from each element's dataset.
-    const defectiveText = defectiveElement.dataset.content || "";
-    const incipientText = incipientElement.dataset.content || "";
+    const defectiveCount = countUniqueTeethInText(defectiveText);
+    const incipientCount = countUniqueTeethInText(incipientText);
 
-    // 3. Evaluate the risk using the same logic from your copy button.
-    const defectiveCount = (defectiveText.match(/\d+/g) || []).length;
-    const incipientCount = (incipientText.match(/\d+/g) || []).length;
+    console.log(`Caries Risk check: defective teeth=${defectiveCount}, incipient=${incipientCount}`);
 
-    let risk = "Low"; // Default to Low risk
-    if (defectiveCount > 2 || incipientCount > 4) {
-        risk = "High";
-    } else if (defectiveCount >= 1 || incipientCount >= 3) {
-        risk = "Moderate";
-    }
+    let risk = "Low";
+    if (defectiveCount > 2 || incipientCount > 4) {
+        risk = "High";
+    } else if (defectiveCount >= 1 || incipientCount >= 3) {
+        risk = "Moderate";
+    }
 
-    // 4. Call our new helper function to update the dropdown UI.
-    updateCariesRiskDropdown(risk);
+    updateCariesRiskDropdown(risk);
 };
 
 
@@ -5116,10 +5139,18 @@ techNameInput.addEventListener('keydown', (event) => {
 
         // =================================================================
         // CHARTING ELEMENT - Interactive two-way tooth chart editor
-        // Schema: tooth + surfaces[] + optional classification (1|2|3)
+        // Schema per tooth: { surfaces: Set, note: string }
+        //   - surfaces optional (empty = tooth-only or tooth+note)
+        //   - note optional free text after the token
         // Classification drives: chart badge, surface color, auto-send to Operative-CLASS N
+        // Output forms:
+        //   #5(MO)           tooth + surfaces
+        //   #5(MO) deep      tooth + surfaces + note
+        //   #5 moderate      tooth + note (no surfaces)
+        //   free text...     notes with no tooth (kept as-is)
         // =================================================================
         let chartingSelections = new Map(); // toothNum -> Set of surface letters
+        let chartingToothNotes = new Map(); // toothNum -> note string (no leading space)
         let chartingClassifications = new Map(); // key = "#3(MO)" -> 1|2|3
         let modalTeethData = {}; // SVG element refs for modal
         let pendingClassifyToken = null; // token currently being classified via context menu
@@ -5162,7 +5193,29 @@ techNameInput.addEventListener('keydown', (event) => {
             return SURFACE_ORDER.filter(s => has(s));
         }
 
+        /**
+         * True only when every letter is a valid surface letter (M O D I B F L).
+         * "MO", "mod", "(DO)" → true
+         * "moderate", "crown", "crack" → false
+         * Critical: we only ever test COMPLETE words, never a prefix of a longer word.
+         */
+        function isPureSurfaceToken(surfStr) {
+            const cleaned = (surfStr || '').toUpperCase().replace(/[\s\-()]/g, '');
+            if (!cleaned) return false;
+            return /^[MODIBFL]+$/.test(cleaned);
+        }
+
+        /**
+         * Strict structured-token regexes — word-boundary safe so "5 moderate"
+         * never loses the leading "mod" to a surface match.
+         * Forms recognized:
+         *   #5(MO)   5(MO)   #5-MO   5-MO   #5 MO   5 MO   #5MO   5MO
+         */
+        const STRUCT_TOKEN_RE = /#?(\d{1,2})\s*\(\s*([A-Za-z]+)\s*\)|#?(\d{1,2})(?:\s*-\s*|\s+)([A-Za-z]+)\b|#?(\d{1,2})([MODIBFLmodibfl]+)\b/gi;
+
         function normalizeSurfaces(surfStr, toothNum) {
+            if (!isPureSurfaceToken(surfStr)) return [];
+
             const s = (surfStr || '').toUpperCase().replace(/[^MODIBFL]/g, '');
             const set = new Set();
             if (s.includes('MOD')) { set.add('M'); set.add('O'); set.add('D'); }
@@ -5176,7 +5229,6 @@ techNameInput.addEventListener('keydown', (event) => {
                 if ('MODIBFL'.includes(c)) set.add(c);
             }
 
-            // Enforce correct center surface letter by tooth type
             if (toothNum != null && !isNaN(toothNum)) {
                 if (isAnteriorTooth(toothNum)) {
                     if (set.has('O')) { set.delete('O'); set.add('I'); }
@@ -5185,96 +5237,257 @@ techNameInput.addEventListener('keydown', (event) => {
                 }
             }
 
-            // Prefer F over B
             if (set.has('F') && set.has('B')) set.delete('B');
 
             return orderSurfaces(set);
         }
 
         function makeToken(tooth, surfaces) {
-            // Ensure the surface letters are correct for this tooth before joining
-            const corrected = normalizeSurfaces(Array.from(surfaces).join(''), tooth);
+            const set = surfaces instanceof Set ? surfaces : new Set(surfaces);
+            if (!set.size) return `#${tooth}`;
+            const corrected = normalizeSurfaces(Array.from(set).join(''), tooth);
+            if (!corrected.length) return `#${tooth}`;
             return `#${tooth}(${corrected.join('')})`;
         }
 
+        /**
+         * Parse text → surface selections map.
+         * Only pure whole-word surface codes count. Ordinary words after a tooth
+         * number become notes (stored in chartingToothNotes), not surfaces.
+         */
         function parseChartingTextToSelections(text) {
             const map = new Map();
-            const regex = /#?(\d{1,2})\s*[- ]?\s*\(?\s*([MODIBFLmodibfl]+)\s*\)?/g;
+            // Reset notes; rebuild from text below
+            const notes = new Map();
+
+            if (!text) {
+                chartingToothNotes = notes;
+                return map;
+            }
+
+            // Pass 1: explicit parenthesized surfaces  #5(MO) or 5(MO)
+            const parenRe = /#?(\d{1,2})\s*\(\s*([A-Za-z]+)\s*\)/g;
             let match;
-            while ((match = regex.exec(text || '')) !== null) {
+            while ((match = parenRe.exec(text)) !== null) {
                 const tooth = parseInt(match[1], 10);
                 if (tooth < 1 || tooth > 32) continue;
+                if (!isPureSurfaceToken(match[2])) continue;
                 const surfs = normalizeSurfaces(match[2], tooth);
+                if (!surfs.length) continue;
                 if (!map.has(tooth)) map.set(tooth, new Set());
                 surfs.forEach(s => map.get(tooth).add(s));
             }
+
+            // Pass 2: spaced/dashed shorthand  #5 MO  5-DO  (whole word only)
+            const spacedRe = /#?(\d{1,2})(?:\s*-\s*|\s+)([A-Za-z]+)\b/g;
+            while ((match = spacedRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                const word = match[2];
+                if (!isPureSurfaceToken(word)) {
+                    // Tooth + ordinary word → note, no surfaces from this match
+                    if (!notes.has(tooth)) notes.set(tooth, word);
+                    continue;
+                }
+                const surfs = normalizeSurfaces(word, tooth);
+                if (!surfs.length) continue;
+                if (!map.has(tooth)) map.set(tooth, new Set());
+                surfs.forEach(s => map.get(tooth).add(s));
+            }
+
+            // Pass 3: glued shorthand 5MO / #14DO (whole word; \b stops "5mod" eating into "moderate")
+            const gluedRe = /#?(\d{1,2})([MODIBFLmodibfl]+)\b/g;
+            while ((match = gluedRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                // Skip if this position was already claimed as parenthesized (avoid double-count)
+                const surfs = normalizeSurfaces(match[2], tooth);
+                if (!surfs.length) continue;
+                if (!map.has(tooth)) map.set(tooth, new Set());
+                surfs.forEach(s => map.get(tooth).add(s));
+            }
+
+            // Pass 4: per-tooth trailing notes after a structured token
+            // "#5(MO) deep caries, #14 crown" → notes for 5 and 14
+            const noteRe = /#(\d{1,2})(?:\([MODIBFL]+\))?([^\n,#]*)/gi;
+            while ((match = noteRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                let note = (match[2] || '').trim();
+                // Strip a leading pure-surface word if present (already handled as surfaces)
+                note = note.replace(/^[MODIBFLmodibfl]+\b\s*/i, '').trim();
+                if (note && !/^#?\d/.test(note)) {
+                    notes.set(tooth, note);
+                }
+            }
+
+            // Also capture "#5 moderate caries" form (tooth + note, no parens/surfaces)
+            const toothNoteRe = /#?(\d{1,2})\s+([A-Za-z][^\n,#]*)/g;
+            while ((match = toothNoteRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                const rest = (match[2] || '').trim();
+                // If the first word is pure surfaces, the note is whatever follows that word
+                const firstWord = (rest.match(/^[A-Za-z]+/) || [])[0] || '';
+                if (isPureSurfaceToken(firstWord)) {
+                    const after = rest.substring(firstWord.length).trim();
+                    if (after) notes.set(tooth, after);
+                } else if (rest) {
+                    notes.set(tooth, rest);
+                }
+            }
+
+            chartingToothNotes = notes;
             return map;
+        }
+
+        function formatToothEntry(tooth, surfaces, note) {
+            const set = surfaces instanceof Set ? surfaces : new Set(surfaces || []);
+            let core;
+            if (set.size > 0) {
+                const ordered = orderSurfaces(set);
+                core = `#${tooth}(${ordered.join('')})`;
+            } else {
+                core = `#${tooth}`;
+            }
+            const n = (note || '').trim();
+            return n ? `${core} ${n}` : core;
         }
 
         function selectionsToText(map) {
             const parts = [];
-            const sortedTeeth = Array.from(map.keys()).sort((a, b) => a - b);
+            const allTeeth = new Set([
+                ...Array.from(map.keys()),
+                ...Array.from(chartingToothNotes.keys())
+            ]);
+            const sortedTeeth = Array.from(allTeeth).sort((a, b) => a - b);
             for (const t of sortedTeeth) {
-                const surfs = orderSurfaces(map.get(t));
-                if (surfs.length > 0) {
-                    parts.push(`#${t}(${surfs.join('')})`);
-                }
+                const surfs = map.has(t) ? map.get(t) : new Set();
+                const note = chartingToothNotes.get(t) || '';
+                if (surfs.size === 0 && !note) continue;
+                parts.push(formatToothEntry(t, surfs, note));
             }
             return parts.join(', ');
         }
 
         /**
-         * Rebuild only the structured #N(SURF) tokens from chartingSelections,
-         * but preserve any free-text notes the user typed after each token
-         * or anywhere else in the textarea.
+         * Strip every tooth-related reference (raw or structured) for the given
+         * tooth numbers out of text, returning the leftover free-text fragments.
+         * This prevents "prefix 6 postfix" → "prefix 6 postfix, #6 postfix" duplication.
+         */
+        function stripToothRefsFromText(text, toothNums) {
+            let remainder = text || '';
+            const teeth = Array.from(toothNums).sort((a, b) => b - a); // longest numbers first
+            for (const t of teeth) {
+                // #6(MO) optional note | #6 note | 6(MO) | 6 note | 6MO | #6
+                const patterns = [
+                    new RegExp(`#?${t}\\s*\\(\\s*[A-Za-z]+\\s*\\)([^,#\\n]*)`, 'gi'),
+                    new RegExp(`#?${t}(?:\\s*-\\s*|\\s+)[A-Za-z][^,#\\n]*`, 'gi'),
+                    new RegExp(`#?${t}[MODIBFLmodibfl]+\\b`, 'gi'),
+                    new RegExp(`#?${t}\\b`, 'gi')
+                ];
+                for (const re of patterns) {
+                    remainder = remainder.replace(re, ' ');
+                }
+            }
+            // Split on commas / periods used as delimiters, clean empties
+            return remainder
+                .split(/[,]+/)
+                .map(s => s.replace(/\s+/g, ' ').trim())
+                .filter(s => s.length > 0 && !/^[.\s]*$/.test(s));
+        }
+
+        /**
+         * Extract per-tooth notes from text WITHOUT touching chartingSelections.
+         * Also returns free-text fragments that are not associated with any tooth.
+         */
+        function harvestNotesFromText(text) {
+            const notes = new Map();
+            if (!text || !text.trim()) return { notes, freeParts: [] };
+
+            // Parenthesized: #5(MO) trailing note
+            const parenRe = /#?(\d{1,2})\s*\(\s*([A-Za-z]+)\s*\)\s*([^,#\n]*)/g;
+            let match;
+            while ((match = parenRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                const rest = (match[3] || '').trim();
+                if (rest) notes.set(tooth, rest);
+            }
+
+            // Tooth + words (note or pure surfaces + note): "6 postfix" / "#5 moderate caries"
+            const toothWordsRe = /#?(\d{1,2})(?:\s+|\s*-\s*)([A-Za-z][^,#\n]*)/g;
+            while ((match = toothWordsRe.exec(text)) !== null) {
+                const tooth = parseInt(match[1], 10);
+                if (tooth < 1 || tooth > 32) continue;
+                let rest = (match[2] || '').trim();
+                const firstWord = (rest.match(/^[A-Za-z]+/) || [])[0] || '';
+                if (isPureSurfaceToken(firstWord)) {
+                    rest = rest.substring(firstWord.length).trim();
+                }
+                if (rest) notes.set(tooth, rest);
+            }
+
+            // Free text = original with all known tooth refs removed
+            const allTeeth = new Set([
+                ...Array.from(chartingSelections.keys()),
+                ...Array.from(notes.keys()),
+                ...Array.from(chartingToothNotes.keys())
+            ]);
+            // Also pick up any tooth numbers present in text
+            const anyTooth = text.matchAll(/#?(\d{1,2})\b/g);
+            for (const m of anyTooth) {
+                const t = parseInt(m[1], 10);
+                if (t >= 1 && t <= 32) allTeeth.add(t);
+            }
+            const freeParts = stripToothRefsFromText(text, allTeeth);
+            return { notes, freeParts };
+        }
+
+        /**
+         * Rebuild textarea from chartingSelections + notes.
+         * Original raw tooth text is stripped so it is not duplicated alongside
+         * the normalized "#N …" form.
          */
         function updateTextareaTokensPreservingNotes() {
             const ta = document.getElementById('charting-editor-textarea');
             if (!ta) return;
             const original = ta.value;
 
-            // Capture notes that currently sit after each token
-            // e.g. "#3(MO) deep near pulp, #14(DO)" → note for #3(MO) = " deep near pulp"
-            const tokenNotes = new Map(); // token → trailing note (including leading space)
-            const tokenRegex = /(#\d{1,2}\([MODIBFL]+\))([^\n,#]*)/gi;
-            let m;
-            while ((m = tokenRegex.exec(original)) !== null) {
-                const tok = m[1];
-                const note = m[2] || '';
-                // Only keep non-empty notes that are not just another token fragment
-                if (note.trim() && !/^[\s,]*#?\d/.test(note)) {
-                    tokenNotes.set(tok.toUpperCase(), note);
+            // Refresh notes from current text (does not clobber SVG surface selections)
+            const harvested = harvestNotesFromText(original);
+            // Rebuild notes map: harvested wins; drop stale notes for teeth no longer in text
+            // unless they still have surfaces selected on the chart
+            const nextNotes = new Map();
+            harvested.notes.forEach((n, t) => nextNotes.set(t, n));
+            // Keep prior note only if that tooth still has surfaces and harvest missed it
+            chartingToothNotes.forEach((n, t) => {
+                if (!nextNotes.has(t) && chartingSelections.has(t) && chartingSelections.get(t).size > 0) {
+                    nextNotes.set(t, n);
                 }
-            }
+            });
+            chartingToothNotes = nextNotes;
 
-            // Build the new token list from current chartingSelections
-            const newTokens = [];
-            const sortedTeeth = Array.from(chartingSelections.keys()).sort((a, b) => a - b);
+            const freeParts = harvested.freeParts;
+
+            // Build structured entries
+            const structured = [];
+            const allTeeth = new Set([
+                ...Array.from(chartingSelections.keys()),
+                ...Array.from(chartingToothNotes.keys())
+            ]);
+            const sortedTeeth = Array.from(allTeeth).sort((a, b) => a - b);
             for (const t of sortedTeeth) {
-                const surfs = orderSurfaces(chartingSelections.get(t));
-                if (surfs.length === 0) continue;
-                const tok = `#${t}(${surfs.join('')})`;
-                const note = tokenNotes.get(tok.toUpperCase()) || '';
-                newTokens.push(tok + note);
+                const surfs = chartingSelections.has(t) ? chartingSelections.get(t) : new Set();
+                const note = chartingToothNotes.get(t) || '';
+                if (surfs.size === 0 && !note) continue;
+                structured.push(formatToothEntry(t, surfs, note));
             }
 
-            // Preserve any free-text that appears before the first token
-            let leading = '';
-            const firstTokenMatch = original.match(/#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+/);
-            if (firstTokenMatch && firstTokenMatch.index > 0) {
-                leading = original.substring(0, firstTokenMatch.index).replace(/,\s*$/, '').trim();
-                if (leading) leading += ' ';
-            }
-
-            // If there are no charting selections left, keep the original free text
-            if (newTokens.length === 0) {
-                const cleaned = original.replace(/#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+\s*\)?/gi, '')
-                    .replace(/^[,\s]+|[,\s]+$/g, '')
-                    .trim();
-                ta.value = cleaned;
-            } else {
-                ta.value = leading + newTokens.join(', ');
-            }
+            const parts = [];
+            if (freeParts.length) parts.push(...freeParts);
+            if (structured.length) parts.push(...structured);
+            ta.value = parts.join(', ');
         }
 
         // Color map for classified surfaces
@@ -5918,18 +6131,51 @@ techNameInput.addEventListener('keydown', (event) => {
                 const lastChar = before.slice(-1);
 
                 if (lastChar === ' ' || lastChar === ',' || lastChar === '.') {
-                    const tokenMatch = before.match(/(?:^|[\s,])(#?\d{1,2}\s*[- ]?\s*\(?\s*[MODIBFLmodibfl]+\s*\)?)$/i);
-                    if (tokenMatch) {
-                        const raw = tokenMatch[1];
-                        const parsed = parseChartingTextToSelections(raw);
-                        if (parsed.size > 0) {
-                            const normalized = selectionsToText(parsed);
-                            const startIdx = before.lastIndexOf(raw);
-                            const newBefore = before.substring(0, startIdx) + normalized + lastChar;
-                            const after = full.substring(cursor);
-                            ta.value = newBefore + after;
-                            const newPos = newBefore.length;
-                            ta.setSelectionRange(newPos, newPos);
+                    // --- A) Pure surface codes: "5 MO " / "5mod " → "#5(MO) "
+                    const surfMatch = before.match(/(?:^|[\s,])(#?\d{1,2}\s*\(\s*[A-Za-z]+\s*\)|#?\d{1,2}(?:\s*-\s*|\s+)[A-Za-z]+|#?\d{1,2}[MODIBFLmodibfl]+)$/i);
+                    if (surfMatch) {
+                        const raw = surfMatch[1];
+                        const paren = raw.match(/\(\s*([A-Za-z]+)\s*\)/);
+                        const spaced = raw.match(/(?:\s*-\s*|\s+)([A-Za-z]+)$/);
+                        const glued = raw.match(/#?\d{1,2}([MODIBFLmodibfl]+)$/i);
+                        const letterPart = (paren && paren[1]) || (spaced && spaced[1]) || (glued && glued[1]) || '';
+                        if (letterPart && isPureSurfaceToken(letterPart)) {
+                            const toothNum = parseInt((raw.match(/(\d{1,2})/) || [])[1], 10);
+                            const ordered = normalizeSurfaces(letterPart, toothNum);
+                            if (ordered.length) {
+                                const normalized = `#${toothNum}(${ordered.join('')})`;
+                                const startIdx = before.lastIndexOf(raw);
+                                const newBefore = before.substring(0, startIdx) + normalized + lastChar;
+                                const after = full.substring(cursor);
+                                ta.value = newBefore + after;
+                                ta.setSelectionRange(newBefore.length, newBefore.length);
+                            }
+                        }
+                    }
+
+                    // --- B) Tooth + note (non-surface words): "6 postfix." → "#6 postfix."
+                    //     Replaces in place so "prefix 6 postfix." becomes "prefix, #6 postfix."
+                    //     (not "prefix 6 postfix., #6 postfix.")
+                    const noteMatch = before.match(/(?:^|[\s,])(#?\d{1,2})\s+([A-Za-z][A-Za-z0-9 \-]*?)$/i);
+                    if (noteMatch) {
+                        const toothRaw = noteMatch[1];
+                        const noteRaw = noteMatch[2].trim();
+                        const firstWord = (noteRaw.match(/^[A-Za-z]+/) || [])[0] || '';
+                        // Skip if the whole note is pure surfaces (handled above)
+                        if (firstWord && !isPureSurfaceToken(noteRaw.replace(/\s+/g, ''))) {
+                            const toothNum = parseInt(toothRaw.replace('#', ''), 10);
+                            if (toothNum >= 1 && toothNum <= 32) {
+                                // Find the start of this "N note" span
+                                const span = noteMatch[0].replace(/^[\s,]/, '');
+                                const startIdx = before.lastIndexOf(span);
+                                const prefix = before.substring(0, startIdx).replace(/[\s,]+$/, '');
+                                const normalized = `#${toothNum} ${noteRaw}`;
+                                const joiner = prefix ? ', ' : '';
+                                const newBefore = prefix + joiner + normalized + lastChar;
+                                const after = full.substring(cursor);
+                                ta.value = newBefore + after;
+                                ta.setSelectionRange(newBefore.length, newBefore.length);
+                            }
                         }
                     }
                 }
@@ -6052,9 +6298,8 @@ techNameInput.addEventListener('keydown', (event) => {
             if (!activeElementForEditor) return;
             isRenderingFromCloud = true;
             const ta = document.getElementById('charting-editor-textarea');
-            // Keep the full text the user sees (tokens + notes). Only normalize pure tokens in place.
+            // Normalize tokens in place (replaces raw "6 postfix" with "#6 postfix", no duplicates)
             chartingSelections = parseChartingTextToSelections(ta.value);
-            // Light pass: make sure any raw shorthand still gets normalized, but do not strip notes
             updateTextareaTokensPreservingNotes();
             const finalText = ta.value.trim();
             activeElementForEditor.dataset.content = finalText;
@@ -6067,7 +6312,17 @@ techNameInput.addEventListener('keydown', (event) => {
                 const preview = activeElementForEditor.querySelector('.enhanced-textbox-preview');
                 if (preview) preview.textContent = finalText;
             }
+
+            const editedElementId = activeElementForEditor.dataset.originalId;
             updateLiveOutput();
+
+            // Re-evaluate Caries Risk when either charting block is saved
+            // (2-5 = CARIES/DEFECTIVE, 2-6 = INCIPIENT)
+            if (editedElementId === "2-5" || editedElementId === "2-6") {
+                console.log("Charting caries field saved. Re-evaluating Caries Risk...");
+                if (typeof checkAndSetCariesRisk === 'function') checkAndSetCariesRisk();
+            }
+
             document.getElementById('charting-editor-modal').style.display = 'none';
             isRenderingFromCloud = false;
             showFeedback("Charting saved.", true);
@@ -6163,30 +6418,35 @@ const handleCombinedInput = (event) => {
         const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ', cursorPos - 2);
         const lastWord = textBeforeCursor.substring(lastSpaceIndex + 1).trim();
 
-		 // --- auto corrects if starts with # or number then dash or number then letter but not mm for millimeter ---
+		 // --- auto corrects tooth+surfaces only when letters are pure surface codes
+         // (MO, DO, MOD…). Refuse ordinary words: "moderate", "crown", "crack", etc.
+         // Also skip "mm" (millimeter).
         const match = lastWord.match(/^#?(?!.*\)$)(\d+)-?\(?(?![mM]{2}\)?$)([a-zA-Z]+)\)?$/);
         
         if (match) {
             const toothNumber = match[1];
             const surfaceLetters = match[2];
+            // Purity check: every letter must be M/O/D/I/B/F/L
+            if (/^[MODIBFLmodibfl]+$/.test(surfaceLetters)) {
+                console.log(`Auto-Correct: Detected tooth shorthand "${lastWord}"`);
 
-            console.log(`Auto-Correct: Detected tooth shorthand "${lastWord}"`);
+                const correctedShorthand = `(${surfaceLetters.toUpperCase()})`;
+                const replacement = `#${toothNumber}${correctedShorthand},`;
 
-            const correctedShorthand = `(${surfaceLetters.toUpperCase()})`;
-            const replacement = `#${toothNumber}${correctedShorthand},`;
+                console.log(`Auto-Correct: Formatting to "${replacement}"`);
+                
+                const textAfterCursor = fullText.substring(cursorPos);
+                const newText = textBeforeCursor.substring(0, lastSpaceIndex + 1) + replacement + fullText.substring(cursorPos - 1);
 
-            console.log(`Auto-Correct: Formatting to "${replacement}"`);
-            
-            const textAfterCursor = fullText.substring(cursorPos);
-            const newText = textBeforeCursor.substring(0, lastSpaceIndex + 1) + replacement + fullText.substring(cursorPos - 1);
-
-            textarea.value = newText;
-            
-            const newCursorPos = lastSpaceIndex + 1 + replacement.length + 1;
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-            
-            hideSuggestions();
-            return; 
+                textarea.value = newText;
+                
+                const newCursorPos = lastSpaceIndex + 1 + replacement.length + 1;
+                textarea.setSelectionRange(newCursorPos, newCursorPos);
+                
+                hideSuggestions();
+                return;
+            }
+            // else: ordinary word after tooth number → leave as free text
         }
     }
 
