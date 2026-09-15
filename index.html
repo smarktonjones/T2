@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 10SEP26 mgh -->
+<!-- version as of 15SEP26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -614,7 +614,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.57</p>
+    <p class="landing-version">v5.6</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -5194,13 +5194,23 @@ techNameInput.addEventListener('keydown', (event) => {
         }
 
         /**
-         * True only when every letter is a valid surface letter (M O D I B F L).
+         * True only when every letter is a valid surface letter (M O D I B F L)
+         * AND the token is not a measurement unit (mm, cm, in, etc.).
          * "MO", "mod", "(DO)" → true
-         * "moderate", "crown", "crack" → false
-         * Critical: we only ever test COMPLETE words, never a prefix of a longer word.
+         * "moderate", "crown", "3mm", "4cm" → false
          */
         function isPureSurfaceToken(surfStr) {
-            const cleaned = (surfStr || '').toUpperCase().replace(/[\s\-()]/g, '');
+            const raw = (surfStr || '').trim();
+            if (!raw) return false;
+
+            // Block common measurement units so "3mm", "2cm", "1in" stay as free text
+            const MEASUREMENT_UNITS = ['mm', 'cm', 'in', 'mm2', 'mm3', 'cm2', 'cm3'];
+            const lower = raw.toLowerCase();
+            if (MEASUREMENT_UNITS.some(u => lower === u || lower.endsWith(u))) {
+                return false;
+            }
+
+            const cleaned = raw.toUpperCase().replace(/[\s\-()]/g, '');
             if (!cleaned) return false;
             return /^[MODIBFL]+$/.test(cleaned);
         }
@@ -6481,15 +6491,19 @@ const handleCombinedInput = (event) => {
         const lastWord = textBeforeCursor.substring(lastSpaceIndex + 1).trim();
 
 		 // --- auto corrects tooth+surfaces only when letters are pure surface codes
-         // (MO, DO, MOD…). Refuse ordinary words: "moderate", "crown", "crack", etc.
-         // Also skip "mm" (millimeter).
-        const match = lastWord.match(/^#?(?!.*\)$)(\d+)-?\(?(?![mM]{2}\)?$)([a-zA-Z]+)\)?$/);
+         // (MO, DO, MOD…). Refuse ordinary words and measurement units (mm, cm, in…).
+        const match = lastWord.match(/^#?(?!.*\)$)(\d+)-?\(?([a-zA-Z0-9]+)\)?$/);
         
         if (match) {
             const toothNumber = match[1];
             const surfaceLetters = match[2];
-            // Purity check: every letter must be M/O/D/I/B/F/L
-            if (/^[MODIBFLmodibfl]+$/.test(surfaceLetters)) {
+
+            // Block measurement units: 3mm, 2cm, 1in, 4mm2, etc.
+            const MEASUREMENT_UNITS = ['mm', 'cm', 'in', 'mm2', 'mm3', 'cm2', 'cm3'];
+            const lowerSurf = surfaceLetters.toLowerCase();
+            if (MEASUREMENT_UNITS.some(u => lowerSurf === u || lowerSurf.endsWith(u))) {
+                // leave as free text
+            } else if (/^[MODIBFLmodibfl]+$/.test(surfaceLetters)) {
                 console.log(`Auto-Correct: Detected tooth shorthand "${lastWord}"`);
 
                 const correctedShorthand = `(${surfaceLetters.toUpperCase()})`;
