@@ -654,7 +654,7 @@ body:not(.condensed-mode) #condensed-form-view { display: none !important; }
     flex-direction: column;
     gap: 4px;
 }
-.cf-row.cf-live-widget .cf-live-host > .draggable-element,
+.cf-row.cf-live-widget .cf-live-host > .cf-surface,
 .cf-row.cf-live-widget .cf-live-host .alert-element,
 .cf-row.cf-live-widget .cf-live-host .bp-element,
 .cf-row.cf-live-widget .cf-live-host .psr-element {
@@ -665,7 +665,19 @@ body:not(.condensed-mode) #condensed-form-view { display: none !important; }
     box-sizing: border-box;
     margin: 0;
 }
-body.condensed-mode .cf-live-host .draggable-element {
+
+.cf-surface {
+    background-color: var(--element-bg);
+    border: 2px solid var(--element-border);
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+body.condensed-mode .cf-live-host .cf-surface {
     cursor: pointer;
     box-shadow: var(--element-shadow);
 }
@@ -799,7 +811,7 @@ body.condensed-mode .cf-live-host .draggable-element {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.63 · dual UI · live form widgets</p>
+    <p class="landing-version">v5.64 · dual UI · charting close / PSR / risk fixes</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -1066,10 +1078,7 @@ body.condensed-mode .cf-live-host .draggable-element {
 <div id="extra-section" class="section-extra-container">
     <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
 
-        <div class="chart-output">
-            <h4>Caries Charting Check</h4> <h5>Derived from Treatment Plan element - (to duplicate in Dentrix treatment plan)</h5>
-            <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
+        <!-- Caries Charting Check removed — interactive charting modal is the source of truth -->
 
 
 
@@ -2442,7 +2451,7 @@ const updateBPElementUI = (element) => { const s = parseInt(element.querySelecto
         
 const updateLiveOutput = (forceImmediate = false) => {
     let outputParts = [];
-    document.querySelectorAll('.draggable-element').forEach(el => {
+    document.querySelectorAll('.dropzone .draggable-element').forEach(el => {
         const state = getElementState(el); let content = '';
         if (state.type === 'enhanced-textbox' || state.type === 'charting') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
         else if (state.type === 'tx-plan') {
@@ -2499,7 +2508,7 @@ const updateLiveOutput = (forceImmediate = false) => {
                 }
             }
         }
-        else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
+        else if (state.type === 'alert') { if (state.alerts && state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => { if (!a) return ''; if (a === 'PREGNANCY') return 'PREGNANCY'; if (String(a).startsWith('Custom: ')) return String(a).substring(8); return `${a} ALLERGY`; }).filter(Boolean).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
         else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
         else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
         else if (state.type === 'psr') { const scores = state.scores; const topRow = `     ${padBox(scores[0])} ${padBox(scores[1])} ${padBox(scores[2])}`; const botRow = `     ${padBox(scores[5])} ${padBox(scores[4])} ${padBox(scores[3])}`; content = `PSR:\n${topRow}\n${botRow}`; if (state.asterisks.some(a => a) && state.asteriskNote.trim()) { content += `\n     (*: ${state.asteriskNote.trim()})`; } }
@@ -2513,7 +2522,9 @@ const updateLiveOutput = (forceImmediate = false) => {
     console.log("DEBUG: updateLiveOutput finished. Triggering cloud sync.");
     syncStateToFirestore(forceImmediate); // Pass the flag along
 
-    generateChart();
+    if (typeof generateChart === 'function') {
+        try { generateChart(); } catch (e) { /* chart removed / optional */ }
+    }
 };
 
 
@@ -2632,8 +2643,7 @@ draggable.querySelectorAll('.psr-input').forEach(input => {
                 if (nextIndex !== undefined) {
                     const nextInput = draggable.querySelector(`.psr-input[data-index="${nextIndex}"]`);
                     if (nextInput) {
-                        nextInput.focus();
-                        nextInput.select();
+                        setTimeout(() => { nextInput.focus(); nextInput.select(); }, 0);
                     }
                 }
             }
@@ -2667,7 +2677,7 @@ draggable.querySelectorAll('.psr-input').forEach(input => {
 draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
             else if (type === 'dropdown') { const select = document.createElement('select'); (data.options || ['Select...', 'Opt 1', 'Opt 2']).forEach(opt => select.add(new Option(opt, opt, false, opt === data.selected))); draggable.appendChild(select); draggable.addEventListener('change', updateLiveOutput); }
             else if (type === 'checkbox') { draggable.innerHTML = `<label><input type="checkbox" ${data.checked ? 'checked' : ''}> <span contenteditable="true">${data.content || 'Checkbox text'}</span></label>`; }
-            else if (type.startsWith('label-')) { draggable.classList.add(type === 'label-red' ? 'element-label-red' : 'element-label-black'); draggable.innerHTML = `<div contenteditable="true">${data.content || 'Descriptive Label'}</div>`; }
+            else if ((type || '').startsWith('label-')) { draggable.classList.add(type === 'label-red' ? 'element-label-red' : 'element-label-black'); draggable.innerHTML = `<div contenteditable="true">${data.content || 'Descriptive Label'}</div>`; }
             else if (type === 'formatter') { draggable.classList.add('formatter-element'); const formatType = data.formatType || 'newline'; let display = (formatType === 'newline') ? '↵ Newline' : (formatType === 'tab') ? '→ Tab' : (data.customChars || '...'); draggable.innerHTML = `<span>${display}</span>`; }
             return draggable;
         };
@@ -2676,7 +2686,24 @@ draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEv
 
 
         const getElementState = (element) => {
-            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
+            const type = element.dataset.type || '';             
+			    if (!element || !element.dataset) {
+        return {
+            type: '', required: false, isHidden: false, doNotReset: false,
+            prefixTab: false, prefixNewline: false, suffixNewline: false,
+            originalId: '', width: '', fillColor: '',
+            content: '', defaultText: '', internalLabel: '', prefixLabel: '',
+            dropdownOptions: [], options: [], selected: '',
+            alerts: [], value: '0', systolic: '', diastolic: '',
+            isPriorTxChecked: false, discussSystolic: '150', discussDiastolic: '95',
+            checkboxSystolic: '160', checkboxDiastolic: '100',
+            scores: ['','','','','',''], asterisks: [false,false,false,false,false,false],
+            asteriskNote: '', includeTopical: true, anestheticTypes: [], anestheticValues: {},
+            endoTests: [], endoData: { teeth: [''], results: {} },
+            txRows: [], txSnippets: [], txData: {}, formatType: 'newline', customChars: ''
+        };
+    }
+			const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
             if (type === 'enhanced-textbox' || type === 'charting') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions || '[]'); }
 
             // **** START OF NEW CODE for tx plan****
@@ -2695,7 +2722,7 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             else if (type === 'psr') { state.scores = Array(6).fill(''); state.asterisks = Array(6).fill(false); element.querySelectorAll('.psr-input').forEach(i => { state.scores[i.dataset.index] = i.value; }); element.querySelectorAll('.psr-asterisk').forEach(cb => { state.asterisks[cb.dataset.index] = cb.checked; }); state.asteriskNote = element.querySelector('.psr-asterisk-note').value; }
             else if (type === 'dropdown') { const select = element.querySelector('select'); state.options = Array.from(select.options).map(o => o.value); state.selected = select.value; }
             else if (type === 'checkbox') { state.checked = element.querySelector('input').checked; state.content = element.querySelector('span').innerText; }
-            else if (type.startsWith('label-')) { state.content = element.querySelector('[contenteditable]').innerText; }
+            else if ((type || '').startsWith('label-')) { state.content = element.querySelector('[contenteditable]').innerText; }
             else if (type === 'formatter') { state.formatType = element.dataset.formatType || 'newline'; state.customChars = element.dataset.customChars || ''; }
             return state;
         };
@@ -2975,9 +3002,12 @@ const updateCariesRiskDropdown = (riskLevel) => {
     if (selectElement && selectElement.value !== optionValue) {
         console.log(`Automatically setting Caries Risk to: ${riskLevel}`);
         selectElement.value = optionValue;
+        // Keep selected attribute in sync for getElementState / re-renders
+        Array.from(selectElement.options).forEach(o => { o.selected = (o.value === optionValue); });
 
         // Trigger a save to persist the automated change.
         updateLiveOutput();
+        if (typeof refreshCondensedForm === 'function') setTimeout(refreshCondensedForm, 40);
     }
 };
 
@@ -3045,9 +3075,11 @@ const updatePerioRiskDropdown = (riskLevel) => {
     if (selectElement && selectElement.value !== optionValue) {
         console.log(`Automatically setting Perio Risk to: ${riskLevel}`);
         selectElement.value = optionValue;
+        Array.from(selectElement.options).forEach(o => { o.selected = (o.value === optionValue); });
 
         // This is crucial for ensuring the change is saved to the cloud.
         updateLiveOutput();
+        if (typeof refreshCondensedForm === 'function') setTimeout(refreshCondensedForm, 40);
     }
 };
 
@@ -3075,7 +3107,7 @@ const parseTreatmentPlanForHighlighting = () => {
     txPlanHighlightMap = {}; // Reset shorthand map
     txPlanPhrasesMap = { class3: [], class2: [], class1: [] }; // Reset exact phrases map
 
-    const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+    const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
     if (!txPlanElement) return;
 
     try {
@@ -3541,7 +3573,7 @@ importFromModalButton.addEventListener('click', () => {
             const selectedText = textboxEditorTextarea.value.substring(textboxEditorTextarea.selectionStart, textboxEditorTextarea.selectionEnd).trim();
             if (!selectedText) return;
 
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) {
                 showFeedback("No Treatment Plan element available", false);
                 return;
@@ -3866,6 +3898,12 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
         console.log("Caries-related field was updated. Re-evaluating Caries Risk...");
         checkAndSetCariesRisk();
     }
+
+    // Highlight Diagnosis of Chief Concern when a real chief concern was entered
+    // but diagnosis has not yet been assessed (yellow border in editor view)
+    if (typeof updateChiefConcernDiagnosisHighlight === 'function') {
+        updateChiefConcernDiagnosisHighlight();
+    }
     
     // 2. Pass 'true' to trigger an INSTANT save to Firestore!
     console.log("DEBUG: Modal saved. Triggering IMMEDIATE cloud sync.");
@@ -3874,6 +3912,27 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
     const noteText = document.getElementById('live-output').value;
     evaluateNote(noteText);
 };
+
+/** Yellow border on Diagnosis of Chief Concern (3-1) when chief concern is present but undiagnosed. */
+function updateChiefConcernDiagnosisHighlight() {
+    const chiefEl = document.querySelector('[data-original-id="1-1"]');
+    const dxEl = document.querySelector('[data-original-id="3-1"]');
+    if (!dxEl) return;
+    let chiefNeedsDx = false;
+    if (chiefEl) {
+        const content = String(chiefEl.dataset.content || '').trim().toLowerCase();
+        const def = String(chiefEl.dataset.defaultText || 'None').trim().toLowerCase();
+        chiefNeedsDx = content !== '' && content !== def && content !== 'none' && content !== 'none.';
+    }
+    const dxContent = String(dxEl.dataset.content || '').trim().toLowerCase();
+    const dxDef = String(dxEl.dataset.defaultText || 'None.').trim().toLowerCase();
+    const dxStillDefault = !dxContent || dxContent === dxDef || dxContent === 'none' || dxContent === 'none.';
+    if (chiefNeedsDx && dxStillDefault) {
+        dxEl.classList.add('element-highlighted2');
+    } else {
+        dxEl.classList.remove('element-highlighted2');
+    }
+}
 
 // =================================================================
 
@@ -3904,7 +3963,7 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
 
     // --- Formatting Properties  ---
 
-    if (state.type !== 'formatter' && !state.type.startsWith('label-')) { 
+    if (state.type !== 'formatter' && !(state.type || '').startsWith('label-')) { 
         formattingHtml = `<fieldset><legend>Formatting</legend>
             <label><input type="checkbox" id="prop-prefix-newline" ${state.prefixNewline ? 'checked' : ''}> Add Newline Before</label>
             <label><input type="checkbox" id="prop-prefix-tab" ${state.prefixTab ? 'checked' : ''}> Add Tab Before</label>
@@ -3983,7 +4042,7 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
 
 
 
-            if (newState.type !== 'formatter' && !newState.type.startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
+            if (newState.type !== 'formatter' && !new(state.type || '').startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
             const newElement = createElement(newState.type, newState); element.replaceWith(newElement); updateLiveOutput(); document.getElementById('properties-modal').style.display = 'none';
         };
         const allergyModal = document.getElementById('allergy-modal'); const allergyListDiv = document.getElementById('allergy-list'); ALLERGY_LIST.forEach(allergy => { allergyListDiv.innerHTML += `<label><input type="checkbox" class="allergy-checkbox" value="${allergy}"> ${allergy}</label>`; }); allergyListDiv.addEventListener('change', e => { if (!e.target.classList.contains('allergy-checkbox')) return; const checkboxes = Array.from(allergyListDiv.querySelectorAll('.allergy-checkbox')); const noneCheckbox = checkboxes.find(cb => cb.value === "None"); if (e.target.value === "None" && e.target.checked) { checkboxes.forEach(cb => { if (cb.value !== "None") cb.checked = false; }); } else if (e.target.value !== "None" && e.target.checked) { if (noneCheckbox.checked) noneCheckbox.checked = false; } }); const openAllergyModal = (element) => { activeElementForEditor = element; const state = getElementState(element); const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox'); checkboxes.forEach(cb => cb.checked = false); const customInput = document.getElementById('custom-allergy-input'); customInput.value = ''; state.alerts.forEach(alert => { const cb = Array.from(checkboxes).find(c => c.value === alert); if (cb) { cb.checked = true; } else if (alert.startsWith('Custom: ')) { customInput.value = alert.substring(8); } }); allergyModal.style.display = 'block'; }; 
@@ -4634,6 +4693,7 @@ const performLocalReset = () => {
             });
             
             updateLiveOutput();
+			if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
             const lockToggle = document.getElementById('lock-layout-toggle');
             if (lockToggle.checked) {
                 lockToggle.dispatchEvent(new Event('change'));
@@ -5071,7 +5131,20 @@ document.querySelectorAll('.modal').forEach(modal => {
         document.getElementById('ctx-delete').onclick = () => { if (activeElementForEditor) { activeElementForEditor.remove(); updateLiveOutput(); } };
         document.getElementById('ctx-properties').onclick = () => { if (activeElementForEditor) openPropertiesModal(activeElementForEditor); };
         document.querySelectorAll('.add-element-btn').forEach(btn => btn.onclick = e => { currentSectionToAdd = e.target.dataset.section; document.getElementById('add-element-modal').style.display = 'block'; });
-        document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = e => document.getElementById(e.target.dataset.modalId).style.display = 'none');
+        document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = e => {
+            e.preventDefault();
+            e.stopPropagation();
+            const btnEl = e.currentTarget || e.target.closest('.close-btn') || e.target;
+            const modalId = btnEl.dataset.modalId || btnEl.getAttribute('data-modal-id');
+            if (!modalId) return;
+            // Charting modal: discard unsaved edits (do NOT write content / classifications)
+            if (modalId === 'charting-editor-modal' && typeof discardChartingEditor === 'function') {
+                discardChartingEditor();
+                return;
+            }
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none';
+        });
         document.querySelectorAll('.element-type').forEach(el => el.onclick = e => { const type = e.currentTarget.dataset.type; const dropzone = document.querySelector(`#${currentSectionToAdd} .dropzone`); if(dropzone) { dropzone.appendChild(createElement(type)); } updateLiveOutput(); document.getElementById('add-element-modal').style.display = 'none'; });
         document.querySelectorAll('.dropzone').forEach(zone => zone.addEventListener('dragover', e => { e.preventDefault(); const draggingEl = document.querySelector('.draggable-element.dragging'); if (!draggingEl) return; const afterElement = [...zone.querySelectorAll('.draggable-element:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = e.clientY - box.top - box.height / 2; return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element; if (afterElement == null) zone.appendChild(draggingEl); else zone.insertBefore(draggingEl, afterElement); }));
 
@@ -6034,7 +6107,7 @@ techNameInput.addEventListener('keydown', (event) => {
          * Returns true if a Tx Plan element existed and was updated.
          */
         function removeTokenFromAllOperativeClasses(token) {
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) return false;
             const state = getElementState(txPlanElement);
             let changed = false;
@@ -6093,7 +6166,7 @@ techNameInput.addEventListener('keydown', (event) => {
         }
 
         function sendTokenToTxPlan(token, classNum) {
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) {
                 showFeedback("No Treatment Plan element found", false);
                 return;
@@ -6277,7 +6350,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 return;
             }
 
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) {
                 showFeedback("No Treatment Plan element available", false);
                 return;
@@ -6348,21 +6421,62 @@ techNameInput.addEventListener('keydown', (event) => {
             updateChartingBackdropMirror();
         }
 
+        // Snapshot taken when charting modal opens — restored on discard (X / Esc / backdrop)
+        let chartingOpenSnapshot = null;
+
+        function takeChartingSnapshot(element) {
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
+            let txData = null;
+            if (txPlanElement) {
+                try { txData = JSON.parse(txPlanElement.dataset.txData || '{}'); } catch (e) { txData = {}; }
+            }
+            return {
+                elementId: element ? element.id : null,
+                content: element ? (element.dataset.content || '') : '',
+                chartingMeta: element ? (element.dataset.chartingMeta || '') : '',
+                txDataJson: txData ? JSON.stringify(txData) : null,
+                txPlanId: txPlanElement ? txPlanElement.id : null
+            };
+        }
+
+        function discardChartingEditor() {
+            const modal = document.getElementById('charting-editor-modal');
+            // Restore tx-plan if classifications mutated it during this session
+            if (chartingOpenSnapshot && chartingOpenSnapshot.txPlanId && chartingOpenSnapshot.txDataJson != null) {
+                const txPlanElement = document.getElementById(chartingOpenSnapshot.txPlanId) ||
+                    document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
+                if (txPlanElement) {
+                    txPlanElement.dataset.txData = chartingOpenSnapshot.txDataJson;
+                    if (typeof updateTxPlanSummary === 'function') updateTxPlanSummary(txPlanElement);
+                }
+            }
+            // Do NOT write textarea back to the element — leave dataset.content as-is
+            chartingSelections = new Map();
+            chartingClassifications = new Map();
+            chartingOpenSnapshot = null;
+            if (modal) modal.style.display = 'none';
+            if (typeof updateLiveOutput === 'function') updateLiveOutput();
+            if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
+        }
+
         const openChartingEditor = (element) => {
             activeElementForEditor = element;
             const state = getElementState(element);
             const textarea = document.getElementById('charting-editor-textarea');
-			
+            if (!textarea) return;
 
-			
-			
+            chartingOpenSnapshot = takeChartingSnapshot(element);
+
             initializeModalChart();
 
-            // Load the full stored content (tokens + any notes the user typed)
-            textarea.value = state.content || '';
+            // Always reload from the element's saved content (never leftover modal text)
+            const savedContent = (state && state.content != null && state.content !== '')
+                ? state.content
+                : (element.dataset.content || element.dataset.defaultText || 'None.');
+            textarea.value = savedContent;
             chartingSelections = parseChartingTextToSelections(textarea.value);
 
-            // Restore classifications if previously saved
+            // Restore classifications if previously saved on THIS element only
             chartingClassifications = new Map();
             try {
                 if (element.dataset.chartingMeta) {
@@ -6376,14 +6490,13 @@ techNameInput.addEventListener('keydown', (event) => {
             updateModalChartVisuals();
             updateChartingBackdropMirror();
 
-            document.getElementById('charting-editor-modal').style.display = 'block';
+            const modal = document.getElementById('charting-editor-modal');
+            modal.style.display = 'block';
             textarea.focus();
-            // Same behavior as the regular textbox editor:
-            // only select the text when it is still the default value
-            if (textarea.value === (activeElementForEditor.dataset.defaultText || '')) {
+            if (textarea.value === (element.dataset.defaultText || 'None.') ||
+                textarea.value === (element.dataset.defaultText || '')) {
                 textarea.select();
             }
-
         };
 
         // Custom autocorrect + live highlight for charting textarea
@@ -6582,6 +6695,7 @@ techNameInput.addEventListener('keydown', (event) => {
             }
 
             const editedElementId = activeElementForEditor.dataset.originalId;
+            chartingOpenSnapshot = null; // commit — do not restore on close
             updateLiveOutput();
 
             // Re-evaluate Caries Risk when either charting block is saved
@@ -6596,6 +6710,26 @@ techNameInput.addEventListener('keydown', (event) => {
             showFeedback("Charting saved.", true);
             if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
         };
+
+        // Close charting modal on Escape (discard)
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const modal = document.getElementById('charting-editor-modal');
+            if (modal && modal.style.display === 'block') {
+                e.preventDefault();
+                discardChartingEditor();
+            }
+        });
+        // Click on modal backdrop (outside content) discards
+        (function wireChartingBackdropClose() {
+            const modal = document.getElementById('charting-editor-modal');
+            if (!modal) return;
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) discardChartingEditor();
+            });
+            const content = modal.querySelector('.modal-content');
+            if (content) content.addEventListener('click', (e) => e.stopPropagation());
+        })();
 
 
         // =================================================================
@@ -6680,7 +6814,7 @@ techNameInput.addEventListener('keydown', (event) => {
                     return inp && inp.checked ? ((sp && sp.innerText) || 'Checked') : 'Unchecked';
                 }
                 if (state.type === 'formatter') return state.formatType || 'formatter';
-                if (state.type && state.type.startsWith('label-')) return el.textContent.trim();
+                if (state.type && (state.type || '').startsWith('label-')) return el.textContent.trim();
             } catch (err) { /* ignore */ }
             return '';
         }
@@ -6803,7 +6937,7 @@ techNameInput.addEventListener('keydown', (event) => {
             if (type === 'alert') {
                 // Visual clone using same alert classes; click opens real modal
                 const box = document.createElement('div');
-                box.className = 'draggable-element alert-element';
+                box.className = 'cf-surface alert-element';
                 box.style.resize = 'none';
                 box.style.minHeight = 'initial';
                 box.style.width = '100%';
@@ -6826,7 +6960,7 @@ techNameInput.addEventListener('keydown', (event) => {
             if (type === 'bloodpressure') {
                 // Full BP chrome with same classes so status colors apply
                 const wrap = document.createElement('div');
-                wrap.className = 'draggable-element bp-element';
+                wrap.className = 'cf-surface bp-element';
                 wrap.style.resize = 'none';
                 wrap.style.width = '100%';
                 // copy status class
@@ -6877,7 +7011,7 @@ techNameInput.addEventListener('keydown', (event) => {
             if (type === 'psr') {
                 // Rebuild full PSR grid bound to source element inputs
                 const wrap = document.createElement('div');
-                wrap.className = 'draggable-element psr-element';
+                wrap.className = 'cf-surface psr-element';
                 wrap.style.resize = 'none';
                 wrap.style.width = '100%';
                 const scores = state.scores || Array(6).fill('');
@@ -6898,29 +7032,33 @@ techNameInput.addEventListener('keydown', (event) => {
                     '" placeholder="* Description...">' + (state.asteriskNote || '') + '</textarea>';
 
                 const syncFromForm = () => {
+                    // Write values onto the source element WITHOUT dispatching its input
+                    // handlers (those steal focus into the hidden editor layout).
                     wrap.querySelectorAll('.psr-input').forEach(inp => {
                         const idx = inp.dataset.index;
                         const src = el.querySelector('.psr-input[data-index="' + idx + '"]');
-                        if (src) {
-                            src.value = inp.value;
-                            src.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
+                        if (src) src.value = inp.value;
                     });
                     wrap.querySelectorAll('.psr-asterisk').forEach(cb => {
                         const idx = cb.dataset.index;
                         const src = el.querySelector('.psr-asterisk[data-index="' + idx + '"]');
-                        if (src) {
-                            src.checked = cb.checked;
-                            src.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
+                        if (src) src.checked = cb.checked;
                     });
                     const note = wrap.querySelector('.psr-asterisk-note');
                     const srcNote = el.querySelector('.psr-asterisk-note');
-                    if (note && srcNote) {
-                        srcNote.value = note.value;
-                        srcNote.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
+                    if (note && srcNote) srcNote.value = note.value;
                     if (typeof updatePSRElementUI === 'function') updatePSRElementUI(el);
+
+                    // Auto-set Perio Risk from scores (same rules as editor)
+                    const allScores = Array.from(wrap.querySelectorAll('.psr-input')).map(i => i.value);
+                    const numericScores = allScores.map(s => parseInt(String(s).replace('*', ''), 10)).filter(n => !isNaN(n));
+                    let risk = 'Low';
+                    const countOf3s = numericScores.filter(s => s === 3).length;
+                    const has4s = numericScores.some(s => s === 4);
+                    if (has4s || countOf3s >= 3) risk = 'High';
+                    else if (countOf3s >= 1 && countOf3s <= 2) risk = 'Moderate';
+                    if (typeof updatePerioRiskDropdown === 'function') updatePerioRiskDropdown(risk);
+
                     updateLiveOutput();
                 };
                 wrap.querySelectorAll('.psr-input').forEach(inp => {
@@ -6936,6 +7074,17 @@ techNameInput.addEventListener('keydown', (event) => {
                         const scorePart = inp.value.replace(/\*/g, '');
                         if (scorePart.length > 1) inp.value = scorePart.charAt(0) + (checkbox && checkbox.checked ? '*' : '');
                         if (!scorePart.match(/^[0-4]?$/)) inp.value = '' + (checkbox && checkbox.checked ? '*' : '');
+                        // Auto-tab to next sextant once a valid score digit is entered
+                        const cleaned = inp.value.replace(/\*/g, '');
+                        if (cleaned.length === 1 && /^[0-4]$/.test(cleaned)) {
+                            const nextIndex = PSR_AUTOFOCUS_MAP.get(index);
+                            if (nextIndex !== undefined) {
+                                const nextInput = wrap.querySelector('.psr-input[data-index="' + nextIndex + '"]');
+                                if (nextInput) {
+                                    setTimeout(() => { nextInput.focus(); nextInput.select(); }, 0);
+                                }
+                            }
+                        }
                         syncFromForm();
                     });
                     inp.addEventListener('keydown', handlePSRTabbing);
@@ -7021,21 +7170,45 @@ techNameInput.addEventListener('keydown', (event) => {
                     row.dataset.originalId = state.originalId || '';
                     applyCfColor(row, fillColor);
 
-                    // Yellow flash for Diagnosis of Chief Concern when content changed (editor parity)
-                    if ((state.originalId === '3-1' ||
-                        (state.internalLabel || '').toLowerCase().includes('diagnosis of chief')) &&
-                        contentChanged) {
-                        row.classList.add('cf-flash-assessment');
-                        // also mirror editor highlight class on the source element
-                        el.classList.add('element-highlighted2');
+                    // Yellow flash: Chief Concern was entered but Diagnosis of Chief Concern not yet assessed
+                    // (matches editor intent — draw attention until diagnosis is filled)
+                    if (state.originalId === '3-1' ||
+                        (state.internalLabel || '').toLowerCase().includes('diagnosis of chief')) {
+                        const chiefEl = document.querySelector('[data-original-id="1-1"]');
+                        let chiefNeedsDx = false;
+                        if (chiefEl) {
+                            const cs = getElementState(chiefEl);
+                            const chiefText = String(cs.content || '').trim().toLowerCase();
+                            const chiefDef = String(cs.defaultText || 'None').trim().toLowerCase();
+                            chiefNeedsDx = chiefText !== '' && chiefText !== chiefDef && chiefText !== 'none' && chiefText !== 'none.';
+                        }
+                        const dxText = String(state.content || '').trim().toLowerCase();
+                        const dxDef = String(state.defaultText || 'None.').trim().toLowerCase();
+                        const dxStillDefault = !dxText || dxText === dxDef || dxText === 'none' || dxText === 'none.';
+                        if (chiefNeedsDx && dxStillDefault) {
+                            row.classList.add('cf-flash-assessment');
+                            el.classList.add('element-highlighted2');
+                        } else {
+                            el.classList.remove('element-highlighted2');
+                        }
                     }
 
                     const label = document.createElement('div');
                     label.className = 'cf-label';
-                    label.textContent = getCondensedLabel(el, state);
+                    // PSR widget already shows "PSR:" inside the element — skip duplicate label
+                    if (state.type === 'psr') {
+                        label.textContent = '';
+                        label.style.display = 'none';
+                    } else {
+                        label.textContent = getCondensedLabel(el, state);
+                    }
                     row.appendChild(label);
 
                     if (isLiveWidget) {
+                        // For PSR full-width live widget, use single-column layout without empty label gap
+                        if (state.type === 'psr') {
+                            row.style.gridTemplateColumns = '1fr';
+                        }
                         const liveHost = document.createElement('div');
                         liveHost.className = 'cf-live-host';
                         mountCfLiveWidget(liveHost, el, state);
@@ -7169,7 +7342,15 @@ techNameInput.addEventListener('keydown', (event) => {
         }
 
         // After initial render / state loads, apply saved mode
-        setTimeout(() => applyUiMode(uiMode), 400);
+        function applyUiModeWhenReady(attempt = 0) {
+	const hasElements = document.querySelector('.dropzone .draggable-element');
+	if (hasElements || attempt >= 25) {
+		applyUiMode(localStorage.getItem('dentalNoteUiMode') || 'editor');
+		return;
+	}
+	setTimeout(() => applyUiModeWhenReady(attempt + 1), 200);
+	}
+	setTimeout(() => applyUiModeWhenReady(), 100);
 
         // Also refresh form when view-hidden toggle changes
         const vht = document.getElementById('view-hidden-toggle');
@@ -7757,10 +7938,15 @@ function attachEventListeners() {
         }
 
         function generateChart() {
-            initializeChart();
-            const prompt = document.getElementById('live-output').value;
-            const cariesToMark = parsePrompt(prompt);
-            markCaries(cariesToMark);
+            // Redundant bottom "Caries Charting Check" removed — keep as safe no-op
+            const dentalChartSVG = document.getElementById('dentalChart');
+            if (!dentalChartSVG) return;
+            try {
+                initializeChart();
+                const prompt = document.getElementById('live-output').value;
+                const cariesToMark = parsePrompt(prompt);
+                markCaries(cariesToMark);
+            } catch (e) { /* ignore */ }
         }
 
 
