@@ -800,6 +800,175 @@ body.condensed-mode .cf-live-host .cf-surface {
 }
 #ui-mode-toggle:hover { background: #1d4ed8; }
 
+/* ================================================================= */
+/* APP-WIDE APPLE / INDUSTRIAL TOOLBAR BUTTONS                       */
+/* ================================================================= */
+.control-btn,
+.copy-btn-prominent,
+.import-btn-prominent,
+#ui-mode-toggle,
+#reset-btn,
+#full-reset-btn,
+#export-sf603a-btn,
+#import-note-button,
+#copy-btn-top,
+#copy-btn-bottom,
+#start-day-button,
+#login-button,
+#signup-button,
+#show-doctor-login-btn,
+#save-copy-button,
+#logout-button,
+.modal-footer .control-btn,
+.modal-footer .primary-button,
+.modal-footer .secondary-button,
+.modal-footer button {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    letter-spacing: -0.01em !important;
+    border-radius: 980px !important;
+    border: 1px solid transparent !important;
+    padding: 10px 18px !important;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease, color 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    line-height: 1.25 !important;
+    -webkit-font-smoothing: antialiased;
+}
+.control-btn:active,
+.copy-btn-prominent:active,
+.import-btn-prominent:active,
+#ui-mode-toggle:active,
+#reset-btn:active,
+#full-reset-btn:active,
+#export-sf603a-btn:active {
+    transform: scale(0.98);
+}
+
+/* Neutral secondary (Import, generic control) */
+.import-btn-prominent,
+#import-note-button,
+.control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn) {
+    background: #f5f5f7 !important;
+    color: #1d1d1f !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+}
+.import-btn-prominent:hover,
+#import-note-button:hover,
+.control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn):hover {
+    background: #e8e8ed !important;
+    color: #1d1d1f !important;
+}
+
+/* Primary success — Copy Note */
+.copy-btn-prominent,
+#copy-btn-top,
+#copy-btn-bottom {
+    background: #34c759 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    font-size: 14px !important;
+}
+.copy-btn-prominent:hover,
+#copy-btn-top:hover,
+#copy-btn-bottom:hover {
+    background: #2fb350 !important;
+    color: #ffffff !important;
+}
+
+/* Mode toggle — system blue */
+#ui-mode-toggle {
+    background: #0071e3 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    margin-left: 8px;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 980px !important;
+    padding: 10px 16px !important;
+}
+#ui-mode-toggle:hover {
+    background: #0077ed !important;
+}
+
+/* Display select — match pill chrome */
+#form-display-select {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    letter-spacing: -0.01em !important;
+    border-radius: 980px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: #f5f5f7 !important;
+    color: #1d1d1f !important;
+    padding: 9px 14px !important;
+    margin-left: 6px;
+    max-width: 240px;
+    cursor: pointer;
+    vertical-align: middle;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+#form-display-select:hover {
+    background: #e8e8ed !important;
+}
+#form-display-select:focus {
+    outline: none;
+    border-color: #0071e3 !important;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+}
+
+/* Destructive-ish archive */
+#reset-btn {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    font-size: 13px !important;
+}
+#reset-btn:hover {
+    background: #e6352b !important;
+    color: #ffffff !important;
+}
+
+/* Warning / full reset */
+#full-reset-btn {
+    background: #ff9f0a !important;
+    color: #1d1d1f !important;
+    border-color: transparent !important;
+    font-size: 13px !important;
+}
+#full-reset-btn:hover {
+    background: #f09500 !important;
+    color: #1d1d1f !important;
+}
+
+/* Export SF 603A — calm green secondary */
+#export-sf603a-btn {
+    background: #30d158 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    font-size: 13px !important;
+    padding: 8px 14px !important;
+}
+#export-sf603a-btn:hover {
+    background: #28c44f !important;
+    color: #ffffff !important;
+}
+
+/* Toolbar row spacing */
+.controls {
+    gap: 10px;
+    align-items: center;
+}
+div[style*="text-align: center"][style*="margin-bottom"] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+
 /* Form View display density + skin (scoped; avoids full-page Ctrl+ zoom clipping) */
 #form-display-select {
     margin-left: 6px;
@@ -870,86 +1039,151 @@ body.cf-density-large #condensed-form-view .cf-preview:not(.chip) {
     line-height: 1.35;
 }
 
-/* Clinical industrial skin (Form View only) */
+/* Apple / industrial Form View skin (light, soft, product-design) */
+body.cf-skin-clinical #condensed-form-view {
+    max-width: 1080px;
+}
 body.cf-skin-clinical #condensed-form-view .cf-section {
-    background: #0f172a;
-    border-color: #334155;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.35);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
 }
 body.cf-skin-clinical #condensed-form-view .cf-section-hd {
-    background: linear-gradient(to right, #1e293b, #0f172a);
-    border-bottom-color: #334155;
+    background: linear-gradient(180deg, #fbfbfd 0%, #f5f5f7 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 12px 18px;
 }
 body.cf-skin-clinical #condensed-form-view .cf-section-hd h2 {
-    color: #38bdf8;
-    letter-spacing: 0.06em;
+    color: #1d1d1f;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-size: 13px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-rows {
+    gap: 10px;
+    padding: 14px 16px 16px;
+    background: #f5f5f7;
 }
 body.cf-skin-clinical #condensed-form-view .cf-row {
-    background: #1e293b;
-    border-color: #334155;
-    border-left-color: #38bdf8;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    border-left-width: 1px;
+    border-left-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    padding: 12px 14px;
+    min-height: 48px;
+    transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
 body.cf-skin-clinical #condensed-form-view .cf-row:hover {
-    background: #243447;
-    border-color: #38bdf8;
-    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+    background: #ffffff;
+    border-color: rgba(0, 113, 227, 0.35);
+    box-shadow: 0 2px 12px rgba(0, 113, 227, 0.10);
 }
 body.cf-skin-clinical #condensed-form-view .cf-row.cf-changed {
-    background: #172554;
-    border-color: #3b82f6;
+    background: #f0f7ff;
+    border-color: rgba(0, 113, 227, 0.28);
+    border-left: 3px solid #0071e3;
+}
+body.cf-skin-clinical #condensed-form-view .cf-row.cf-live-widget.cf-changed {
+    background: #ffffff;
+    border-left-width: 1px;
+    border-left-color: rgba(0, 0, 0, 0.06);
 }
 body.cf-skin-clinical #condensed-form-view .cf-label {
-    color: #e2e8f0;
+    color: #1d1d1f;
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: -0.01em;
 }
 body.cf-skin-clinical #condensed-form-view .cf-preview {
-    color: #cbd5e1;
+    color: #424245;
 }
 body.cf-skin-clinical #condensed-form-view .cf-preview.empty {
-    color: #64748b;
+    color: #86868b;
 }
 body.cf-skin-clinical #condensed-form-view .cf-preview.chip {
-    background: #1e3a5f;
-    border-color: #3b82f6;
-    color: #e0f2fe;
+    background: #f5f5f7;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    color: #1d1d1f;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    padding: 4px 10px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-row.cf-changed .cf-preview:not(:has(input)):not(:has(select)) {
+    background: #e8f1ff;
+    border-color: rgba(0, 113, 227, 0.25);
+    border-radius: 8px;
 }
 body.cf-skin-clinical #condensed-form-view .cf-edit-btn {
-    background: #0f172a;
-    border-color: #475569;
-    color: #38bdf8;
+    background: #f5f5f7;
+    border: 1px solid transparent;
+    border-radius: 980px; /* pill */
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0071e3;
+    letter-spacing: -0.01em;
 }
 body.cf-skin-clinical #condensed-form-view .cf-edit-btn:hover {
-    background: #1e293b;
-    border-color: #38bdf8;
+    background: #e8e8ed;
+    border-color: transparent;
+    color: #0077ed;
 }
 body.cf-skin-clinical #condensed-form-view .cf-edit-btn.chart {
-    background: #1e3a5f;
-    border-color: #3b82f6;
-    color: #93c5fd;
+    background: #0071e3;
+    border-color: transparent;
+    color: #ffffff;
+}
+body.cf-skin-clinical #condensed-form-view .cf-edit-btn.chart:hover {
+    background: #0077ed;
+    color: #ffffff;
 }
 body.cf-skin-clinical #condensed-form-view .cf-surface {
-    background: #0f172a;
-    border-color: #475569;
-    color: #e2e8f0;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    color: #1d1d1f;
+    box-shadow: none;
 }
 body.cf-skin-clinical #condensed-form-view .psr-input,
 body.cf-skin-clinical #condensed-form-view .bp-systolic,
 body.cf-skin-clinical #condensed-form-view .bp-diastolic,
 body.cf-skin-clinical #condensed-form-view .cf-preview select,
 body.cf-skin-clinical #condensed-form-view .cf-preview input[type="range"] {
-    background: #0f172a;
-    color: #f1f5f9;
-    border: 1px solid #475569;
-    border-radius: 4px;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-preview select:focus,
+body.cf-skin-clinical #condensed-form-view .psr-input:focus,
+body.cf-skin-clinical #condensed-form-view .bp-systolic:focus,
+body.cf-skin-clinical #condensed-form-view .bp-diastolic:focus {
+    outline: none;
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
 }
 body.cf-skin-clinical #condensed-form-view .psr-sextant label {
-    color: #94a3b8;
+    color: #86868b;
+    font-weight: 500;
 }
 body.cf-skin-clinical #condensed-form-view .psr-asterisk-note {
-    background: #0f172a;
-    color: #e2e8f0;
-    border: 1px solid #475569;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
 }
-/* Keep alert status colors solid even in clinical skin */
+/* Keep alert status colors solid even in Apple skin */
+body.cf-skin-clinical #condensed-form-view .alert-element {
+    border-radius: 10px;
+}
 body.cf-skin-clinical #condensed-form-view .alert-element.alert-none {
     background-color: var(--success-color) !important;
     border-color: var(--success-color) !important;
@@ -962,6 +1196,216 @@ body.cf-skin-clinical #condensed-form-view .alert-element.alert-blank {
     background-color: var(--warning-color) !important;
     border-color: var(--warning-color) !important;
 }
+
+/* ================================================================= */
+/* APPLE GRAPHITE Form View skin (slightly darker industrial)        */
+/* ================================================================= */
+body.cf-skin-graphite {
+    background-color: #2c2c2e !important;
+    background-image: linear-gradient(160deg, #3a3a3c 0%, #2c2c2e 40%, #1c1c1e 100%) !important;
+    color: #f5f5f7;
+}
+body.cf-skin-graphite #view-note-editor h1 {
+    color: #f5f5f7;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+body.cf-skin-graphite #condensed-form-view {
+    max-width: 1080px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-section {
+    background: #3a3a3c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+body.cf-skin-graphite #condensed-form-view .cf-section-hd {
+    background: linear-gradient(180deg, #48484a 0%, #3a3a3c 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 18px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-section-hd h2 {
+    color: #f5f5f7;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-size: 13px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-rows {
+    gap: 10px;
+    padding: 14px 16px 16px;
+    background: #2c2c2e;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row {
+    background: #3a3a3c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    padding: 12px 14px;
+    min-height: 48px;
+    transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row:hover {
+    background: #48484a;
+    border-color: rgba(10, 132, 255, 0.45);
+    box-shadow: 0 2px 14px rgba(10, 132, 255, 0.15);
+}
+body.cf-skin-graphite #condensed-form-view .cf-row.cf-changed {
+    background: #1e3a5f;
+    border-color: rgba(10, 132, 255, 0.4);
+    border-left: 3px solid #0a84ff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row.cf-live-widget.cf-changed {
+    background: #3a3a3c;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.08);
+}
+body.cf-skin-graphite #condensed-form-view .cf-label {
+    color: #f5f5f7;
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: -0.01em;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview {
+    color: #d1d1d6;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview.empty {
+    color: #8e8e93;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview.chip {
+    background: #48484a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    padding: 4px 10px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row.cf-changed .cf-preview:not(:has(input)):not(:has(select)) {
+    background: #1c3d66;
+    border-color: rgba(10, 132, 255, 0.35);
+    border-radius: 8px;
+    color: #e5f1ff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn {
+    background: #48484a;
+    border: 1px solid transparent;
+    border-radius: 980px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0a84ff;
+    letter-spacing: -0.01em;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn:hover {
+    background: #636366;
+    color: #409cff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn.chart {
+    background: #0a84ff;
+    border-color: transparent;
+    color: #ffffff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn.chart:hover {
+    background: #409cff;
+    color: #ffffff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-surface {
+    background: #2c2c2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #f5f5f7;
+    box-shadow: none;
+}
+body.cf-skin-graphite #condensed-form-view .psr-input,
+body.cf-skin-graphite #condensed-form-view .bp-systolic,
+body.cf-skin-graphite #condensed-form-view .bp-diastolic,
+body.cf-skin-graphite #condensed-form-view .cf-preview select,
+body.cf-skin-graphite #condensed-form-view .cf-preview input[type="range"] {
+    background: #1c1c1e;
+    color: #f5f5f7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview select:focus,
+body.cf-skin-graphite #condensed-form-view .psr-input:focus,
+body.cf-skin-graphite #condensed-form-view .bp-systolic:focus,
+body.cf-skin-graphite #condensed-form-view .bp-diastolic:focus {
+    outline: none;
+    border-color: #0a84ff;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+}
+body.cf-skin-graphite #condensed-form-view .psr-sextant label {
+    color: #8e8e93;
+    font-weight: 500;
+}
+body.cf-skin-graphite #condensed-form-view .psr-asterisk-note {
+    background: #1c1c1e;
+    color: #f5f5f7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element {
+    border-radius: 10px;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element.alert-none {
+    background-color: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element.alert-active {
+    background-color: var(--danger-color) !important;
+    border-color: var(--danger-color) !important;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element.alert-blank {
+    background-color: var(--warning-color) !important;
+    border-color: var(--warning-color) !important;
+}
+
+/* Graphite: toolbar + page chrome */
+body.cf-skin-graphite .controls label {
+    color: #d1d1d6;
+}
+body.cf-skin-graphite #extra-section,
+body.cf-skin-graphite .section-extra-container {
+    background: #3a3a3c;
+    border-color: rgba(255,255,255,0.1);
+    color: #f5f5f7;
+}
+body.cf-skin-graphite #live-output {
+    background: #1c1c1e;
+    color: #f5f5f7;
+    border: 1px solid rgba(255,255,255,0.12);
+}
+body.cf-skin-graphite .import-btn-prominent,
+body.cf-skin-graphite #import-note-button,
+body.cf-skin-graphite .control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn) {
+    background: #48484a !important;
+    color: #f5f5f7 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+body.cf-skin-graphite .import-btn-prominent:hover,
+body.cf-skin-graphite #import-note-button:hover,
+body.cf-skin-graphite .control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn):hover {
+    background: #636366 !important;
+}
+body.cf-skin-graphite #form-display-select {
+    background: #48484a !important;
+    color: #f5f5f7 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body.cf-skin-graphite #form-display-select:hover {
+    background: #636366 !important;
+}
+body.cf-skin-graphite #user-status {
+    background: #3a3a3c !important;
+    color: #f5f5f7;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
    
     </style>
 	
@@ -1003,7 +1447,7 @@ body.cf-skin-clinical #condensed-form-view .alert-element.alert-blank {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.67 · dual UI · form density / clinical skin</p>
+    <p class="landing-version">v5.69 · dual UI · Apple toolbar buttons · light + graphite skins</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -1114,9 +1558,12 @@ body.cf-skin-clinical #condensed-form-view .alert-element.alert-blank {
             <option value="default">Display: Default</option>
             <option value="comfortable">Display: Comfortable</option>
             <option value="large">Display: Large</option>
-            <option value="clinical">Skin: Clinical Dark</option>
-            <option value="clinical-comfortable">Skin: Clinical + Comfortable</option>
-            <option value="clinical-large">Skin: Clinical + Large</option>
+            <option value="clinical">Skin: Apple Light</option>
+            <option value="clinical-comfortable">Skin: Apple Light + Comfortable</option>
+            <option value="clinical-large">Skin: Apple Light + Large</option>
+            <option value="graphite">Skin: Apple Graphite</option>
+            <option value="graphite-comfortable">Skin: Graphite + Comfortable</option>
+            <option value="graphite-large">Skin: Graphite + Large</option>
         </select>
     </div>
     <!-- Layout and Modals -->
@@ -4287,7 +4734,7 @@ function updateChiefConcernDiagnosisHighlight() {
 
 
 
-            if (newState.type !== 'formatter' && !new(state.type || '').startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
+            if (newState.type !== 'formatter' && !(newState.type || '').startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
             const newElement = createElement(newState.type, newState); element.replaceWith(newElement); updateLiveOutput(); document.getElementById('properties-modal').style.display = 'none';
         };
         const allergyModal = document.getElementById('allergy-modal'); const allergyListDiv = document.getElementById('allergy-list'); ALLERGY_LIST.forEach(allergy => { allergyListDiv.innerHTML += `<label><input type="checkbox" class="allergy-checkbox" value="${allergy}"> ${allergy}</label>`; }); allergyListDiv.addEventListener('change', e => { if (!e.target.classList.contains('allergy-checkbox')) return; const checkboxes = Array.from(allergyListDiv.querySelectorAll('.allergy-checkbox')); const noneCheckbox = checkboxes.find(cb => cb.value === "None"); if (e.target.value === "None" && e.target.checked) { checkboxes.forEach(cb => { if (cb.value !== "None") cb.checked = false; }); } else if (e.target.value !== "None" && e.target.checked) { if (noneCheckbox.checked) noneCheckbox.checked = false; } }); const openAllergyModal = (element) => { activeElementForEditor = element; const state = getElementState(element); const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox'); checkboxes.forEach(cb => cb.checked = false); const customInput = document.getElementById('custom-allergy-input'); customInput.value = ''; state.alerts.forEach(alert => { const cb = Array.from(checkboxes).find(c => c.value === alert); if (cb) { cb.checked = true; } else if (alert.startsWith('Custom: ')) { customInput.value = alert.substring(8); } }); allergyModal.style.display = 'block'; }; 
@@ -7671,7 +8118,10 @@ techNameInput.addEventListener('keydown', (event) => {
                 'large': true,
                 'clinical': true,
                 'clinical-comfortable': true,
-                'clinical-large': true
+                'clinical-large': true,
+                'graphite': true,
+                'graphite-comfortable': true,
+                'graphite-large': true
             };
             if (!allowed[pref]) pref = 'default';
             localStorage.setItem('dentalNoteFormDisplay', pref);
@@ -7679,16 +8129,19 @@ techNameInput.addEventListener('keydown', (event) => {
             document.body.classList.remove(
                 'cf-density-comfortable',
                 'cf-density-large',
-                'cf-skin-clinical'
+                'cf-skin-clinical',
+                'cf-skin-graphite'
             );
 
-            if (pref === 'comfortable' || pref === 'clinical-comfortable') {
+            if (pref === 'comfortable' || pref === 'clinical-comfortable' || pref === 'graphite-comfortable') {
                 document.body.classList.add('cf-density-comfortable');
-            } else if (pref === 'large' || pref === 'clinical-large') {
+            } else if (pref === 'large' || pref === 'clinical-large' || pref === 'graphite-large') {
                 document.body.classList.add('cf-density-large');
             }
             if (pref.startsWith('clinical')) {
                 document.body.classList.add('cf-skin-clinical');
+            } else if (pref.startsWith('graphite')) {
+                document.body.classList.add('cf-skin-graphite');
             }
 
             const sel = document.getElementById('form-display-select');
