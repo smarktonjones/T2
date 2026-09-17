@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 15SEP26 mgh -->
+<!-- version as of 17SEP26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -711,6 +711,35 @@ body.condensed-mode .cf-live-host .cf-surface {
     padding: 3px 8px;
 }
 
+/* Live widgets (alert/BP/PSR): never take the blue "changed" wash */
+.cf-row.cf-live-widget.cf-changed {
+    background: #fafbfc;
+    border-color: #e8ecf0;
+}
+/* Allergy/Alert in Form View — solid status colors like Editor (override fill/changed) */
+.cf-row.cf-live-widget .cf-surface.alert-element.alert-blank,
+.cf-row.cf-live-widget .alert-element.alert-blank {
+    background-color: var(--warning-color) !important;
+    border-color: var(--warning-color) !important;
+    color: #fff !important;
+}
+.cf-row.cf-live-widget .cf-surface.alert-element.alert-none,
+.cf-row.cf-live-widget .alert-element.alert-none {
+    background-color: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+    color: #fff !important;
+}
+.cf-row.cf-live-widget .cf-surface.alert-element.alert-active,
+.cf-row.cf-live-widget .alert-element.alert-active {
+    background-color: var(--danger-color) !important;
+    border-color: var(--danger-color) !important;
+    color: #fff !important;
+}
+.cf-row.cf-live-widget .alert-element .alert-display {
+    color: #fff !important;
+    font-weight: bold;
+}
+
 /* Assessment · Diagnosis of Chief Concern — yellow flash (editor import highlight) */
 .cf-row.cf-flash-assessment {
     animation: cf-assessment-flash 1.6s ease-in-out 2;
@@ -811,7 +840,7 @@ body.condensed-mode .cf-live-host .cf-surface {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.64 · dual UI · charting close / PSR / risk fixes</p>
+    <p class="landing-version">v5.66 · dual UI · focus-preserve / solid alert / silent BP</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -2394,7 +2423,40 @@ const getBPStatus = (s, d) => {if (!s || !d) return 'normal'; if (s >= 180 || d 
 const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
 
 		const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
-        const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
+
+// Improved PSR auto-tabbing that works in BOTH Editor View and Form View
+const handlePSRTabbing = (event) => {
+    if (event.key !== 'Tab') return;
+    event.preventDefault();
+
+    const currentInput = event.target;
+    const currentIndex = parseInt(currentInput.dataset.index, 10);
+    if (isNaN(currentIndex)) return;
+
+    let nextIndex = event.shiftKey ? 
+        Array.from(PSR_AUTOFOCUS_MAP.entries()).find(([k]) => k === currentIndex)?.[1] : 
+        PSR_AUTOFOCUS_MAP.get(currentIndex);
+
+    if (nextIndex === undefined) {
+        nextIndex = event.shiftKey ? 5 : 0;
+    }
+
+    // First try to find the input in the SAME container (works for both real PSR and form clone)
+    let container = currentInput.closest('.psr-grid');
+    let nextInput = container ? container.querySelector(`.psr-input[data-index="${nextIndex}"]`) : null;
+
+    // Fallback: look for any PSR input with that index on the page
+    if (!nextInput) {
+        nextInput = document.querySelector(`.psr-input[data-index="${nextIndex}"]`);
+    }
+
+    if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+    }
+};
+
+
         const padBox = (score) => `[${(score || '').padEnd(2)}]`;
         const updateAlertElementUI = (element) => {
             const state = getElementState(element);
@@ -2675,7 +2737,7 @@ draggable.querySelectorAll('.psr-input').forEach(input => {
 
 
 draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
-            else if (type === 'dropdown') { const select = document.createElement('select'); (data.options || ['Select...', 'Opt 1', 'Opt 2']).forEach(opt => select.add(new Option(opt, opt, false, opt === data.selected))); draggable.appendChild(select); draggable.addEventListener('change', updateLiveOutput); }
+            else if (type === 'dropdown') { const select = document.createElement('select'); (data.options || ['Select...', 'Opt 1', 'Opt 2']).forEach(opt => select.add(new Option(opt, opt, false, opt === data.selected))); draggable.appendChild(select); draggable.addEventListener('change', () => { updateLiveOutput(); if (typeof window.refreshCondensedForm === 'function') setTimeout(window.refreshCondensedForm, 30); }); }
             else if (type === 'checkbox') { draggable.innerHTML = `<label><input type="checkbox" ${data.checked ? 'checked' : ''}> <span contenteditable="true">${data.content || 'Checkbox text'}</span></label>`; }
             else if ((type || '').startsWith('label-')) { draggable.classList.add(type === 'label-red' ? 'element-label-red' : 'element-label-black'); draggable.innerHTML = `<div contenteditable="true">${data.content || 'Descriptive Label'}</div>`; }
             else if (type === 'formatter') { draggable.classList.add('formatter-element'); const formatType = data.formatType || 'newline'; let display = (formatType === 'newline') ? '↵ Newline' : (formatType === 'tab') ? '→ Tab' : (data.customChars || '...'); draggable.innerHTML = `<span>${display}</span>`; }
@@ -2686,23 +2748,24 @@ draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEv
 
 
         const getElementState = (element) => {
-            const type = element.dataset.type || '';             
-			    if (!element || !element.dataset) {
-        return {
-            type: '', required: false, isHidden: false, doNotReset: false,
-            prefixTab: false, prefixNewline: false, suffixNewline: false,
-            originalId: '', width: '', fillColor: '',
-            content: '', defaultText: '', internalLabel: '', prefixLabel: '',
-            dropdownOptions: [], options: [], selected: '',
-            alerts: [], value: '0', systolic: '', diastolic: '',
-            isPriorTxChecked: false, discussSystolic: '150', discussDiastolic: '95',
-            checkboxSystolic: '160', checkboxDiastolic: '100',
-            scores: ['','','','','',''], asterisks: [false,false,false,false,false,false],
-            asteriskNote: '', includeTopical: true, anestheticTypes: [], anestheticValues: {},
-            endoTests: [], endoData: { teeth: [''], results: {} },
-            txRows: [], txSnippets: [], txData: {}, formatType: 'newline', customChars: ''
-        };
-    }
+            // Null-safe: check element before touching dataset
+            if (!element || !element.dataset) {
+                return {
+                    type: '', required: false, isHidden: false, doNotReset: false,
+                    prefixTab: false, prefixNewline: false, suffixNewline: false,
+                    originalId: '', width: '', fillColor: '',
+                    content: '', defaultText: '', internalLabel: '', prefixLabel: '',
+                    dropdownOptions: [], options: [], selected: '',
+                    alerts: [], value: '0', systolic: '', diastolic: '',
+                    isPriorTxChecked: false, discussSystolic: '150', discussDiastolic: '95',
+                    checkboxSystolic: '160', checkboxDiastolic: '100',
+                    scores: ['','','','','',''], asterisks: [false,false,false,false,false,false],
+                    asteriskNote: '', includeTopical: true, anestheticTypes: [], anestheticValues: {},
+                    endoTests: [], endoData: { teeth: [''], results: {} },
+                    txRows: [], txSnippets: [], txData: {}, formatType: 'newline', customChars: ''
+                };
+            }
+            const type = element.dataset.type || '';
 			const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
             if (type === 'enhanced-textbox' || type === 'charting') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions || '[]'); }
 
@@ -2987,28 +3050,33 @@ const COLOR_PALETTE = [
  * @param {string} riskLevel - The calculated risk level ("Low", "Moderate", or "High").
  */
 const updateCariesRiskDropdown = (riskLevel) => {
-    // 1. Find the dropdown element by its unique originalId.
-    const cariesRiskDropdown = document.querySelector('[data-original-id="3-5"]');
-    if (!cariesRiskDropdown) {
-        console.warn("Caries Risk dropdown element not found on the page.");
-        return;
-    }
+    // 1. Find the dropdown element by its unique originalId.
+    const cariesRiskDropdown = document.querySelector('[data-original-id="3-5"]');
+    if (!cariesRiskDropdown) {
+        console.warn("Caries Risk dropdown element not found on the page.");
+        return;
+    }
 
-    // 2. Construct the full option text that matches the dropdown's value.
-    const optionValue = `CARIES RISK: ${riskLevel}`;
+    // 2. Construct the full option text that matches the dropdown's value.
+    const optionValue = `CARIES RISK: ${riskLevel}`;
 
-    // 3. Find the <select> element and update its value if it's different.
-    const selectElement = cariesRiskDropdown.querySelector('select');
-    if (selectElement && selectElement.value !== optionValue) {
-        console.log(`Automatically setting Caries Risk to: ${riskLevel}`);
-        selectElement.value = optionValue;
+    // 3. Find the <select> element and update its value if it's different.
+    const selectElement = cariesRiskDropdown.querySelector('select');
+    if (selectElement && selectElement.value !== optionValue) {
+        console.log(`Automatically setting Caries Risk to: ${riskLevel}`);
+        selectElement.value = optionValue;
         // Keep selected attribute in sync for getElementState / re-renders
         Array.from(selectElement.options).forEach(o => { o.selected = (o.value === optionValue); });
 
-        // Trigger a save to persist the automated change.
-        updateLiveOutput();
-        if (typeof refreshCondensedForm === 'function') setTimeout(refreshCondensedForm, 40);
-    }
+        // Mirror Form View select in-place (avoid full form rebuild / focus loss)
+        document.querySelectorAll('#condensed-form-view .cf-row[data-original-id="3-5"] select').forEach(formSel => {
+            formSel.value = optionValue;
+            Array.from(formSel.options).forEach(o => { o.selected = (o.value === optionValue); });
+        });
+
+        // Persist; do NOT call refreshCondensedForm
+        updateLiveOutput();
+    }
 };
 
 /**
@@ -3060,27 +3128,33 @@ const checkAndSetCariesRisk = () => {
  * @param {string} riskLevel - The calculated risk level ("Low", "Moderate", or "High").
  */
 const updatePerioRiskDropdown = (riskLevel) => {
-    // 1. Find the dropdown element using its unique originalId.
-    const perioRiskDropdown = document.querySelector('[data-original-id="3-6"]');
-    if (!perioRiskDropdown) {
-        console.warn("Perio Risk dropdown element not found on the page.");
-        return;
-    }
+    // 1. Find the dropdown element using its unique originalId.
+    const perioRiskDropdown = document.querySelector('[data-original-id="3-6"]');
+    if (!perioRiskDropdown) {
+        console.warn("Perio Risk dropdown element not found on the page.");
+        return;
+    }
 
-    // 2. Construct the full option text that matches the dropdown's <option> value.
-    const optionValue = `PERIO RISK: ${riskLevel}`;
+    // 2. Construct the full option text that matches the dropdown's <option> value.
+    const optionValue = `PERIO RISK: ${riskLevel}`;
 
-    // 3. Find the <select> element inside the dropdown and set its value.
-    const selectElement = perioRiskDropdown.querySelector('select');
-    if (selectElement && selectElement.value !== optionValue) {
-        console.log(`Automatically setting Perio Risk to: ${riskLevel}`);
-        selectElement.value = optionValue;
+    // 3. Find the <select> element inside the dropdown and set its value.
+    const selectElement = perioRiskDropdown.querySelector('select');
+    if (selectElement && selectElement.value !== optionValue) {
+        console.log(`Automatically setting Perio Risk to: ${riskLevel}`);
+        selectElement.value = optionValue;
         Array.from(selectElement.options).forEach(o => { o.selected = (o.value === optionValue); });
 
-        // This is crucial for ensuring the change is saved to the cloud.
-        updateLiveOutput();
-        if (typeof refreshCondensedForm === 'function') setTimeout(refreshCondensedForm, 40);
-    }
+        // Mirror into Form View select clone(s) WITHOUT rebuilding the form
+        // (full refresh steals focus from PSR / BP inputs)
+        document.querySelectorAll('#condensed-form-view .cf-row[data-original-id="3-6"] select').forEach(formSel => {
+            formSel.value = optionValue;
+            Array.from(formSel.options).forEach(o => { o.selected = (o.value === optionValue); });
+        });
+
+        // Persist + live note; do NOT call refreshCondensedForm here
+        updateLiveOutput();
+    }
 };
 
 
@@ -4476,6 +4550,12 @@ const reconcileState = (newState) => {
     if (lockToggle && lockToggle.checked) {
         console.log("DEBUG: Re-applying layout lock after reconciliation.");
         lockToggle.dispatchEvent(new Event('change'));
+    }
+    // Keep Form View in sync after any cloud/surgical DOM update (Start My Day, Reset, multi-user)
+    if (typeof window.refreshCondensedForm === 'function') {
+        window.refreshCondensedForm();
+    } else if (typeof refreshCondensedForm === 'function') {
+        refreshCondensedForm();
     }
     // --- END OF  CODE ---
 	
@@ -6983,11 +7063,13 @@ techNameInput.addEventListener('keydown', (event) => {
                 const dIn = wrap.querySelector('.bp-diastolic');
                 const pIn = wrap.querySelector('.bp-prior-tx-check');
                 const sync = () => {
-                    if (sSrc) { sSrc.value = sIn.value; sSrc.dispatchEvent(new Event('input', { bubbles: true })); }
-                    if (dSrc) { dSrc.value = dIn.value; dSrc.dispatchEvent(new Event('input', { bubbles: true })); }
+                    // Silent write to source inputs — do NOT dispatch bubbled input events
+                    // (those re-enter editor handlers / risk form rebuild and focus loss)
+                    if (sSrc) sSrc.value = sIn.value;
+                    if (dSrc) dSrc.value = dIn.value;
                     if (priorSrc && pIn) priorSrc.checked = pIn.checked;
                     if (typeof updateBPElementUI === 'function') updateBPElementUI(el);
-                    // mirror status onto form clone
+                    // mirror status onto form clone in-place
                     ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => wrap.classList.remove(c));
                     ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
                         if (el.classList.contains(c)) wrap.classList.add(c);
@@ -6997,14 +7079,26 @@ techNameInput.addEventListener('keydown', (event) => {
                     if (pc && srcPc) {
                         pc.classList.toggle('visible', srcPc.classList.contains('visible'));
                     }
-                    updateLiveOutput();
-                    if (typeof refreshCondensedForm === 'function') {
-                        /* avoid full re-render while typing — status classes already mirrored */
+                    // Keep prior-tx visibility on form clone too
+                    if (pc) {
+                        const s = parseInt(sIn.value, 10);
+                        const d = parseInt(dIn.value, 10);
+                        const triggerS = parseInt(el.dataset.checkboxSystolic, 10) || 160;
+                        const triggerD = parseInt(el.dataset.checkboxDiastolic, 10) || 100;
+                        if ((!isNaN(s) && s >= triggerS) || (!isNaN(d) && d >= triggerD)) {
+                            pc.classList.add('visible');
+                        } else {
+                            pc.classList.remove('visible');
+                        }
                     }
+                    updateLiveOutput();
+                    // Never refreshCondensedForm while typing BP
                 };
-                sIn.addEventListener('input', sync);
-                dIn.addEventListener('input', sync);
-                if (pIn) pIn.addEventListener('change', sync);
+                sIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
+                dIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
+                sIn.addEventListener('keydown', (e) => e.stopPropagation());
+                dIn.addEventListener('keydown', (e) => e.stopPropagation());
+                if (pIn) pIn.addEventListener('change', (e) => { e.stopPropagation(); sync(); });
                 host.appendChild(wrap);
                 return;
             }
@@ -7062,7 +7156,8 @@ techNameInput.addEventListener('keydown', (event) => {
                     updateLiveOutput();
                 };
                 wrap.querySelectorAll('.psr-input').forEach(inp => {
-                    inp.addEventListener('input', () => {
+                    inp.addEventListener('input', (e) => {
+                        e.stopPropagation();
                         // asterisk auto-toggle like editor
                         const index = parseInt(inp.dataset.index, 10);
                         const checkbox = wrap.querySelector('.psr-asterisk[data-index="' + index + '"]');
@@ -7075,19 +7170,22 @@ techNameInput.addEventListener('keydown', (event) => {
                         if (scorePart.length > 1) inp.value = scorePart.charAt(0) + (checkbox && checkbox.checked ? '*' : '');
                         if (!scorePart.match(/^[0-4]?$/)) inp.value = '' + (checkbox && checkbox.checked ? '*' : '');
                         // Auto-tab to next sextant once a valid score digit is entered
+                        // (do this AFTER sync so Perio Risk update cannot steal focus)
                         const cleaned = inp.value.replace(/\*/g, '');
-                        if (cleaned.length === 1 && /^[0-4]$/.test(cleaned)) {
-                            const nextIndex = PSR_AUTOFOCUS_MAP.get(index);
-                            if (nextIndex !== undefined) {
-                                const nextInput = wrap.querySelector('.psr-input[data-index="' + nextIndex + '"]');
-                                if (nextInput) {
-                                    setTimeout(() => { nextInput.focus(); nextInput.select(); }, 0);
-                                }
+                        const shouldTab = cleaned.length === 1 && /^[0-4]$/.test(cleaned);
+                        const nextIndex = shouldTab ? PSR_AUTOFOCUS_MAP.get(index) : undefined;
+                        syncFromForm(); // updates Perio Risk in-place (no form rebuild)
+                        if (shouldTab && nextIndex !== undefined) {
+                            const nextInput = wrap.querySelector('.psr-input[data-index="' + nextIndex + '"]');
+                            if (nextInput) {
+                                setTimeout(() => { nextInput.focus(); nextInput.select(); }, 0);
                             }
                         }
-                        syncFromForm();
                     });
-                    inp.addEventListener('keydown', handlePSRTabbing);
+                    inp.addEventListener('keydown', (e) => {
+                        e.stopPropagation();
+                        handlePSRTabbing(e);
+                    });
                 });
                 wrap.querySelectorAll('.psr-asterisk').forEach(cb => {
                     cb.addEventListener('change', () => {
@@ -7162,13 +7260,18 @@ techNameInput.addEventListener('keydown', (event) => {
                     const fillColor = state.fillColor || el.dataset.fillColor || '';
 
                     const row = document.createElement('div');
+                    // Alert uses solid green/red/orange status — never blue "changed" wash
+                    const useChanged = contentChanged && state.type !== 'alert';
                     row.className = 'cf-row ' + spanClass +
                         (isHidden ? ' cf-hidden-row' : '') +
                         (isLiveWidget ? ' cf-live-widget' : '') +
-                        (contentChanged ? ' cf-changed' : '');
+                        (useChanged ? ' cf-changed' : '');
                     row.dataset.elementId = el.id;
                     row.dataset.originalId = state.originalId || '';
-                    applyCfColor(row, fillColor);
+                    // Do not apply template fillColor to alert (status colors must win)
+                    if (state.type !== 'alert') {
+                        applyCfColor(row, fillColor);
+                    }
 
                     // Yellow flash: Chief Concern was entered but Diagnosis of Chief Concern not yet assessed
                     // (matches editor intent — draw attention until diagnosis is filled)
@@ -7230,11 +7333,24 @@ techNameInput.addEventListener('keydown', (event) => {
                             const clone = src.cloneNode(true);
                             clone.className = 'inline';
                             clone.style.maxWidth = '100%';
-                            clone.addEventListener('change', () => {
+                            clone.style.width = '100%';
+                            // Force mirror of current editor selection (cloneNode alone can be stale)
+                            clone.value = src.value;
+                            clone.selectedIndex = src.selectedIndex;
+                            // Prevent row-level click handlers from intercepting
+                            clone.addEventListener('click', (e) => e.stopPropagation());
+                            clone.addEventListener('mousedown', (e) => e.stopPropagation());
+                            clone.addEventListener('change', (e) => {
+                                e.stopPropagation();
                                 src.value = clone.value;
+                                src.selectedIndex = clone.selectedIndex;
+                                // Fire both so any listeners update Live Note
+                                src.dispatchEvent(new Event('input', { bubbles: true }));
                                 src.dispatchEvent(new Event('change', { bubbles: true }));
                                 updateLiveOutput();
-                                setTimeout(refreshCondensedForm, 30);
+                                setTimeout(() => {
+                                    if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
+                                }, 30);
                             });
                             preview.className = 'cf-preview';
                             preview.appendChild(clone);
@@ -7306,7 +7422,74 @@ techNameInput.addEventListener('keydown', (event) => {
         }
 
         function refreshCondensedForm() {
-            if (uiMode === 'form') renderCondensedForm();
+            if (uiMode !== 'form') return;
+
+            // Preserve focus across form rebuild (PSR sextants, BP fields, etc.)
+            const ae = document.activeElement;
+            let restore = null;
+            if (ae && ae.closest && ae.closest('#condensed-form-view')) {
+                const row = ae.closest('.cf-row');
+                restore = {
+                    originalId: (row && row.dataset.originalId) || '',
+                    elementId: (row && row.dataset.elementId) || '',
+                    classList: Array.from(ae.classList || []),
+                    dataIndex: ae.dataset ? ae.dataset.index : undefined,
+                    tag: ae.tagName,
+                    type: ae.type || '',
+                    selStart: (typeof ae.selectionStart === 'number') ? ae.selectionStart : null,
+                    selEnd: (typeof ae.selectionEnd === 'number') ? ae.selectionEnd : null
+                };
+            }
+
+            renderCondensedForm();
+
+            if (!restore) return;
+            try {
+                let row = restore.originalId
+                    ? document.querySelector('#condensed-form-view .cf-row[data-original-id="' + restore.originalId + '"]')
+                    : null;
+                if (!row && restore.elementId) {
+                    row = document.querySelector('#condensed-form-view .cf-row[data-element-id="' + restore.elementId + '"]');
+                }
+                if (!row) return;
+
+                let target = null;
+                if (restore.classList.includes('bp-systolic')) {
+                    target = row.querySelector('.bp-systolic');
+                } else if (restore.classList.includes('bp-diastolic')) {
+                    target = row.querySelector('.bp-diastolic');
+                } else if (restore.classList.includes('psr-input') && restore.dataIndex != null) {
+                    target = row.querySelector('.psr-input[data-index="' + restore.dataIndex + '"]');
+                } else if (restore.classList.includes('psr-asterisk') && restore.dataIndex != null) {
+                    target = row.querySelector('.psr-asterisk[data-index="' + restore.dataIndex + '"]');
+                } else if (restore.classList.includes('psr-asterisk-note') || (restore.tag === 'TEXTAREA' && row.querySelector('.psr-asterisk-note'))) {
+                    target = row.querySelector('.psr-asterisk-note');
+                } else if (restore.tag === 'SELECT') {
+                    target = row.querySelector('select');
+                } else if (restore.tag === 'INPUT' && restore.type === 'range') {
+                    target = row.querySelector('input[type="range"]');
+                } else if (restore.tag === 'INPUT') {
+                    // best-effort: same data-index or first matching type
+                    if (restore.dataIndex != null) {
+                        target = row.querySelector('input[data-index="' + restore.dataIndex + '"]');
+                    }
+                    if (!target) target = row.querySelector('input');
+                }
+
+                if (target) {
+                    target.focus();
+                    if (restore.selStart != null && typeof target.setSelectionRange === 'function') {
+                        try {
+                            const len = (target.value || '').length;
+                            const a = Math.min(restore.selStart, len);
+                            const b = Math.min(restore.selEnd != null ? restore.selEnd : a, len);
+                            target.setSelectionRange(a, b);
+                        } catch (e) { /* number inputs may not support selection */ }
+                    }
+                }
+            } catch (err) {
+                console.warn('Form focus restore failed', err);
+            }
         }
 
         function applyUiMode(mode) {
