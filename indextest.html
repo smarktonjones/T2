@@ -1447,7 +1447,7 @@ body.cf-skin-graphite #user-status {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.69 · dual UI · Apple toolbar buttons · light + graphite skins</p>
+    <p class="landing-version">v6.0</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -1558,12 +1558,12 @@ body.cf-skin-graphite #user-status {
             <option value="default">Display: Default</option>
             <option value="comfortable">Display: Comfortable</option>
             <option value="large">Display: Large</option>
-            <option value="clinical">Skin: Apple Light</option>
-            <option value="clinical-comfortable">Skin: Apple Light + Comfortable</option>
-            <option value="clinical-large">Skin: Apple Light + Large</option>
-            <option value="graphite">Skin: Apple Graphite</option>
-            <option value="graphite-comfortable">Skin: Graphite + Comfortable</option>
-            <option value="graphite-large">Skin: Graphite + Large</option>
+            <option value="clinical">Display: Light</option>
+            <option value="clinical-comfortable">Display: Light + Comfortable</option>
+            <option value="clinical-large">Display: Light + Large</option>
+            <option value="graphite">Display: Graphite</option>
+            <option value="graphite-comfortable">Display: Graphite + Comfortable</option>
+            <option value="graphite-large">Display: Graphite + Large</option>
         </select>
     </div>
     <!-- Layout and Modals -->
@@ -5883,7 +5883,9 @@ const features = [
 	"MHS Genesis-ready formatting",
     "Seamlessly import past notes",
 	"Cloud-synced note history",
-    "Detailed Endo-Testing tables",
+    'Quick-charting Caries',
+	'Dual-mode UI',
+	"Detailed Endo-Testing tables",
     "Built-in dental term autocorrect",
     "Quick-Copy with Shift + Enter",
     "Double-click to replace text snippets",
@@ -7434,7 +7436,7 @@ techNameInput.addEventListener('keydown', (event) => {
         // DUAL MODE: Editor (blocks) <-> Condensed Form
         // Same dropzone elements, same modals, alternate renderer only.
         // =================================================================
-        let uiMode = localStorage.getItem('dentalNoteUiMode') || 'editor'; // 'editor' | 'form'
+        let uiMode = localStorage.getItem('dentalNoteUiMode') || 'form'; // 'editor' | 'form'
 
         const SECTION_TITLES = {
             header: 'Header',
@@ -8194,7 +8196,7 @@ techNameInput.addEventListener('keydown', (event) => {
         function applyUiModeWhenReady(attempt = 0) {
 	const hasElements = document.querySelector('.dropzone .draggable-element');
 	if (hasElements || attempt >= 25) {
-		applyUiMode(localStorage.getItem('dentalNoteUiMode') || 'editor');
+		applyUiMode(localStorage.getItem('dentalNoteUiMode') || 'form');
 		return;
 	}
 	setTimeout(() => applyUiModeWhenReady(attempt + 1), 200);
