@@ -7439,12 +7439,12 @@ techNameInput.addEventListener('keydown', (event) => {
         let uiMode = localStorage.getItem('dentalNoteUiMode') || 'form'; // 'editor' | 'form'
 
         const SECTION_TITLES = {
-            header: 'Header',
+            header: 'Intake',
             subjective: 'S · Subjective Findings',
             objective: 'O · Objective Findings',
             assessment: 'A · Assessment',
             plan: 'P · Treatment Plan',
-            footer: 'Signatures / Footer'
+            footer: 'Signatures'
         };
 
         function getCondensedLabel(el, state) {
