@@ -1429,6 +1429,21 @@ body.cf-skin-graphite #user-status {
     border: 1px solid rgba(255,255,255,0.08);
 }
 
+
+/* Dropdown rows in Form View: full-width select, no label column */
+.cf-row:has(select.inline) {
+    grid-template-columns: 1fr !important;
+}
+.cf-preview:has(select.inline) {
+    overflow: visible !important;
+    white-space: normal !important;
+}
+.cf-preview select.inline {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
    
     </style>
 	
@@ -7954,6 +7969,7 @@ techNameInput.addEventListener('keydown', (event) => {
                     const isLiveWidget = state.type === 'alert' || state.type === 'bloodpressure' || state.type === 'psr';
                     const contentChanged = isCfContentChanged(el, state);
 
+
                     const widthVal = state.width || el.dataset.width || '';
                     // Live widgets default to a sensible width so they fit the column
                     let spanClass = getCfSpanClass(widthVal);
@@ -7962,17 +7978,31 @@ techNameInput.addEventListener('keydown', (event) => {
                         else if (state.type === 'alert') spanClass = 'cf-span-6';
                         else if (state.type === 'bloodpressure') spanClass = 'cf-span-6';
                     }
+                    // Assessment risk triad (3-5 / 3-6 / 3-7): always 3-up, start on a fresh row
+                    // so a preceding span-6 (e.g. Oral Surgery Diagnosis) cannot break the packing.
+                    if (state.originalId === '3-5' || state.originalId === '3-6' || state.originalId === '3-7') {
+                        spanClass = 'cf-span-4';
+                    }
+
+
                     const fillColor = state.fillColor || el.dataset.fillColor || '';
 
                     const row = document.createElement('div');
                     // Alert uses solid green/red/orange status — never blue "changed" wash
                     const useChanged = contentChanged && state.type !== 'alert';
+
+
                     row.className = 'cf-row ' + spanClass +
                         (isHidden ? ' cf-hidden-row' : '') +
                         (isLiveWidget ? ' cf-live-widget' : '') +
                         (useChanged ? ' cf-changed' : '');
                     row.dataset.elementId = el.id;
                     row.dataset.originalId = state.originalId || '';
+                    // Caries Risk starts column 1 so Perio + Cancer land beside it (4+4+4 = 12)
+                    if (state.originalId === '3-5') {
+                        row.style.gridColumn = '1 / span 4';
+                    }
+
                     // Do not apply template fillColor to alert (status colors must win)
                     if (state.type !== 'alert') {
                         applyCfColor(row, fillColor);
@@ -8003,14 +8033,21 @@ techNameInput.addEventListener('keydown', (event) => {
 
                     const label = document.createElement('div');
                     label.className = 'cf-label';
-                    // PSR widget already shows "PSR:" inside the element — skip duplicate label
-                    if (state.type === 'psr') {
+
+                    // PSR: no extra label. Dropdowns: no label (option text is the control, like Editor).
+                    if (state.type === 'psr' || state.type === 'dropdown') {
                         label.textContent = '';
                         label.style.display = 'none';
+                        if (state.type === 'dropdown') {
+                            // Label column gone → select gets the full row
+                            row.style.gridTemplateColumns = '1fr';
+                        }
                     } else {
                         label.textContent = getCondensedLabel(el, state);
                     }
                     row.appendChild(label);
+
+
 
                     if (isLiveWidget) {
                         // For PSR full-width live widget, use single-column layout without empty label gap
@@ -8036,9 +8073,17 @@ techNameInput.addEventListener('keydown', (event) => {
                         const src = el.querySelector('select');
                         if (src) {
                             const clone = src.cloneNode(true);
+
                             clone.className = 'inline';
                             clone.style.maxWidth = '100%';
                             clone.style.width = '100%';
+                            clone.style.boxSizing = 'border-box';
+                            // Let long option text show (e.g. "CARIES RISK: Moderate")
+                            preview.style.overflow = 'visible';
+                            preview.style.whiteSpace = 'normal';
+                            preview.style.minWidth = '0';
+
+
                             // Force mirror of current editor selection (cloneNode alone can be stale)
                             clone.value = src.value;
                             clone.selectedIndex = src.selectedIndex;
@@ -8099,12 +8144,14 @@ techNameInput.addEventListener('keydown', (event) => {
                     if (state.type === 'charting') btn.textContent = 'Open Chart';
                     else if (state.type === 'tx-plan') btn.textContent = 'Open Tx Plan';
                     else if (state.type === 'endo-testing') btn.textContent = 'Open Table';
+
                     else if (state.type === 'dropdown' || state.type === 'painscale') {
                         btn.textContent = '—';
                         btn.disabled = true;
-                        btn.style.opacity = '0.35';
-                        btn.style.cursor = 'default';
+                        btn.style.display = 'none'; // no chrome; full width for the control
                     } else btn.textContent = 'Edit';
+
+
 
                     const open = (e) => {
                         e.preventDefault();
