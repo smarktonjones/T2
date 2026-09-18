@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 15SEP26 mgh -->
+<!-- version as of 18SEP26 mgh -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -324,14 +324,37 @@ opacity: 0.4;
             fill: red !important; /* Mark caries in red */
         }
         .tooth-label {
-            font-size: 7px; /* Labels for tooth numbers */
+            font-size: 12px; /* larger tooth numbers; circles stay put */
             text-anchor: middle;
-            fill: #333;
-            font-weight: bold;
+            fill: #222;
+            font-weight: 700;
         }
+        .class-badge {
+            font-size: 13px;
+            font-weight: 800;
+            pointer-events: none;
+        }
+        #dental-class-indicator {
+            display: none;
+            margin-left: 8px;
+            padding: 5px 12px;
+            border-radius: 980px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        #dental-class-indicator.dc-1 { background: #28a745; color: #fff; }
+        #dental-class-indicator.dc-2 { background: #ffc107; color: #1d1d1f; }
+        #dental-class-indicator.dc-3 { background: #d93025; color: #fff; }
+        body.cf-skin-graphite #dental-class-indicator.dc-1 { background: #30d158; }
+        body.cf-skin-graphite #dental-class-indicator.dc-2 { background: #ffd60a; }
+        body.cf-skin-graphite #dental-class-indicator.dc-3 { background: #ff453a; }
         .arch-line {
-            stroke: #aaa;
-            stroke-width: 2;
+            stroke: #888;
+            stroke-width: 2.5;
             fill: none;
         }
         .mouth-label {
@@ -572,7 +595,840 @@ opacity: 0.4;
 #start-day-button:hover {
     background-color: var(--success-hover); /* Darken on hover */
 }
-   
+
+/* ================================================================= */
+/* CONDENSED FORM MODE (dual-mode UI)                                */
+/* ================================================================= */
+body.condensed-mode .layout-container { display: none !important; }
+body.condensed-mode .add-element-btn { display: none !important; }
+body.condensed-mode #lock-layout-toggle,
+body.condensed-mode #lock-layout-toggle + span,
+body.condensed-mode label:has(#lock-layout-toggle) { display: none !important; }
+body:not(.condensed-mode) #condensed-form-view { display: none !important; }
+
+#condensed-form-view {
+    max-width: 1100px;
+    margin: 0 auto 16px;
+}
+.cf-section {
+    background: #fff;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+.cf-section-hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: linear-gradient(to right, #fef2f2, #fff);
+    border-bottom: 1px solid #d0d7de;
+}
+.cf-section-hd h2 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 800;
+    color: #c53030;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: left;
+    text-shadow: none;
+}
+/* 12-col grid: default span 6 (= 2 columns). 100%→12, 33%→4, 25%→3 */
+.cf-rows {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 8px;
+    padding: 10px 12px 12px;
+}
+.cf-row {
+    display: grid;
+    grid-template-columns: minmax(100px, 140px) 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px;
+    min-height: 44px;
+    cursor: pointer;
+    border: 1px solid #e8ecf0;
+    border-radius: 8px;
+    background: #fafbfc;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    grid-column: span 6; /* default 2-column */
+    border-left-width: 8px; /* thicker color tab (2x) */
+    border-left-style: solid;
+    border-left-color: #cbd5e1;
+}
+.cf-row.cf-span-12 { grid-column: span 12; } /* width 100% → full row */
+.cf-row.cf-span-4  { grid-column: span 4;  } /* width ~33% → 3-up */
+.cf-row.cf-span-3  { grid-column: span 3;  } /* width ~25% → 4-up */
+.cf-row.cf-span-6  { grid-column: span 6;  } /* default / other */
+
+/* Live special widgets (alert / BP / PSR) keep original element CSS */
+.cf-row.cf-live-widget {
+    grid-template-columns: minmax(100px, 140px) 1fr;
+    align-items: stretch;
+    cursor: default;
+    padding: 8px 10px;
+}
+.cf-row.cf-live-widget .cf-live-host {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.cf-row.cf-live-widget .cf-live-host > .cf-surface,
+.cf-row.cf-live-widget .cf-live-host .alert-element,
+.cf-row.cf-live-widget .cf-live-host .bp-element,
+.cf-row.cf-live-widget .cf-live-host .psr-element {
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0 !important;
+    resize: none !important;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.cf-surface {
+    background-color: var(--element-bg);
+    border: 2px solid var(--element-border);
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+body.condensed-mode .cf-live-host .cf-surface {
+    cursor: pointer;
+    box-shadow: var(--element-shadow);
+}
+
+@media (max-width: 800px) {
+    .cf-rows { grid-template-columns: 1fr; }
+    .cf-row, .cf-row.cf-span-12, .cf-row.cf-span-4, .cf-row.cf-span-3, .cf-row.cf-span-6 {
+        grid-column: span 1;
+    }
+}
+
+.cf-row:hover {
+    background: #f0f4ff;
+    border-color: #91d5ff;
+    box-shadow: 0 1px 4px rgba(24, 144, 255, 0.12);
+}
+.cf-row.cf-hidden-row { opacity: 0.55; border-style: dashed; }
+
+/* Content changed from default → blue fill (same visual language as charting/tx-plan chips) */
+.cf-row.cf-changed {
+    background: #eff6ff;
+    border-color: #91d5ff;
+}
+.cf-row.cf-changed .cf-preview:not(:has(input)):not(:has(select)) {
+    white-space: normal;
+    font-family: ui-monospace, monospace;
+    font-size: 12.5px;
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 4px;
+    padding: 3px 8px;
+}
+
+/* Live widgets (alert/BP/PSR): never take the blue "changed" wash */
+.cf-row.cf-live-widget.cf-changed {
+    background: #fafbfc;
+    border-color: #e8ecf0;
+}
+/* Allergy/Alert in Form View — solid status colors like Editor (override fill/changed) */
+.cf-row.cf-live-widget .cf-surface.alert-element.alert-blank,
+.cf-row.cf-live-widget .alert-element.alert-blank {
+    background-color: var(--warning-color) !important;
+    border-color: var(--warning-color) !important;
+    color: #fff !important;
+}
+.cf-row.cf-live-widget .cf-surface.alert-element.alert-none,
+.cf-row.cf-live-widget .alert-element.alert-none {
+    background-color: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+    color: #fff !important;
+}
+.cf-row.cf-live-widget .cf-surface.alert-element.alert-active,
+.cf-row.cf-live-widget .alert-element.alert-active {
+    background-color: var(--danger-color) !important;
+    border-color: var(--danger-color) !important;
+    color: #fff !important;
+}
+.cf-row.cf-live-widget .alert-element .alert-display {
+    color: #fff !important;
+    font-weight: bold;
+}
+
+/* Assessment · Diagnosis of Chief Concern — yellow flash (editor import highlight) */
+.cf-row.cf-flash-assessment {
+    animation: cf-assessment-flash 1.6s ease-in-out 2;
+    border-color: var(--success-color2) !important;
+}
+@keyframes cf-assessment-flash {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.35); }
+    50% { box-shadow: 0 0 14px 4px rgba(255, 215, 0, 0.9); }
+}
+
+.cf-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a365d;
+    line-height: 1.25;
+}
+.cf-preview {
+    font-size: 13px;
+    color: #334155;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.cf-preview.empty { color: #94a3b8; font-style: italic; }
+.cf-preview.chip {
+    white-space: normal;
+    font-family: ui-monospace, monospace;
+    font-size: 12.5px;
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 4px;
+    padding: 3px 8px;
+}
+.cf-edit-btn {
+    background: #fff;
+    border: 1px solid #d0d7de;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1890ff;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.cf-edit-btn:hover { background: #e6f7ff; border-color: #1890ff; }
+.cf-edit-btn.chart { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+#ui-mode-toggle {
+    background: #1e40af;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 8px;
+}
+#ui-mode-toggle:hover { background: #1d4ed8; }
+
+/* ================================================================= */
+/* APP-WIDE APPLE / INDUSTRIAL TOOLBAR BUTTONS                       */
+/* ================================================================= */
+.control-btn,
+.copy-btn-prominent,
+.import-btn-prominent,
+#ui-mode-toggle,
+#reset-btn,
+#full-reset-btn,
+#export-sf603a-btn,
+#import-note-button,
+#copy-btn-top,
+#copy-btn-bottom,
+#start-day-button,
+#login-button,
+#signup-button,
+#show-doctor-login-btn,
+#save-copy-button,
+#logout-button,
+.modal-footer .control-btn,
+.modal-footer .primary-button,
+.modal-footer .secondary-button,
+.modal-footer button {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    letter-spacing: -0.01em !important;
+    border-radius: 980px !important;
+    border: 1px solid transparent !important;
+    padding: 10px 18px !important;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease, color 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    line-height: 1.25 !important;
+    -webkit-font-smoothing: antialiased;
+}
+.control-btn:active,
+.copy-btn-prominent:active,
+.import-btn-prominent:active,
+#ui-mode-toggle:active,
+#reset-btn:active,
+#full-reset-btn:active,
+#export-sf603a-btn:active {
+    transform: scale(0.98);
+}
+
+/* Neutral secondary (Import, generic control) */
+.import-btn-prominent,
+#import-note-button,
+.control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn) {
+    background: #f5f5f7 !important;
+    color: #1d1d1f !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+}
+.import-btn-prominent:hover,
+#import-note-button:hover,
+.control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn):hover {
+    background: #e8e8ed !important;
+    color: #1d1d1f !important;
+}
+
+/* Primary success — Copy Note */
+.copy-btn-prominent,
+#copy-btn-top,
+#copy-btn-bottom {
+    background: #34c759 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    font-size: 14px !important;
+}
+.copy-btn-prominent:hover,
+#copy-btn-top:hover,
+#copy-btn-bottom:hover {
+    background: #2fb350 !important;
+    color: #ffffff !important;
+}
+
+/* Mode toggle — system blue */
+#ui-mode-toggle {
+    background: #0071e3 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    margin-left: 8px;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 980px !important;
+    padding: 10px 16px !important;
+}
+#ui-mode-toggle:hover {
+    background: #0077ed !important;
+}
+
+/* Display select — match pill chrome */
+#form-display-select {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    letter-spacing: -0.01em !important;
+    border-radius: 980px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: #f5f5f7 !important;
+    color: #1d1d1f !important;
+    padding: 9px 14px !important;
+    margin-left: 6px;
+    max-width: 240px;
+    cursor: pointer;
+    vertical-align: middle;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+#form-display-select:hover {
+    background: #e8e8ed !important;
+}
+#form-display-select:focus {
+    outline: none;
+    border-color: #0071e3 !important;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+}
+
+/* Destructive-ish archive */
+#reset-btn {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    font-size: 13px !important;
+}
+#reset-btn:hover {
+    background: #e6352b !important;
+    color: #ffffff !important;
+}
+
+/* Warning / full reset */
+#full-reset-btn {
+    background: #ff9f0a !important;
+    color: #1d1d1f !important;
+    border-color: transparent !important;
+    font-size: 13px !important;
+}
+#full-reset-btn:hover {
+    background: #f09500 !important;
+    color: #1d1d1f !important;
+}
+
+/* Export SF 603A — calm green secondary */
+#export-sf603a-btn {
+    background: #30d158 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    font-size: 13px !important;
+    padding: 8px 14px !important;
+}
+#export-sf603a-btn:hover {
+    background: #28c44f !important;
+    color: #ffffff !important;
+}
+
+/* Toolbar row spacing */
+.controls {
+    gap: 10px;
+    align-items: center;
+}
+div[style*="text-align: center"][style*="margin-bottom"] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+
+/* Form View display density + skin (scoped; avoids full-page Ctrl+ zoom clipping) */
+#form-display-select {
+    margin-left: 6px;
+    padding: 9px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    cursor: pointer;
+    vertical-align: middle;
+    max-width: 200px;
+}
+body:not(.condensed-mode) #form-display-select {
+    display: none !important;
+}
+#condensed-form-view {
+    transform-origin: top center;
+}
+/* Comfortable ≈ 1.15× form chrome only */
+body.cf-density-comfortable #condensed-form-view {
+    zoom: 1.15;
+}
+body.cf-density-comfortable #condensed-form-view .cf-label {
+    font-size: 13px;
+}
+body.cf-density-comfortable #condensed-form-view .cf-preview,
+body.cf-density-comfortable #condensed-form-view .cf-preview input,
+body.cf-density-comfortable #condensed-form-view .cf-preview select,
+body.cf-density-comfortable #condensed-form-view .psr-input,
+body.cf-density-comfortable #condensed-form-view .bp-systolic,
+body.cf-density-comfortable #condensed-form-view .bp-diastolic {
+    font-size: 14.5px;
+}
+body.cf-density-comfortable #condensed-form-view .cf-row {
+    min-height: 50px;
+    padding: 11px 12px;
+}
+/* Large ≈ 1.28× */
+body.cf-density-large #condensed-form-view {
+    zoom: 1.28;
+}
+body.cf-density-large #condensed-form-view .cf-label {
+    font-size: 14px;
+}
+body.cf-density-large #condensed-form-view .cf-preview,
+body.cf-density-large #condensed-form-view .cf-preview input,
+body.cf-density-large #condensed-form-view .cf-preview select,
+body.cf-density-large #condensed-form-view .psr-input,
+body.cf-density-large #condensed-form-view .bp-systolic,
+body.cf-density-large #condensed-form-view .bp-diastolic {
+    font-size: 15.5px;
+}
+body.cf-density-large #condensed-form-view .cf-row {
+    min-height: 54px;
+    padding: 12px 13px;
+}
+body.cf-density-large #condensed-form-view .cf-section-hd h2 {
+    font-size: 14px;
+}
+/* Reduce ellipsis clipping at larger sizes */
+body.cf-density-comfortable #condensed-form-view .cf-preview:not(.chip),
+body.cf-density-large #condensed-form-view .cf-preview:not(.chip) {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.35;
+}
+
+/* Apple / industrial Form View skin (light, soft, product-design) */
+body.cf-skin-clinical #condensed-form-view {
+    max-width: 1080px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-section {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+body.cf-skin-clinical #condensed-form-view .cf-section-hd {
+    background: linear-gradient(180deg, #fbfbfd 0%, #f5f5f7 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 12px 18px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-section-hd h2 {
+    color: #1d1d1f;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-size: 13px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-rows {
+    gap: 10px;
+    padding: 14px 16px 16px;
+    background: #f5f5f7;
+}
+body.cf-skin-clinical #condensed-form-view .cf-row {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    border-left-width: 1px;
+    border-left-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    padding: 12px 14px;
+    min-height: 48px;
+    transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+}
+body.cf-skin-clinical #condensed-form-view .cf-row:hover {
+    background: #ffffff;
+    border-color: rgba(0, 113, 227, 0.35);
+    box-shadow: 0 2px 12px rgba(0, 113, 227, 0.10);
+}
+body.cf-skin-clinical #condensed-form-view .cf-row.cf-changed {
+    background: #f0f7ff;
+    border-color: rgba(0, 113, 227, 0.28);
+    border-left: 3px solid #0071e3;
+}
+body.cf-skin-clinical #condensed-form-view .cf-row.cf-live-widget.cf-changed {
+    background: #ffffff;
+    border-left-width: 1px;
+    border-left-color: rgba(0, 0, 0, 0.06);
+}
+body.cf-skin-clinical #condensed-form-view .cf-label {
+    color: #1d1d1f;
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: -0.01em;
+}
+body.cf-skin-clinical #condensed-form-view .cf-preview {
+    color: #424245;
+}
+body.cf-skin-clinical #condensed-form-view .cf-preview.empty {
+    color: #86868b;
+}
+body.cf-skin-clinical #condensed-form-view .cf-preview.chip {
+    background: #f5f5f7;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    color: #1d1d1f;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    padding: 4px 10px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-row.cf-changed .cf-preview:not(:has(input)):not(:has(select)) {
+    background: #e8f1ff;
+    border-color: rgba(0, 113, 227, 0.25);
+    border-radius: 8px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-edit-btn {
+    background: #f5f5f7;
+    border: 1px solid transparent;
+    border-radius: 980px; /* pill */
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0071e3;
+    letter-spacing: -0.01em;
+}
+body.cf-skin-clinical #condensed-form-view .cf-edit-btn:hover {
+    background: #e8e8ed;
+    border-color: transparent;
+    color: #0077ed;
+}
+body.cf-skin-clinical #condensed-form-view .cf-edit-btn.chart {
+    background: #0071e3;
+    border-color: transparent;
+    color: #ffffff;
+}
+body.cf-skin-clinical #condensed-form-view .cf-edit-btn.chart:hover {
+    background: #0077ed;
+    color: #ffffff;
+}
+body.cf-skin-clinical #condensed-form-view .cf-surface {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    color: #1d1d1f;
+    box-shadow: none;
+}
+body.cf-skin-clinical #condensed-form-view .psr-input,
+body.cf-skin-clinical #condensed-form-view .bp-systolic,
+body.cf-skin-clinical #condensed-form-view .bp-diastolic,
+body.cf-skin-clinical #condensed-form-view .cf-preview select,
+body.cf-skin-clinical #condensed-form-view .cf-preview input[type="range"] {
+    background: #f5f5f7;
+    color: #1d1d1f;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+body.cf-skin-clinical #condensed-form-view .cf-preview select:focus,
+body.cf-skin-clinical #condensed-form-view .psr-input:focus,
+body.cf-skin-clinical #condensed-form-view .bp-systolic:focus,
+body.cf-skin-clinical #condensed-form-view .bp-diastolic:focus {
+    outline: none;
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+}
+body.cf-skin-clinical #condensed-form-view .psr-sextant label {
+    color: #86868b;
+    font-weight: 500;
+}
+body.cf-skin-clinical #condensed-form-view .psr-asterisk-note {
+    background: #f5f5f7;
+    color: #1d1d1f;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+}
+/* Keep alert status colors solid even in Apple skin */
+body.cf-skin-clinical #condensed-form-view .alert-element {
+    border-radius: 10px;
+}
+body.cf-skin-clinical #condensed-form-view .alert-element.alert-none {
+    background-color: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+}
+body.cf-skin-clinical #condensed-form-view .alert-element.alert-active {
+    background-color: var(--danger-color) !important;
+    border-color: var(--danger-color) !important;
+}
+body.cf-skin-clinical #condensed-form-view .alert-element.alert-blank {
+    background-color: var(--warning-color) !important;
+    border-color: var(--warning-color) !important;
+}
+
+/* ================================================================= */
+/* APPLE GRAPHITE Form View skin (slightly darker industrial)        */
+/* ================================================================= */
+body.cf-skin-graphite {
+    background-color: #2c2c2e !important;
+    background-image: linear-gradient(160deg, #3a3a3c 0%, #2c2c2e 40%, #1c1c1e 100%) !important;
+    color: #f5f5f7;
+}
+body.cf-skin-graphite #view-note-editor h1 {
+    color: #f5f5f7;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+body.cf-skin-graphite #condensed-form-view {
+    max-width: 1080px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-section {
+    background: #3a3a3c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+body.cf-skin-graphite #condensed-form-view .cf-section-hd {
+    background: linear-gradient(180deg, #48484a 0%, #3a3a3c 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 18px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-section-hd h2 {
+    color: #f5f5f7;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-size: 13px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-rows {
+    gap: 10px;
+    padding: 14px 16px 16px;
+    background: #2c2c2e;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row {
+    background: #3a3a3c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    padding: 12px 14px;
+    min-height: 48px;
+    transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row:hover {
+    background: #48484a;
+    border-color: rgba(10, 132, 255, 0.45);
+    box-shadow: 0 2px 14px rgba(10, 132, 255, 0.15);
+}
+body.cf-skin-graphite #condensed-form-view .cf-row.cf-changed {
+    background: #1e3a5f;
+    border-color: rgba(10, 132, 255, 0.4);
+    border-left: 3px solid #0a84ff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row.cf-live-widget.cf-changed {
+    background: #3a3a3c;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.08);
+}
+body.cf-skin-graphite #condensed-form-view .cf-label {
+    color: #f5f5f7;
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: -0.01em;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview {
+    color: #d1d1d6;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview.empty {
+    color: #8e8e93;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview.chip {
+    background: #48484a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    padding: 4px 10px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-row.cf-changed .cf-preview:not(:has(input)):not(:has(select)) {
+    background: #1c3d66;
+    border-color: rgba(10, 132, 255, 0.35);
+    border-radius: 8px;
+    color: #e5f1ff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn {
+    background: #48484a;
+    border: 1px solid transparent;
+    border-radius: 980px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0a84ff;
+    letter-spacing: -0.01em;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn:hover {
+    background: #636366;
+    color: #409cff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn.chart {
+    background: #0a84ff;
+    border-color: transparent;
+    color: #ffffff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-edit-btn.chart:hover {
+    background: #409cff;
+    color: #ffffff;
+}
+body.cf-skin-graphite #condensed-form-view .cf-surface {
+    background: #2c2c2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #f5f5f7;
+    box-shadow: none;
+}
+body.cf-skin-graphite #condensed-form-view .psr-input,
+body.cf-skin-graphite #condensed-form-view .bp-systolic,
+body.cf-skin-graphite #condensed-form-view .bp-diastolic,
+body.cf-skin-graphite #condensed-form-view .cf-preview select,
+body.cf-skin-graphite #condensed-form-view .cf-preview input[type="range"] {
+    background: #1c1c1e;
+    color: #f5f5f7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+body.cf-skin-graphite #condensed-form-view .cf-preview select:focus,
+body.cf-skin-graphite #condensed-form-view .psr-input:focus,
+body.cf-skin-graphite #condensed-form-view .bp-systolic:focus,
+body.cf-skin-graphite #condensed-form-view .bp-diastolic:focus {
+    outline: none;
+    border-color: #0a84ff;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+}
+body.cf-skin-graphite #condensed-form-view .psr-sextant label {
+    color: #8e8e93;
+    font-weight: 500;
+}
+body.cf-skin-graphite #condensed-form-view .psr-asterisk-note {
+    background: #1c1c1e;
+    color: #f5f5f7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element {
+    border-radius: 10px;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element.alert-none {
+    background-color: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element.alert-active {
+    background-color: var(--danger-color) !important;
+    border-color: var(--danger-color) !important;
+}
+body.cf-skin-graphite #condensed-form-view .alert-element.alert-blank {
+    background-color: var(--warning-color) !important;
+    border-color: var(--warning-color) !important;
+}
+
+/* Graphite: toolbar + page chrome */
+body.cf-skin-graphite .controls label {
+    color: #d1d1d6;
+}
+body.cf-skin-graphite #extra-section,
+body.cf-skin-graphite .section-extra-container {
+    background: #3a3a3c;
+    border-color: rgba(255,255,255,0.1);
+    color: #f5f5f7;
+}
+body.cf-skin-graphite #live-output {
+    background: #1c1c1e;
+    color: #f5f5f7;
+    border: 1px solid rgba(255,255,255,0.12);
+}
+body.cf-skin-graphite .import-btn-prominent,
+body.cf-skin-graphite #import-note-button,
+body.cf-skin-graphite .control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn) {
+    background: #48484a !important;
+    color: #f5f5f7 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+body.cf-skin-graphite .import-btn-prominent:hover,
+body.cf-skin-graphite #import-note-button:hover,
+body.cf-skin-graphite .control-btn:not(.copy-btn-prominent):not(#reset-btn):not(#full-reset-btn):not(#export-sf603a-btn):hover {
+    background: #636366 !important;
+}
+body.cf-skin-graphite #form-display-select {
+    background: #48484a !important;
+    color: #f5f5f7 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body.cf-skin-graphite #form-display-select:hover {
+    background: #636366 !important;
+}
+body.cf-skin-graphite #user-status {
+    background: #3a3a3c !important;
+    color: #f5f5f7;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
    
     </style>
 	
@@ -602,6 +1458,7 @@ opacity: 0.4;
 <div id="user-status" style="position: fixed; top: 10px; right: 20px; background: #fff; padding: 5px 10px; border-radius: 5px; box-shadow: var(--element-shadow); z-index: 100;">
     <span id="user-email"></span>
     <button id="logout-button" class="view-hidden">Logout</button>
+    <span id="dental-class-indicator" class="dc-1" title="Derived from Treatment Plan Class 2 / Class 3 entries">Dental Class 1</span>
 <!-- ================================================================= -->
 <!--  Doctor's "Save Final Copy or Go Back" Button                 -->
 <!-- ================================================================= -->
@@ -614,7 +1471,7 @@ opacity: 0.4;
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v5.6</p>
+    <p class="landing-version">v6.0</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -717,9 +1574,27 @@ opacity: 0.4;
 
     <h1>ORAL EXAM</h1>
 
-    <div style="text-align: center; margin-bottom: 10px;"><button id="import-note-button" class="import-btn-prominent">Import Previous Note...</button><button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button></div>
+    <div style="text-align: center; margin-bottom: 10px;">
+        <button id="import-note-button" class="import-btn-prominent">Import Previous Note...</button>
+        <button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
+        <button id="ui-mode-toggle" type="button" title="Switch between block editor and condensed form">Form View</button>
+        <select id="form-display-select" title="Form View display size and style (does not affect Editor View)" aria-label="Form display options">
+            <option value="default">Display: Default</option>
+            <option value="comfortable">Display: Comfortable</option>
+            <option value="large">Display: Large</option>
+            <option value="clinical">Display: Light</option>
+            <option value="clinical-comfortable">Display: Light + Comfortable</option>
+            <option value="clinical-large">Display: Light + Large</option>
+            <option value="graphite">Display: Graphite</option>
+            <option value="graphite-comfortable">Display: Graphite + Comfortable</option>
+            <option value="graphite-large">Display: Graphite + Large</option>
+        </select>
+    </div>
     <!-- Layout and Modals -->
     <div class="layout-container"><div id="header-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="header-section">+</button></div><div class="dropzone" data-section-id="header"></div></div><div class="main-body-container"><div id="subjective-section" class="section-container"><div class="section-header"><h2>S: SUBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="subjective-section">+</button></div><div class="dropzone" data-section-id="subjective"></div></div><div id="objective-section" class="section-container"><div class="section-header"><h2>O: OBJECTIVE FINDINGS</h2><button class="add-element-btn" data-section="objective-section">+</button></div><div class="dropzone" data-section-id="objective"></div></div><div id="assessment-section" class="section-container"><div class="section-header"><h2>A: ASSESSMENT OF FINDINGS & CHIEF COMPLAINT</h2><button class="add-element-btn" data-section="assessment-section">+</button></div><div class="dropzone" data-section-id="assessment"></div></div><div id="plan-section" class="section-container"><div class="section-header"><h2>P: TREATMENT PLAN</h2><button class="add-element-btn" data-section="plan-section">+</button></div><div class="dropzone" data-section-id="plan"></div></div></div><div id="footer-section" class="section-container"><div class="section-header"><h2>--</h2><button class="add-element-btn" data-section="footer-section">+</button></div><div class="dropzone" data-section-id="footer"></div></div></div>
+
+    <!-- Condensed Form View (same elements / modals; alternate renderer) -->
+    <div id="condensed-form-view" aria-label="Condensed form view"></div>
 
     <div class="controls">
 	    <button id="copy-btn-bottom" class="control-btn copy-btn-prominent" style="margin-top: 10px;">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
@@ -874,10 +1749,7 @@ opacity: 0.4;
 <div id="extra-section" class="section-extra-container">
     <div class="output-container" style="margin-top: 20px;"><h2>Live Note Preview</h2><textarea id="live-output" style="width: 100%; box-sizing: border-box; height: 200px; font-family: monospace; white-space: pre-wrap;"></textarea>
 
-        <div class="chart-output">
-            <h4>Caries Charting Check</h4> <h5>Derived from Treatment Plan element - (to duplicate in Dentrix treatment plan)</h5>
-            <svg id="dentalChart" viewBox="0 0 850 400" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
+        <!-- Caries Charting Check removed — interactive charting modal is the source of truth -->
 
 
 
@@ -1647,7 +2519,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-5",
       "isHidden": false,
       "doNotReset": false,
-      "width": "",
+      "width": "33%",
       "fillColor": "#e8e8e8",
       "options": [
         "CARIES RISK: Low",
@@ -1665,7 +2537,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-6",
       "isHidden": false,
       "doNotReset": false,
-      "width": "",
+      "width": "33%",
       "fillColor": "#e8e8e8",
       "options": [
         "PERIO RISK: Low",
@@ -1683,7 +2555,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-7",
       "isHidden": false,
       "doNotReset": false,
-      "width": "",
+      "width": "33%",
       "fillColor": "#e8e8e8",
       "options": [
         "CANCER RISK: Low",
@@ -2193,7 +3065,40 @@ const getBPStatus = (s, d) => {if (!s || !d) return 'normal'; if (s >= 180 || d 
 const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
 
 		const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
-        const handlePSRTabbing = (event) => { if (event.key !== 'Tab') return; event.preventDefault(); const allInputs = Array.from(event.target.closest('.psr-grid').querySelectorAll('.psr-input')); const currentIndex = parseInt(event.target.dataset.index, 10); let nextIndex; if (event.shiftKey) { const reverseMap = new Map(Array.from(PSR_AUTOFOCUS_MAP.entries()).map(([k,v]) => [v,k])); nextIndex = reverseMap.get(currentIndex); if(nextIndex === undefined) nextIndex = 5; } else { nextIndex = PSR_AUTOFOCUS_MAP.get(currentIndex); if(nextIndex === undefined) nextIndex = 0; } const nextInput = allInputs.find(input => parseInt(input.dataset.index, 10) === nextIndex); if (nextInput) { nextInput.focus(); nextInput.select(); } };
+
+// Improved PSR auto-tabbing that works in BOTH Editor View and Form View
+const handlePSRTabbing = (event) => {
+    if (event.key !== 'Tab') return;
+    event.preventDefault();
+
+    const currentInput = event.target;
+    const currentIndex = parseInt(currentInput.dataset.index, 10);
+    if (isNaN(currentIndex)) return;
+
+    let nextIndex = event.shiftKey ? 
+        Array.from(PSR_AUTOFOCUS_MAP.entries()).find(([k]) => k === currentIndex)?.[1] : 
+        PSR_AUTOFOCUS_MAP.get(currentIndex);
+
+    if (nextIndex === undefined) {
+        nextIndex = event.shiftKey ? 5 : 0;
+    }
+
+    // First try to find the input in the SAME container (works for both real PSR and form clone)
+    let container = currentInput.closest('.psr-grid');
+    let nextInput = container ? container.querySelector(`.psr-input[data-index="${nextIndex}"]`) : null;
+
+    // Fallback: look for any PSR input with that index on the page
+    if (!nextInput) {
+        nextInput = document.querySelector(`.psr-input[data-index="${nextIndex}"]`);
+    }
+
+    if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+    }
+};
+
+
         const padBox = (score) => `[${(score || '').padEnd(2)}]`;
         const updateAlertElementUI = (element) => {
             const state = getElementState(element);
@@ -2250,7 +3155,7 @@ const updateBPElementUI = (element) => { const s = parseInt(element.querySelecto
         
 const updateLiveOutput = (forceImmediate = false) => {
     let outputParts = [];
-    document.querySelectorAll('.draggable-element').forEach(el => {
+    document.querySelectorAll('.dropzone .draggable-element').forEach(el => {
         const state = getElementState(el); let content = '';
         if (state.type === 'enhanced-textbox' || state.type === 'charting') { if(state.content && state.content.trim() !== "") { const prefix = state.prefixLabel ? `${state.prefixLabel} ` : ''; content = prefix + state.content; } }
         else if (state.type === 'tx-plan') {
@@ -2307,7 +3212,7 @@ const updateLiveOutput = (forceImmediate = false) => {
                 }
             }
         }
-        else if (state.type === 'alert') { if (state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => a === 'PREGNANCY' ? 'PREGNANCY' : a.startsWith('Custom: ') ? a.substring(8) : `${a} ALLERGY`).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
+        else if (state.type === 'alert') { if (state.alerts && state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => { if (!a) return ''; if (a === 'PREGNANCY') return 'PREGNANCY'; if (String(a).startsWith('Custom: ')) return String(a).substring(8); return `${a} ALLERGY`; }).filter(Boolean).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
         else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
         else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
         else if (state.type === 'psr') { const scores = state.scores; const topRow = `     ${padBox(scores[0])} ${padBox(scores[1])} ${padBox(scores[2])}`; const botRow = `     ${padBox(scores[5])} ${padBox(scores[4])} ${padBox(scores[3])}`; content = `PSR:\n${topRow}\n${botRow}`; if (state.asterisks.some(a => a) && state.asteriskNote.trim()) { content += `\n     (*: ${state.asteriskNote.trim()})`; } }
@@ -2320,8 +3225,11 @@ const updateLiveOutput = (forceImmediate = false) => {
 
     console.log("DEBUG: updateLiveOutput finished. Triggering cloud sync.");
     syncStateToFirestore(forceImmediate); // Pass the flag along
+    if (typeof updateDentalClassIndicator === 'function') updateDentalClassIndicator();
 
-    generateChart();
+    if (typeof generateChart === 'function') {
+        try { generateChart(); } catch (e) { /* chart removed / optional */ }
+    }
 };
 
 
@@ -2440,8 +3348,7 @@ draggable.querySelectorAll('.psr-input').forEach(input => {
                 if (nextIndex !== undefined) {
                     const nextInput = draggable.querySelector(`.psr-input[data-index="${nextIndex}"]`);
                     if (nextInput) {
-                        nextInput.focus();
-                        nextInput.select();
+                        setTimeout(() => { nextInput.focus(); nextInput.select(); }, 0);
                     }
                 }
             }
@@ -2473,9 +3380,9 @@ draggable.querySelectorAll('.psr-input').forEach(input => {
 
 
 draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEventListener('change', () => { const index = parseInt(checkbox.dataset.index, 10); const input = draggable.querySelector(`.psr-input[data-index="${index}"]`); const scorePart = input.value.replace(/\*/g, ''); input.value = scorePart + (checkbox.checked ? '*' : ''); updatePSRElementUI(draggable); updateLiveOutput(); }); }); updatePSRElementUI(draggable); }
-            else if (type === 'dropdown') { const select = document.createElement('select'); (data.options || ['Select...', 'Opt 1', 'Opt 2']).forEach(opt => select.add(new Option(opt, opt, false, opt === data.selected))); draggable.appendChild(select); draggable.addEventListener('change', updateLiveOutput); }
+            else if (type === 'dropdown') { const select = document.createElement('select'); (data.options || ['Select...', 'Opt 1', 'Opt 2']).forEach(opt => select.add(new Option(opt, opt, false, opt === data.selected))); draggable.appendChild(select); draggable.addEventListener('change', () => { updateLiveOutput(); if (typeof window.refreshCondensedForm === 'function') setTimeout(window.refreshCondensedForm, 30); }); }
             else if (type === 'checkbox') { draggable.innerHTML = `<label><input type="checkbox" ${data.checked ? 'checked' : ''}> <span contenteditable="true">${data.content || 'Checkbox text'}</span></label>`; }
-            else if (type.startsWith('label-')) { draggable.classList.add(type === 'label-red' ? 'element-label-red' : 'element-label-black'); draggable.innerHTML = `<div contenteditable="true">${data.content || 'Descriptive Label'}</div>`; }
+            else if ((type || '').startsWith('label-')) { draggable.classList.add(type === 'label-red' ? 'element-label-red' : 'element-label-black'); draggable.innerHTML = `<div contenteditable="true">${data.content || 'Descriptive Label'}</div>`; }
             else if (type === 'formatter') { draggable.classList.add('formatter-element'); const formatType = data.formatType || 'newline'; let display = (formatType === 'newline') ? '↵ Newline' : (formatType === 'tab') ? '→ Tab' : (data.customChars || '...'); draggable.innerHTML = `<span>${display}</span>`; }
             return draggable;
         };
@@ -2484,7 +3391,25 @@ draggable.querySelectorAll('.psr-asterisk').forEach(checkbox => { checkbox.addEv
 
 
         const getElementState = (element) => {
-            const type = element.dataset.type;             const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
+            // Null-safe: check element before touching dataset
+            if (!element || !element.dataset) {
+                return {
+                    type: '', required: false, isHidden: false, doNotReset: false,
+                    prefixTab: false, prefixNewline: false, suffixNewline: false,
+                    originalId: '', width: '', fillColor: '',
+                    content: '', defaultText: '', internalLabel: '', prefixLabel: '',
+                    dropdownOptions: [], options: [], selected: '',
+                    alerts: [], value: '0', systolic: '', diastolic: '',
+                    isPriorTxChecked: false, discussSystolic: '150', discussDiastolic: '95',
+                    checkboxSystolic: '160', checkboxDiastolic: '100',
+                    scores: ['','','','','',''], asterisks: [false,false,false,false,false,false],
+                    asteriskNote: '', includeTopical: true, anestheticTypes: [], anestheticValues: {},
+                    endoTests: [], endoData: { teeth: [''], results: {} },
+                    txRows: [], txSnippets: [], txData: {}, formatType: 'newline', customChars: ''
+                };
+            }
+            const type = element.dataset.type || '';
+			const state = { type, required: element.dataset.required === 'true', prefixTab: element.dataset.prefixTab === 'true', prefixNewline: element.dataset.prefixNewline === 'true', suffixNewline: element.dataset.suffixNewline === 'true', originalId: element.dataset.originalId, isHidden: element.classList.contains('element-hidden'), doNotReset: element.dataset.doNotReset === 'true', width: element.dataset.width || '', fillColor: element.dataset.fillColor || '' };
             if (type === 'enhanced-textbox' || type === 'charting') { state.content = element.dataset.content; state.internalLabel = element.dataset.internalLabel; state.prefixLabel = element.dataset.prefixLabel; state.defaultText = element.dataset.defaultText; state.dropdownOptions = JSON.parse(element.dataset.dropdownOptions || '[]'); }
 
             // **** START OF NEW CODE for tx plan****
@@ -2503,7 +3428,7 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             else if (type === 'psr') { state.scores = Array(6).fill(''); state.asterisks = Array(6).fill(false); element.querySelectorAll('.psr-input').forEach(i => { state.scores[i.dataset.index] = i.value; }); element.querySelectorAll('.psr-asterisk').forEach(cb => { state.asterisks[cb.dataset.index] = cb.checked; }); state.asteriskNote = element.querySelector('.psr-asterisk-note').value; }
             else if (type === 'dropdown') { const select = element.querySelector('select'); state.options = Array.from(select.options).map(o => o.value); state.selected = select.value; }
             else if (type === 'checkbox') { state.checked = element.querySelector('input').checked; state.content = element.querySelector('span').innerText; }
-            else if (type.startsWith('label-')) { state.content = element.querySelector('[contenteditable]').innerText; }
+            else if ((type || '').startsWith('label-')) { state.content = element.querySelector('[contenteditable]').innerText; }
             else if (type === 'formatter') { state.formatType = element.dataset.formatType || 'newline'; state.customChars = element.dataset.customChars || ''; }
             return state;
         };
@@ -2768,25 +3693,33 @@ const COLOR_PALETTE = [
  * @param {string} riskLevel - The calculated risk level ("Low", "Moderate", or "High").
  */
 const updateCariesRiskDropdown = (riskLevel) => {
-    // 1. Find the dropdown element by its unique originalId.
-    const cariesRiskDropdown = document.querySelector('[data-original-id="3-5"]');
-    if (!cariesRiskDropdown) {
-        console.warn("Caries Risk dropdown element not found on the page.");
-        return;
-    }
+    // 1. Find the dropdown element by its unique originalId.
+    const cariesRiskDropdown = document.querySelector('[data-original-id="3-5"]');
+    if (!cariesRiskDropdown) {
+        console.warn("Caries Risk dropdown element not found on the page.");
+        return;
+    }
 
-    // 2. Construct the full option text that matches the dropdown's value.
-    const optionValue = `CARIES RISK: ${riskLevel}`;
+    // 2. Construct the full option text that matches the dropdown's value.
+    const optionValue = `CARIES RISK: ${riskLevel}`;
 
-    // 3. Find the <select> element and update its value if it's different.
-    const selectElement = cariesRiskDropdown.querySelector('select');
-    if (selectElement && selectElement.value !== optionValue) {
-        console.log(`Automatically setting Caries Risk to: ${riskLevel}`);
-        selectElement.value = optionValue;
+    // 3. Find the <select> element and update its value if it's different.
+    const selectElement = cariesRiskDropdown.querySelector('select');
+    if (selectElement && selectElement.value !== optionValue) {
+        console.log(`Automatically setting Caries Risk to: ${riskLevel}`);
+        selectElement.value = optionValue;
+        // Keep selected attribute in sync for getElementState / re-renders
+        Array.from(selectElement.options).forEach(o => { o.selected = (o.value === optionValue); });
 
-        // Trigger a save to persist the automated change.
-        updateLiveOutput();
-    }
+        // Mirror Form View select in-place (avoid full form rebuild / focus loss)
+        document.querySelectorAll('#condensed-form-view .cf-row[data-original-id="3-5"] select').forEach(formSel => {
+            formSel.value = optionValue;
+            Array.from(formSel.options).forEach(o => { o.selected = (o.value === optionValue); });
+        });
+
+        // Persist; do NOT call refreshCondensedForm
+        updateLiveOutput();
+    }
 };
 
 /**
@@ -2838,25 +3771,33 @@ const checkAndSetCariesRisk = () => {
  * @param {string} riskLevel - The calculated risk level ("Low", "Moderate", or "High").
  */
 const updatePerioRiskDropdown = (riskLevel) => {
-    // 1. Find the dropdown element using its unique originalId.
-    const perioRiskDropdown = document.querySelector('[data-original-id="3-6"]');
-    if (!perioRiskDropdown) {
-        console.warn("Perio Risk dropdown element not found on the page.");
-        return;
-    }
+    // 1. Find the dropdown element using its unique originalId.
+    const perioRiskDropdown = document.querySelector('[data-original-id="3-6"]');
+    if (!perioRiskDropdown) {
+        console.warn("Perio Risk dropdown element not found on the page.");
+        return;
+    }
 
-    // 2. Construct the full option text that matches the dropdown's <option> value.
-    const optionValue = `PERIO RISK: ${riskLevel}`;
+    // 2. Construct the full option text that matches the dropdown's <option> value.
+    const optionValue = `PERIO RISK: ${riskLevel}`;
 
-    // 3. Find the <select> element inside the dropdown and set its value.
-    const selectElement = perioRiskDropdown.querySelector('select');
-    if (selectElement && selectElement.value !== optionValue) {
-        console.log(`Automatically setting Perio Risk to: ${riskLevel}`);
-        selectElement.value = optionValue;
+    // 3. Find the <select> element inside the dropdown and set its value.
+    const selectElement = perioRiskDropdown.querySelector('select');
+    if (selectElement && selectElement.value !== optionValue) {
+        console.log(`Automatically setting Perio Risk to: ${riskLevel}`);
+        selectElement.value = optionValue;
+        Array.from(selectElement.options).forEach(o => { o.selected = (o.value === optionValue); });
 
-        // This is crucial for ensuring the change is saved to the cloud.
-        updateLiveOutput();
-    }
+        // Mirror into Form View select clone(s) WITHOUT rebuilding the form
+        // (full refresh steals focus from PSR / BP inputs)
+        document.querySelectorAll('#condensed-form-view .cf-row[data-original-id="3-6"] select').forEach(formSel => {
+            formSel.value = optionValue;
+            Array.from(formSel.options).forEach(o => { o.selected = (o.value === optionValue); });
+        });
+
+        // Persist + live note; do NOT call refreshCondensedForm here
+        updateLiveOutput();
+    }
 };
 
 
@@ -2868,6 +3809,7 @@ const updatePerioRiskDropdown = (riskLevel) => {
     const summarySpan = element.querySelector('.tx-plan-summary');
     const entryCount = Object.values(state.txData).filter(d => d.text && d.text.trim() !== '').length;
     summarySpan.textContent = entryCount > 0 ? `Treatment Plan: ${entryCount} Entries` : 'Click to set Treatment Plan'; 
+    if (typeof updateDentalClassIndicator === 'function') updateDentalClassIndicator();
 };
    
   
@@ -2883,7 +3825,7 @@ const parseTreatmentPlanForHighlighting = () => {
     txPlanHighlightMap = {}; // Reset shorthand map
     txPlanPhrasesMap = { class3: [], class2: [], class1: [] }; // Reset exact phrases map
 
-    const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+    const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
     if (!txPlanElement) return;
 
     try {
@@ -3188,6 +4130,10 @@ const runImportLogic = (noteText) => {
                 }
             });
         }
+        // Mirror yellow flash into Form View when active
+        if (typeof refreshCondensedForm === 'function') {
+            setTimeout(() => { try { refreshCondensedForm(); } catch (e) {} }, 60);
+        }
 
         console.log("--- IMPORT PROCESS COMPLETE ---");
 
@@ -3345,7 +4291,7 @@ importFromModalButton.addEventListener('click', () => {
             const selectedText = textboxEditorTextarea.value.substring(textboxEditorTextarea.selectionStart, textboxEditorTextarea.selectionEnd).trim();
             if (!selectedText) return;
 
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) {
                 showFeedback("No Treatment Plan element available", false);
                 return;
@@ -3670,6 +4616,12 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
         console.log("Caries-related field was updated. Re-evaluating Caries Risk...");
         checkAndSetCariesRisk();
     }
+
+    // Highlight Diagnosis of Chief Concern when a real chief concern was entered
+    // but diagnosis has not yet been assessed (yellow border in editor view)
+    if (typeof updateChiefConcernDiagnosisHighlight === 'function') {
+        updateChiefConcernDiagnosisHighlight();
+    }
     
     // 2. Pass 'true' to trigger an INSTANT save to Firestore!
     console.log("DEBUG: Modal saved. Triggering IMMEDIATE cloud sync.");
@@ -3678,6 +4630,27 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
     const noteText = document.getElementById('live-output').value;
     evaluateNote(noteText);
 };
+
+/** Yellow border on Diagnosis of Chief Concern (3-1) when chief concern is present but undiagnosed. */
+function updateChiefConcernDiagnosisHighlight() {
+    const chiefEl = document.querySelector('[data-original-id="1-1"]');
+    const dxEl = document.querySelector('[data-original-id="3-1"]');
+    if (!dxEl) return;
+    let chiefNeedsDx = false;
+    if (chiefEl) {
+        const content = String(chiefEl.dataset.content || '').trim().toLowerCase();
+        const def = String(chiefEl.dataset.defaultText || 'None').trim().toLowerCase();
+        chiefNeedsDx = content !== '' && content !== def && content !== 'none' && content !== 'none.';
+    }
+    const dxContent = String(dxEl.dataset.content || '').trim().toLowerCase();
+    const dxDef = String(dxEl.dataset.defaultText || 'None.').trim().toLowerCase();
+    const dxStillDefault = !dxContent || dxContent === dxDef || dxContent === 'none' || dxContent === 'none.';
+    if (chiefNeedsDx && dxStillDefault) {
+        dxEl.classList.add('element-highlighted2');
+    } else {
+        dxEl.classList.remove('element-highlighted2');
+    }
+}
 
 // =================================================================
 
@@ -3708,7 +4681,7 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
 
     // --- Formatting Properties  ---
 
-    if (state.type !== 'formatter' && !state.type.startsWith('label-')) { 
+    if (state.type !== 'formatter' && !(state.type || '').startsWith('label-')) { 
         formattingHtml = `<fieldset><legend>Formatting</legend>
             <label><input type="checkbox" id="prop-prefix-newline" ${state.prefixNewline ? 'checked' : ''}> Add Newline Before</label>
             <label><input type="checkbox" id="prop-prefix-tab" ${state.prefixTab ? 'checked' : ''}> Add Tab Before</label>
@@ -3787,7 +4760,7 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
 
 
 
-            if (newState.type !== 'formatter' && !newState.type.startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
+            if (newState.type !== 'formatter' && !(newState.type || '').startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
             const newElement = createElement(newState.type, newState); element.replaceWith(newElement); updateLiveOutput(); document.getElementById('properties-modal').style.display = 'none';
         };
         const allergyModal = document.getElementById('allergy-modal'); const allergyListDiv = document.getElementById('allergy-list'); ALLERGY_LIST.forEach(allergy => { allergyListDiv.innerHTML += `<label><input type="checkbox" class="allergy-checkbox" value="${allergy}"> ${allergy}</label>`; }); allergyListDiv.addEventListener('change', e => { if (!e.target.classList.contains('allergy-checkbox')) return; const checkboxes = Array.from(allergyListDiv.querySelectorAll('.allergy-checkbox')); const noneCheckbox = checkboxes.find(cb => cb.value === "None"); if (e.target.value === "None" && e.target.checked) { checkboxes.forEach(cb => { if (cb.value !== "None") cb.checked = false; }); } else if (e.target.value !== "None" && e.target.checked) { if (noneCheckbox.checked) noneCheckbox.checked = false; } }); const openAllergyModal = (element) => { activeElementForEditor = element; const state = getElementState(element); const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox'); checkboxes.forEach(cb => cb.checked = false); const customInput = document.getElementById('custom-allergy-input'); customInput.value = ''; state.alerts.forEach(alert => { const cb = Array.from(checkboxes).find(c => c.value === alert); if (cb) { cb.checked = true; } else if (alert.startsWith('Custom: ')) { customInput.value = alert.substring(8); } }); allergyModal.style.display = 'block'; }; 
@@ -4222,6 +5195,12 @@ const reconcileState = (newState) => {
         console.log("DEBUG: Re-applying layout lock after reconciliation.");
         lockToggle.dispatchEvent(new Event('change'));
     }
+    // Keep Form View in sync after any cloud/surgical DOM update (Start My Day, Reset, multi-user)
+    if (typeof window.refreshCondensedForm === 'function') {
+        window.refreshCondensedForm();
+    } else if (typeof refreshCondensedForm === 'function') {
+        refreshCondensedForm();
+    }
     // --- END OF  CODE ---
 	
 	
@@ -4438,6 +5417,7 @@ const performLocalReset = () => {
             });
             
             updateLiveOutput();
+			if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
             const lockToggle = document.getElementById('lock-layout-toggle');
             if (lockToggle.checked) {
                 lockToggle.dispatchEvent(new Event('change'));
@@ -4875,7 +5855,20 @@ document.querySelectorAll('.modal').forEach(modal => {
         document.getElementById('ctx-delete').onclick = () => { if (activeElementForEditor) { activeElementForEditor.remove(); updateLiveOutput(); } };
         document.getElementById('ctx-properties').onclick = () => { if (activeElementForEditor) openPropertiesModal(activeElementForEditor); };
         document.querySelectorAll('.add-element-btn').forEach(btn => btn.onclick = e => { currentSectionToAdd = e.target.dataset.section; document.getElementById('add-element-modal').style.display = 'block'; });
-        document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = e => document.getElementById(e.target.dataset.modalId).style.display = 'none');
+        document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = e => {
+            e.preventDefault();
+            e.stopPropagation();
+            const btnEl = e.currentTarget || e.target.closest('.close-btn') || e.target;
+            const modalId = btnEl.dataset.modalId || btnEl.getAttribute('data-modal-id');
+            if (!modalId) return;
+            // Charting modal: discard unsaved edits (do NOT write content / classifications)
+            if (modalId === 'charting-editor-modal' && typeof discardChartingEditor === 'function') {
+                discardChartingEditor();
+                return;
+            }
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none';
+        });
         document.querySelectorAll('.element-type').forEach(el => el.onclick = e => { const type = e.currentTarget.dataset.type; const dropzone = document.querySelector(`#${currentSectionToAdd} .dropzone`); if(dropzone) { dropzone.appendChild(createElement(type)); } updateLiveOutput(); document.getElementById('add-element-modal').style.display = 'none'; });
         document.querySelectorAll('.dropzone').forEach(zone => zone.addEventListener('dragover', e => { e.preventDefault(); const draggingEl = document.querySelector('.draggable-element.dragging'); if (!draggingEl) return; const afterElement = [...zone.querySelectorAll('.draggable-element:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = e.clientY - box.top - box.height / 2; return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element; if (afterElement == null) zone.appendChild(draggingEl); else zone.insertBefore(draggingEl, afterElement); }));
 
@@ -4916,7 +5909,9 @@ const features = [
 	"MHS Genesis-ready formatting",
     "Seamlessly import past notes",
 	"Cloud-synced note history",
-    "Detailed Endo-Testing tables",
+    'Quick-charting Caries',
+	'Dual-mode UI',
+	"Detailed Endo-Testing tables",
     "Built-in dental term autocorrect",
     "Quick-Copy with Shift + Enter",
     "Double-click to replace text snippets",
@@ -5605,23 +6600,28 @@ techNameInput.addEventListener('keydown', (event) => {
                     }
                 });
 
-                // Red "3" (or 2 / 1) badge above the tooth if classified
+                // Class 1/2/3 badge on the FACIAL side (away from tooth-number on lingual)
+                // Upper teeth: above the circle. Lower teeth: below the circle.
                 if (highestClass > 0 && data['O']) {
                     const cx = parseFloat(data['O'].getAttribute('x')) + parseFloat(data['O'].getAttribute('width')) / 2;
-                    // Approximate tooth center Y from the outer circle if available
                     const group = document.getElementById(`modal-tooth-group-${tooth}`);
-                    let cy = 80;
+                    const isUpperTooth = (tooth >= 1 && tooth <= 16);
+                    let cy = isUpperTooth ? 70 : 340;
                     if (group) {
                         const circle = group.querySelector('circle');
-                        if (circle) cy = parseFloat(circle.getAttribute('cy')) - 22;
+                        if (circle) {
+                            const centerY = parseFloat(circle.getAttribute('cy'));
+                            // ~30px beyond outer radius so badge clears tooth number
+                            cy = isUpperTooth ? (centerY - 32) : (centerY + 38);
+                        }
                     }
                     const badge = document.createElementNS("http://www.w3.org/2000/svg", "text");
                     badge.setAttribute("x", cx);
                     badge.setAttribute("y", cy);
                     badge.setAttribute("class", "class-badge");
                     badge.setAttribute("text-anchor", "middle");
-                    badge.setAttribute("font-size", "11");
-                    badge.setAttribute("font-weight", "bold");
+                    badge.setAttribute("font-size", "13");
+                    badge.setAttribute("font-weight", "800");
                     badge.setAttribute("fill", CLASS_COLORS[highestClass] || '#d93025');
                     badge.textContent = String(highestClass);
                     if (svg) svg.appendChild(badge);
@@ -5723,7 +6723,9 @@ techNameInput.addEventListener('keydown', (event) => {
 
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
             label.setAttribute("x", x);
-            label.setAttribute("y", isUpper ? y + size + 8 : y - size - 4);
+            // Push numbers away from the circle so class badges on the facial side do not collide
+            // Upper: number on lingual (below). Lower: number on lingual (above).
+            label.setAttribute("y", isUpper ? y + size + 16 : y - size - 12);
             label.setAttribute("class", "tooth-label");
             label.textContent = toothNum;
             group.appendChild(label);
@@ -5747,18 +6749,24 @@ techNameInput.addEventListener('keydown', (event) => {
                 l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2); l.setAttribute("class", "label-line");
                 svg.appendChild(l);
             };
-            addLabel("Facial", 425, 30); addLine(20, 40, 780, 40);
-            addLabel("Lingual", 425, 170); addLine(20, 180, 780, 180);
-            addLabel("Lingual", 425, 230); addLine(20, 240, 780, 240);
-            addLabel("Facial", 425, 370); addLine(20, 380, 780, 380);
+            // Facial = outer/lip side; Lingual = inner (between arches)
+            addLabel("Facial", 425, 22); addLine(20, 32, 830, 32);
+            addLabel("Lingual", 425, 168); addLine(20, 178, 830, 178);
+            addLabel("Lingual", 425, 232); addLine(20, 242, 830, 242);
+            addLabel("Facial", 425, 388); addLine(20, 378, 830, 378);
 
+            // Outer lip / facial curves (tweak control-point Y for more/less arch bulge)
+            // Upper facial — superior to teeth 1–16; ends near terminal molars
             const upperArch = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            upperArch.setAttribute("d", "M 20 120 C 200 60, 600 60, 830 120");
+            upperArch.setAttribute("d", "M 28 98 C 140 42, 710 42, 822 98");
             upperArch.setAttribute("class", "arch-line");
+            upperArch.setAttribute("fill", "none");
             svg.appendChild(upperArch);
+            // Lower facial — inferior to teeth 32–17
             const lowerArch = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            lowerArch.setAttribute("d", "M 20 280 C 200 340, 600 340, 830 280");
+            lowerArch.setAttribute("d", "M 28 302 C 140 358, 710 358, 822 302");
             lowerArch.setAttribute("class", "arch-line");
+            lowerArch.setAttribute("fill", "none");
             svg.appendChild(lowerArch);
 
             const positions = (typeof toothPositions !== 'undefined') ? toothPositions : {
@@ -5838,7 +6846,7 @@ techNameInput.addEventListener('keydown', (event) => {
          * Returns true if a Tx Plan element existed and was updated.
          */
         function removeTokenFromAllOperativeClasses(token) {
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) return false;
             const state = getElementState(txPlanElement);
             let changed = false;
@@ -5897,7 +6905,7 @@ techNameInput.addEventListener('keydown', (event) => {
         }
 
         function sendTokenToTxPlan(token, classNum) {
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) {
                 showFeedback("No Treatment Plan element found", false);
                 return;
@@ -6081,7 +7089,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 return;
             }
 
-            const txPlanElement = document.querySelector('.draggable-element[data-type="tx-plan"]');
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
             if (!txPlanElement) {
                 showFeedback("No Treatment Plan element available", false);
                 return;
@@ -6152,21 +7160,62 @@ techNameInput.addEventListener('keydown', (event) => {
             updateChartingBackdropMirror();
         }
 
+        // Snapshot taken when charting modal opens — restored on discard (X / Esc / backdrop)
+        let chartingOpenSnapshot = null;
+
+        function takeChartingSnapshot(element) {
+            const txPlanElement = document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
+            let txData = null;
+            if (txPlanElement) {
+                try { txData = JSON.parse(txPlanElement.dataset.txData || '{}'); } catch (e) { txData = {}; }
+            }
+            return {
+                elementId: element ? element.id : null,
+                content: element ? (element.dataset.content || '') : '',
+                chartingMeta: element ? (element.dataset.chartingMeta || '') : '',
+                txDataJson: txData ? JSON.stringify(txData) : null,
+                txPlanId: txPlanElement ? txPlanElement.id : null
+            };
+        }
+
+        function discardChartingEditor() {
+            const modal = document.getElementById('charting-editor-modal');
+            // Restore tx-plan if classifications mutated it during this session
+            if (chartingOpenSnapshot && chartingOpenSnapshot.txPlanId && chartingOpenSnapshot.txDataJson != null) {
+                const txPlanElement = document.getElementById(chartingOpenSnapshot.txPlanId) ||
+                    document.querySelector('.dropzone .draggable-element[data-type="tx-plan"]');
+                if (txPlanElement) {
+                    txPlanElement.dataset.txData = chartingOpenSnapshot.txDataJson;
+                    if (typeof updateTxPlanSummary === 'function') updateTxPlanSummary(txPlanElement);
+                }
+            }
+            // Do NOT write textarea back to the element — leave dataset.content as-is
+            chartingSelections = new Map();
+            chartingClassifications = new Map();
+            chartingOpenSnapshot = null;
+            if (modal) modal.style.display = 'none';
+            if (typeof updateLiveOutput === 'function') updateLiveOutput();
+            if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
+        }
+
         const openChartingEditor = (element) => {
             activeElementForEditor = element;
             const state = getElementState(element);
             const textarea = document.getElementById('charting-editor-textarea');
-			
+            if (!textarea) return;
 
-			
-			
+            chartingOpenSnapshot = takeChartingSnapshot(element);
+
             initializeModalChart();
 
-            // Load the full stored content (tokens + any notes the user typed)
-            textarea.value = state.content || '';
+            // Always reload from the element's saved content (never leftover modal text)
+            const savedContent = (state && state.content != null && state.content !== '')
+                ? state.content
+                : (element.dataset.content || element.dataset.defaultText || 'None.');
+            textarea.value = savedContent;
             chartingSelections = parseChartingTextToSelections(textarea.value);
 
-            // Restore classifications if previously saved
+            // Restore classifications if previously saved on THIS element only
             chartingClassifications = new Map();
             try {
                 if (element.dataset.chartingMeta) {
@@ -6180,14 +7229,13 @@ techNameInput.addEventListener('keydown', (event) => {
             updateModalChartVisuals();
             updateChartingBackdropMirror();
 
-            document.getElementById('charting-editor-modal').style.display = 'block';
+            const modal = document.getElementById('charting-editor-modal');
+            modal.style.display = 'block';
             textarea.focus();
-            // Same behavior as the regular textbox editor:
-            // only select the text when it is still the default value
-            if (textarea.value === (activeElementForEditor.dataset.defaultText || '')) {
+            if (textarea.value === (element.dataset.defaultText || 'None.') ||
+                textarea.value === (element.dataset.defaultText || '')) {
                 textarea.select();
             }
-
         };
 
         // Custom autocorrect + live highlight for charting textarea
@@ -6386,6 +7434,7 @@ techNameInput.addEventListener('keydown', (event) => {
             }
 
             const editedElementId = activeElementForEditor.dataset.originalId;
+            chartingOpenSnapshot = null; // commit — do not restore on close
             updateLiveOutput();
 
             // Re-evaluate Caries Risk when either charting block is saved
@@ -6398,28 +7447,870 @@ techNameInput.addEventListener('keydown', (event) => {
             document.getElementById('charting-editor-modal').style.display = 'none';
             isRenderingFromCloud = false;
             showFeedback("Charting saved.", true);
+            if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
         };
 
+        // Close charting modal on Escape (discard)
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const modal = document.getElementById('charting-editor-modal');
+            if (modal && modal.style.display === 'block') {
+                e.preventDefault();
+                discardChartingEditor();
+            }
+        });
+        // Click on modal backdrop (outside content) discards
+        (function wireChartingBackdropClose() {
+            const modal = document.getElementById('charting-editor-modal');
+            if (!modal) return;
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) discardChartingEditor();
+            });
+            const content = modal.querySelector('.modal-content');
+            if (content) content.addEventListener('click', (e) => e.stopPropagation());
+        })();
 
 
+        // =================================================================
 
+        // ---- Dental Class 1/2/3 status chip (from Treatment Plan content) ----
+        function updateDentalClassIndicator() {
+            const chip = document.getElementById('dental-class-indicator');
+            if (!chip) return;
+            let hasClass3 = false;
+            let hasClass2 = false;
+            try {
+                document.querySelectorAll('.dropzone .draggable-element[data-type="tx-plan"]').forEach(el => {
+                    let txData = {};
+                    try {
+                        if (typeof getElementState === 'function') {
+                            const st = getElementState(el);
+                            txData = (st && st.txData) || {};
+                        } else {
+                            txData = JSON.parse(el.dataset.txData || '{}');
+                        }
+                    } catch (e) { txData = {}; }
+                    Object.keys(txData).forEach(key => {
+                        const entry = txData[key];
+                        if (!entry || !String(entry.text || '').trim()) return;
+                        const k = String(key).toUpperCase();
+                        if (k.includes('CLASS 3')) hasClass3 = true;
+                        else if (k.includes('CLASS 2')) hasClass2 = true;
+                    });
+                });
+            } catch (err) {
+                console.warn('Dental Class indicator update failed', err);
+            }
+            chip.classList.remove('dc-1', 'dc-2', 'dc-3');
+            if (hasClass3) {
+                chip.textContent = 'Dental Class 3';
+                chip.classList.add('dc-3');
+            } else if (hasClass2) {
+                chip.textContent = 'Dental Class 2';
+                chip.classList.add('dc-2');
+            } else {
+                chip.textContent = 'Dental Class 1';
+                chip.classList.add('dc-1');
+            }
+            // Visible whenever note editor is shown
+            const editor = document.getElementById('view-note-editor');
+            const editorVisible = editor && !editor.classList.contains('view-hidden');
+            chip.style.display = editorVisible ? 'inline-block' : 'none';
+        }
 
+                // DUAL MODE: Editor (blocks) <-> Condensed Form
+        // Same dropzone elements, same modals, alternate renderer only.
+        // =================================================================
+        let uiMode = localStorage.getItem('dentalNoteUiMode') || 'form'; // 'editor' | 'form'
 
+        const SECTION_TITLES = {
+            header: 'Intake',
+            subjective: 'S · Subjective Findings',
+            objective: 'O · Objective Findings',
+            assessment: 'A · Assessment',
+            plan: 'P · Treatment Plan',
+            footer: 'Signatures'
+        };
 
+        function getCondensedLabel(el, state) {
+            if (state.internalLabel) return state.internalLabel;
+            if (state.type === 'alert') return 'Allergies / Alerts';
+            if (state.type === 'bloodpressure') return 'Blood Pressure';
+            if (state.type === 'painscale') return 'Pain Scale';
+            if (state.type === 'psr') return 'PSR';
+            if (state.type === 'tx-plan') return 'Treatment Plan';
+            if (state.type === 'endo-testing') return 'Endo Testing';
+            if (state.type === 'anesthetic') return 'Anesthetic';
+            if (state.type === 'dropdown') {
+                const sel = el.querySelector('select');
+                if (sel && sel.options.length) {
+                    const first = (sel.options[0].text || '').split(':')[0].trim();
+                    if (first) return first;
+                }
+                return 'Dropdown';
+            }
+            if (state.prefixLabel) return state.prefixLabel.replace(/:\s*$/, '');
+            return state.type || 'Field';
+        }
 
+        function getCondensedPreview(el, state) {
+            try {
+                if (state.type === 'enhanced-textbox' || state.type === 'charting') {
+                    const t = (state.content || state.defaultText || '').trim();
+                    return t || 'None.';
+                }
+                if (state.type === 'alert') {
+                    if (!state.alerts || state.alerts.length === 0) return 'ALERT (not set)';
+                    if (state.alerts.length === 1 && state.alerts[0] === 'None') return 'No Known Allergies';
+                    return state.alerts.join(', ');
+                }
+                if (state.type === 'painscale') return `${state.value || 0}/10`;
+                if (state.type === 'bloodpressure') {
+                    if (state.systolic && state.diastolic) return `${state.systolic}/${state.diastolic}`;
+                    return 'Not recorded';
+                }
+                if (state.type === 'dropdown') {
+                    const sel = el.querySelector('select');
+                    return sel ? (sel.value || '') : '';
+                }
+                if (state.type === 'tx-plan') {
+                    const parts = [];
+                    Object.keys(state.txData || {}).forEach(k => {
+                        const e = state.txData[k];
+                        if (e && e.text && e.text.trim()) parts.push(`${k}: ${e.text}`);
+                    });
+                    return parts.length ? parts.join(' · ') : '—';
+                }
+                if (state.type === 'endo-testing') {
+                    const n = (state.endoData && state.endoData.teeth || []).filter(t => t && t.trim()).length;
+                    return n ? `${n} tooth/teeth` : 'No teeth entered';
+                }
+                if (state.type === 'anesthetic') {
+                    const used = Object.values(state.anestheticValues || {}).filter(v => v > 0).length;
+                    return used ? `${used} type(s) used` : 'Not set';
+                }
+                if (state.type === 'psr') {
+                    const scores = (state.scores || []).filter(s => s !== '' && s != null);
+                    return scores.length ? scores.join(' ') : 'Not recorded';
+                }
+                if (state.type === 'checkbox') {
+                    const inp = el.querySelector('input');
+                    const sp = el.querySelector('span');
+                    return inp && inp.checked ? ((sp && sp.innerText) || 'Checked') : 'Unchecked';
+                }
+                if (state.type === 'formatter') return state.formatType || 'formatter';
+                if (state.type && (state.type || '').startsWith('label-')) return el.textContent.trim();
+            } catch (err) { /* ignore */ }
+            return '';
+        }
 
+        function openElementFromForm(el) {
+            if (!el) return;
+            activeElementForEditor = el;
+            const type = el.dataset.type;
+            if (type === 'charting' && typeof openChartingEditor === 'function') openChartingEditor(el);
+            else if (type === 'enhanced-textbox' && typeof openTextboxEditor === 'function') openTextboxEditor(el);
+            else if (type === 'tx-plan' && typeof openTxPlanEditor === 'function') openTxPlanEditor(el);
+            else if (type === 'alert' && typeof openAllergyModal === 'function') openAllergyModal(el);
+            else if (type === 'endo-testing' && typeof openEndoTestingEditor === 'function') openEndoTestingEditor(el);
+            else if (type === 'anesthetic' && typeof openAnestheticEditor === 'function') openAnestheticEditor(el);
+            else if (type === 'psr') {
+                // Prefer staying in form mode — live PSR widget is already interactive
+                if (uiMode === 'form') {
+                    const formRow = document.querySelector('.cf-row[data-element-id="' + el.id + '"]');
+                    if (formRow) {
+                        formRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const first = formRow.querySelector('.psr-input');
+                        if (first) first.focus();
+                    }
+                } else {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('element-highlighted');
+                    const first = el.querySelector('.psr-input');
+                    if (first) first.focus();
+                }
+            } else {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('element-highlighted');
+            }
+        }
 
+        /** Map element custom width → 12-col span class.
+         *  Default / empty / other → 6 (2 columns)
+         *  100% → 12 (full width)
+         *  33% / 33.33% → 4 (3-up)
+         *  25% → 3 (4-up)
+         */
+        function getCfSpanClass(widthStr) {
+            const w = String(widthStr || '').trim().toLowerCase().replace(/\s/g, '');
+            if (!w) return 'cf-span-6';
+            if (w === '100%' || w === '100') return 'cf-span-12';
+            if (w === '33%' || w === '33' || w === '33.33%' || w === '33.3%') return 'cf-span-4';
+            if (w === '25%' || w === '25') return 'cf-span-3';
+            return 'cf-span-6';
+        }
 
+        /** Custom fill from Properties modal — 8px left tab + light tint. */
+        function applyCfColor(row, fillColor) {
+            if (!fillColor || !String(fillColor).trim()) return;
+            const c = String(fillColor).trim();
+            row.style.borderLeft = '8px solid ' + c;
+            try {
+                const hex = c.replace('#', '');
+                if (/^[0-9a-fA-F]{3,8}$/.test(hex)) {
+                    let r, g, b;
+                    if (hex.length === 3) {
+                        r = parseInt(hex[0] + hex[0], 16);
+                        g = parseInt(hex[1] + hex[1], 16);
+                        b = parseInt(hex[2] + hex[2], 16);
+                    } else {
+                        r = parseInt(hex.slice(0, 2), 16);
+                        g = parseInt(hex.slice(2, 4), 16);
+                        b = parseInt(hex.slice(4, 6), 16);
+                    }
+                    row.style.background = 'rgba(' + r + ',' + g + ',' + b + ',0.18)';
+                } else {
+                    row.style.background = c;
+                }
+            } catch (e) {
+                row.style.borderLeft = '8px solid ' + c;
+            }
+        }
 
+        /** True when content/value differs from the element's default. */
+        function isCfContentChanged(el, state) {
+            try {
+                if (state.type === 'enhanced-textbox' || state.type === 'charting') {
+                    const cur = String(state.content || '').trim();
+                    const def = String(state.defaultText || '').trim();
+                    if (!cur && !def) return false;
+                    return cur !== def;
+                }
+                if (state.type === 'alert') {
+                    if (!state.alerts || !state.alerts.length) return false;
+                    return !(state.alerts.length === 1 && state.alerts[0] === 'None');
+                }
+                if (state.type === 'painscale') return String(state.value || '0') !== '0';
+                if (state.type === 'bloodpressure') return !!(state.systolic || state.diastolic);
+                if (state.type === 'psr') return (state.scores || []).some(s => s !== '' && s != null);
+                if (state.type === 'tx-plan') {
+                    return Object.values(state.txData || {}).some(e => e && e.text && String(e.text).trim());
+                }
+                if (state.type === 'endo-testing') {
+                    return (state.endoData && state.endoData.teeth || []).some(t => t && String(t).trim());
+                }
+                if (state.type === 'anesthetic') {
+                    return Object.values(state.anestheticValues || {}).some(v => v > 0);
+                }
+                if (state.type === 'dropdown') {
+                    const sel = el.querySelector('select');
+                    if (!sel || !sel.options.length) return false;
+                    return sel.selectedIndex > 0;
+                }
+            } catch (err) { /* ignore */ }
+            return false;
+        }
 
+        /**
+         * Mount live editor widgets (alert / BP / PSR) into Form View so they
+         * keep their original CSS + behavior. Elements stay in the (hidden)
+         * dropzone for state; we clone a visual/interactive surface that writes
+         * back to the source element.
+         */
+        function mountCfLiveWidget(host, el, state) {
+            const type = state.type;
+            if (type === 'alert') {
+                // Visual clone using same alert classes; click opens real modal
+                const box = document.createElement('div');
+                box.className = 'cf-surface alert-element';
+                box.style.resize = 'none';
+                box.style.minHeight = 'initial';
+                box.style.width = '100%';
+                box.innerHTML = '<span class="alert-display"></span>';
+                // Mirror current status classes from source
+                ['alert-blank', 'alert-none', 'alert-active'].forEach(c => {
+                    if (el.classList.contains(c)) box.classList.add(c);
+                });
+                const srcDisplay = el.querySelector('.alert-display');
+                const dstDisplay = box.querySelector('.alert-display');
+                if (srcDisplay && dstDisplay) dstDisplay.textContent = srcDisplay.textContent;
+                box.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof openAllergyModal === 'function') openAllergyModal(el);
+                });
+                host.appendChild(box);
+                return;
+            }
+            if (type === 'bloodpressure') {
+                // Full BP chrome with same classes so status colors apply
+                const wrap = document.createElement('div');
+                wrap.className = 'cf-surface bp-element';
+                wrap.style.resize = 'none';
+                wrap.style.width = '100%';
+                // copy status class
+                ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
+                    if (el.classList.contains(c)) wrap.classList.add(c);
+                });
+                const sSrc = el.querySelector('.bp-systolic');
+                const dSrc = el.querySelector('.bp-diastolic');
+                const priorSrc = el.querySelector('.bp-prior-tx-check');
+                const priorVis = el.querySelector('.bp-prior-tx-container');
+                wrap.innerHTML =
+                    '<div class="bp-inputs"><b>BP:</b> ' +
+                    '<input type="number" class="bp-systolic" placeholder="120" value="' + (sSrc ? sSrc.value : '') + '"> / ' +
+                    '<input type="number" class="bp-diastolic" placeholder="80" value="' + (dSrc ? dSrc.value : '') + '">' +
+                    '</div>' +
+                    '<div class="bp-prior-tx-container' + (priorVis && priorVis.classList.contains('visible') ? ' visible' : '') + '">' +
+                    '<label><input type="checkbox" class="bp-prior-tx-check"' + (priorSrc && priorSrc.checked ? ' checked' : '') + '> BP Prior to Tx</label>' +
+                    '</div>';
+                const sIn = wrap.querySelector('.bp-systolic');
+                const dIn = wrap.querySelector('.bp-diastolic');
+                const pIn = wrap.querySelector('.bp-prior-tx-check');
+                const sync = () => {
+                    // Silent write to source inputs — do NOT dispatch bubbled input events
+                    // (those re-enter editor handlers / risk form rebuild and focus loss)
+                    if (sSrc) sSrc.value = sIn.value;
+                    if (dSrc) dSrc.value = dIn.value;
+                    if (priorSrc && pIn) priorSrc.checked = pIn.checked;
+                    if (typeof updateBPElementUI === 'function') updateBPElementUI(el);
+                    // mirror status onto form clone in-place
+                    ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => wrap.classList.remove(c));
+                    ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
+                        if (el.classList.contains(c)) wrap.classList.add(c);
+                    });
+                    const pc = wrap.querySelector('.bp-prior-tx-container');
+                    const srcPc = el.querySelector('.bp-prior-tx-container');
+                    if (pc && srcPc) {
+                        pc.classList.toggle('visible', srcPc.classList.contains('visible'));
+                    }
+                    // Keep prior-tx visibility on form clone too
+                    if (pc) {
+                        const s = parseInt(sIn.value, 10);
+                        const d = parseInt(dIn.value, 10);
+                        const triggerS = parseInt(el.dataset.checkboxSystolic, 10) || 160;
+                        const triggerD = parseInt(el.dataset.checkboxDiastolic, 10) || 100;
+                        if ((!isNaN(s) && s >= triggerS) || (!isNaN(d) && d >= triggerD)) {
+                            pc.classList.add('visible');
+                        } else {
+                            pc.classList.remove('visible');
+                        }
+                    }
+                    updateLiveOutput();
+                    // Never refreshCondensedForm while typing BP
+                };
+                sIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
+                dIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
+                sIn.addEventListener('keydown', (e) => e.stopPropagation());
+                dIn.addEventListener('keydown', (e) => e.stopPropagation());
+                if (pIn) pIn.addEventListener('change', (e) => { e.stopPropagation(); sync(); });
+                host.appendChild(wrap);
+                return;
+            }
+            if (type === 'psr') {
+                // Rebuild full PSR grid bound to source element inputs
+                const wrap = document.createElement('div');
+                wrap.className = 'cf-surface psr-element';
+                wrap.style.resize = 'none';
+                wrap.style.width = '100%';
+                const scores = state.scores || Array(6).fill('');
+                const asterisks = state.asterisks || Array(6).fill(false);
+                const visualOrder = [[0, '[1]'], [1, '[2]'], [2, '[3]'], [5, '[6]'], [4, '[5]'], [3, '[4]']];
+                let gridHtml = '';
+                [visualOrder.slice(0, 3), visualOrder.slice(3, 6)].forEach(rowCells => {
+                    gridHtml += rowCells.map(([index, label]) =>
+                        '<div class="psr-sextant">' +
+                        '<input type="checkbox" class="psr-asterisk" data-index="' + index + '"' + (asterisks[index] ? ' checked' : '') + '>' +
+                        '<label>' + label + '</label>' +
+                        '<input type="text" class="psr-input" value="' + (scores[index] || '') + '" data-index="' + index + '">' +
+                        '</div>'
+                    ).join('');
+                });
+                wrap.innerHTML = '<b>PSR:</b><div class="psr-grid">' + gridHtml + '</div>' +
+                    '<textarea class="psr-asterisk-note' + ((asterisks || []).some(Boolean) ? ' visible' : '') +
+                    '" placeholder="* Description...">' + (state.asteriskNote || '') + '</textarea>';
 
+                const syncFromForm = () => {
+                    // Write values onto the source element WITHOUT dispatching its input
+                    // handlers (those steal focus into the hidden editor layout).
+                    wrap.querySelectorAll('.psr-input').forEach(inp => {
+                        const idx = inp.dataset.index;
+                        const src = el.querySelector('.psr-input[data-index="' + idx + '"]');
+                        if (src) src.value = inp.value;
+                    });
+                    wrap.querySelectorAll('.psr-asterisk').forEach(cb => {
+                        const idx = cb.dataset.index;
+                        const src = el.querySelector('.psr-asterisk[data-index="' + idx + '"]');
+                        if (src) src.checked = cb.checked;
+                    });
+                    const note = wrap.querySelector('.psr-asterisk-note');
+                    const srcNote = el.querySelector('.psr-asterisk-note');
+                    if (note && srcNote) srcNote.value = note.value;
+                    if (typeof updatePSRElementUI === 'function') updatePSRElementUI(el);
 
+                    // Auto-set Perio Risk from scores (same rules as editor)
+                    const allScores = Array.from(wrap.querySelectorAll('.psr-input')).map(i => i.value);
+                    const numericScores = allScores.map(s => parseInt(String(s).replace('*', ''), 10)).filter(n => !isNaN(n));
+                    let risk = 'Low';
+                    const countOf3s = numericScores.filter(s => s === 3).length;
+                    const has4s = numericScores.some(s => s === 4);
+                    if (has4s || countOf3s >= 3) risk = 'High';
+                    else if (countOf3s >= 1 && countOf3s <= 2) risk = 'Moderate';
+                    if (typeof updatePerioRiskDropdown === 'function') updatePerioRiskDropdown(risk);
 
+                    updateLiveOutput();
+                };
+                wrap.querySelectorAll('.psr-input').forEach(inp => {
+                    inp.addEventListener('input', (e) => {
+                        e.stopPropagation();
+                        // asterisk auto-toggle like editor
+                        const index = parseInt(inp.dataset.index, 10);
+                        const checkbox = wrap.querySelector('.psr-asterisk[data-index="' + index + '"]');
+                        if (inp.value.includes('*')) {
+                            if (checkbox && !checkbox.checked) checkbox.checked = true;
+                        } else if (checkbox && checkbox.checked) {
+                            checkbox.checked = false;
+                        }
+                        const scorePart = inp.value.replace(/\*/g, '');
+                        if (scorePart.length > 1) inp.value = scorePart.charAt(0) + (checkbox && checkbox.checked ? '*' : '');
+                        if (!scorePart.match(/^[0-4]?$/)) inp.value = '' + (checkbox && checkbox.checked ? '*' : '');
+                        // Auto-tab to next sextant once a valid score digit is entered
+                        // (do this AFTER sync so Perio Risk update cannot steal focus)
+                        const cleaned = inp.value.replace(/\*/g, '');
+                        const shouldTab = cleaned.length === 1 && /^[0-4]$/.test(cleaned);
+                        const nextIndex = shouldTab ? PSR_AUTOFOCUS_MAP.get(index) : undefined;
+                        syncFromForm(); // updates Perio Risk in-place (no form rebuild)
+                        if (shouldTab && nextIndex !== undefined) {
+                            const nextInput = wrap.querySelector('.psr-input[data-index="' + nextIndex + '"]');
+                            if (nextInput) {
+                                setTimeout(() => { nextInput.focus(); nextInput.select(); }, 0);
+                            }
+                        }
+                    });
+                    inp.addEventListener('keydown', (e) => {
+                        e.stopPropagation();
+                        handlePSRTabbing(e);
+                    });
+                });
+                wrap.querySelectorAll('.psr-asterisk').forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        const index = parseInt(cb.dataset.index, 10);
+                        const input = wrap.querySelector('.psr-input[data-index="' + index + '"]');
+                        if (input) {
+                            const scorePart = input.value.replace(/\*/g, '');
+                            input.value = scorePart + (cb.checked ? '*' : '');
+                        }
+                        const note = wrap.querySelector('.psr-asterisk-note');
+                        if (note) {
+                            const any = Array.from(wrap.querySelectorAll('.psr-asterisk')).some(c => c.checked);
+                            note.classList.toggle('visible', any);
+                        }
+                        syncFromForm();
+                    });
+                });
+                const noteTa = wrap.querySelector('.psr-asterisk-note');
+                if (noteTa) noteTa.addEventListener('input', syncFromForm);
+                host.appendChild(wrap);
+            }
+        }
 
+        function renderCondensedForm() {
+            const host = document.getElementById('condensed-form-view');
+            if (!host) return;
+            host.innerHTML = '';
+            const showHidden = document.body.classList.contains('show-hidden-elements') ||
+                (document.getElementById('view-hidden-toggle') && document.getElementById('view-hidden-toggle').checked);
 
+            SECTIONS.forEach(sectionId => {
+                const dropzone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+                if (!dropzone) return;
+                const elements = Array.from(dropzone.querySelectorAll('.draggable-element'));
+                if (!elements.length) return;
 
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'cf-section';
+                sectionEl.dataset.section = sectionId;
 
+                const hd = document.createElement('div');
+                hd.className = 'cf-section-hd';
+                hd.innerHTML = `<h2>${SECTION_TITLES[sectionId] || sectionId}</h2>`;
+                sectionEl.appendChild(hd);
 
+                const rowsHost = document.createElement('div');
+                rowsHost.className = 'cf-rows';
+                sectionEl.appendChild(rowsHost);
+
+                let anyVisible = false;
+                elements.forEach(el => {
+                    const state = getElementState(el);
+                    if (state.type === 'formatter') return; // skip pure layout formatters
+                    const isHidden = el.classList.contains('element-hidden') || state.isHidden;
+                    if (isHidden && !showHidden) return;
+                    anyVisible = true;
+
+                    const previewText = getCondensedPreview(el, state);
+                    const isEmpty = !previewText || /^(none\.?|—|not recorded|not set|unchecked)?$/i.test(previewText.trim());
+                    const isChart = state.type === 'charting' || state.type === 'tx-plan' || state.type === 'endo-testing';
+                    const isLiveWidget = state.type === 'alert' || state.type === 'bloodpressure' || state.type === 'psr';
+                    const contentChanged = isCfContentChanged(el, state);
+
+                    const widthVal = state.width || el.dataset.width || '';
+                    // Live widgets default to a sensible width so they fit the column
+                    let spanClass = getCfSpanClass(widthVal);
+                    if (isLiveWidget && (!widthVal || spanClass === 'cf-span-6')) {
+                        if (state.type === 'psr') spanClass = 'cf-span-12';
+                        else if (state.type === 'alert') spanClass = 'cf-span-6';
+                        else if (state.type === 'bloodpressure') spanClass = 'cf-span-6';
+                    }
+                    const fillColor = state.fillColor || el.dataset.fillColor || '';
+
+                    const row = document.createElement('div');
+                    // Alert uses solid green/red/orange status — never blue "changed" wash
+                    const useChanged = contentChanged && state.type !== 'alert';
+                    row.className = 'cf-row ' + spanClass +
+                        (isHidden ? ' cf-hidden-row' : '') +
+                        (isLiveWidget ? ' cf-live-widget' : '') +
+                        (useChanged ? ' cf-changed' : '');
+                    row.dataset.elementId = el.id;
+                    row.dataset.originalId = state.originalId || '';
+                    // Do not apply template fillColor to alert (status colors must win)
+                    if (state.type !== 'alert') {
+                        applyCfColor(row, fillColor);
+                    }
+
+                    // Yellow flash: Chief Concern was entered but Diagnosis of Chief Concern not yet assessed
+                    // (matches editor intent — draw attention until diagnosis is filled)
+                    if (state.originalId === '3-1' ||
+                        (state.internalLabel || '').toLowerCase().includes('diagnosis of chief')) {
+                        const chiefEl = document.querySelector('[data-original-id="1-1"]');
+                        let chiefNeedsDx = false;
+                        if (chiefEl) {
+                            const cs = getElementState(chiefEl);
+                            const chiefText = String(cs.content || '').trim().toLowerCase();
+                            const chiefDef = String(cs.defaultText || 'None').trim().toLowerCase();
+                            chiefNeedsDx = chiefText !== '' && chiefText !== chiefDef && chiefText !== 'none' && chiefText !== 'none.';
+                        }
+                        const dxText = String(state.content || '').trim().toLowerCase();
+                        const dxDef = String(state.defaultText || 'None.').trim().toLowerCase();
+                        const dxStillDefault = !dxText || dxText === dxDef || dxText === 'none' || dxText === 'none.';
+                        if (chiefNeedsDx && dxStillDefault) {
+                            row.classList.add('cf-flash-assessment');
+                            el.classList.add('element-highlighted2');
+                        } else {
+                            el.classList.remove('element-highlighted2');
+                        }
+                    }
+
+                    const label = document.createElement('div');
+                    label.className = 'cf-label';
+                    // PSR widget already shows "PSR:" inside the element — skip duplicate label
+                    if (state.type === 'psr') {
+                        label.textContent = '';
+                        label.style.display = 'none';
+                    } else {
+                        label.textContent = getCondensedLabel(el, state);
+                    }
+                    row.appendChild(label);
+
+                    if (isLiveWidget) {
+                        // For PSR full-width live widget, use single-column layout without empty label gap
+                        if (state.type === 'psr') {
+                            row.style.gridTemplateColumns = '1fr';
+                        }
+                        const liveHost = document.createElement('div');
+                        liveHost.className = 'cf-live-host';
+                        mountCfLiveWidget(liveHost, el, state);
+                        row.appendChild(liveHost);
+                        rowsHost.appendChild(row);
+                        return;
+                    }
+
+                    const preview = document.createElement('div');
+                    // Standardize: any non-default content gets the blue chip treatment
+                    preview.className = 'cf-preview' +
+                        (isEmpty ? ' empty' : '') +
+                        ((!isEmpty && (isChart || contentChanged)) ? ' chip' : '');
+
+                    // Inline-editable controls for simple types (stay in form mode)
+                    if (state.type === 'dropdown') {
+                        const src = el.querySelector('select');
+                        if (src) {
+                            const clone = src.cloneNode(true);
+                            clone.className = 'inline';
+                            clone.style.maxWidth = '100%';
+                            clone.style.width = '100%';
+                            // Force mirror of current editor selection (cloneNode alone can be stale)
+                            clone.value = src.value;
+                            clone.selectedIndex = src.selectedIndex;
+                            // Prevent row-level click handlers from intercepting
+                            clone.addEventListener('click', (e) => e.stopPropagation());
+                            clone.addEventListener('mousedown', (e) => e.stopPropagation());
+                            clone.addEventListener('change', (e) => {
+                                e.stopPropagation();
+                                src.value = clone.value;
+                                src.selectedIndex = clone.selectedIndex;
+                                // Fire both so any listeners update Live Note
+                                src.dispatchEvent(new Event('input', { bubbles: true }));
+                                src.dispatchEvent(new Event('change', { bubbles: true }));
+                                updateLiveOutput();
+                                setTimeout(() => {
+                                    if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
+                                }, 30);
+                            });
+                            preview.className = 'cf-preview';
+                            preview.appendChild(clone);
+                        } else {
+                            preview.textContent = previewText;
+                        }
+                    } else if (state.type === 'painscale') {
+                        const src = el.querySelector('.pain-slider');
+                        const wrap = document.createElement('div');
+                        wrap.style.display = 'flex';
+                        wrap.style.alignItems = 'center';
+                        wrap.style.gap = '8px';
+                        const range = document.createElement('input');
+                        range.type = 'range';
+                        range.min = '0'; range.max = '10';
+                        range.value = src ? src.value : (state.value || '0');
+                        const val = document.createElement('strong');
+                        val.textContent = `${range.value}/10`;
+                        range.addEventListener('input', () => {
+                            val.textContent = `${range.value}/10`;
+                            if (src) {
+                                src.value = range.value;
+                                src.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            const pv = el.querySelector('.pain-value');
+                            if (pv) pv.textContent = `${range.value}/10`;
+                            updateLiveOutput();
+                        });
+                        range.addEventListener('change', () => setTimeout(refreshCondensedForm, 30));
+                        wrap.appendChild(range);
+                        wrap.appendChild(val);
+                        preview.className = 'cf-preview';
+                        preview.appendChild(wrap);
+                    } else {
+                        preview.textContent = previewText;
+                    }
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'cf-edit-btn' + (isChart ? ' chart' : '');
+                    if (state.type === 'charting') btn.textContent = 'Open Chart';
+                    else if (state.type === 'tx-plan') btn.textContent = 'Open Tx Plan';
+                    else if (state.type === 'endo-testing') btn.textContent = 'Open Table';
+                    else if (state.type === 'dropdown' || state.type === 'painscale') {
+                        btn.textContent = '—';
+                        btn.disabled = true;
+                        btn.style.opacity = '0.35';
+                        btn.style.cursor = 'default';
+                    } else btn.textContent = 'Edit';
+
+                    const open = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (state.type === 'dropdown' || state.type === 'painscale') return;
+                        openElementFromForm(el);
+                    };
+                    btn.addEventListener('click', open);
+                    if (!(state.type === 'dropdown' || state.type === 'painscale')) {
+                        row.addEventListener('click', open);
+                    }
+
+                    row.appendChild(preview);
+                    row.appendChild(btn);
+                    rowsHost.appendChild(row);
+                });
+
+                if (anyVisible) host.appendChild(sectionEl);
+            });
+        }
+
+        function refreshCondensedForm() {
+            if (uiMode !== 'form') return;
+
+            // Preserve focus across form rebuild (PSR sextants, BP fields, etc.)
+            const ae = document.activeElement;
+            let restore = null;
+            if (ae && ae.closest && ae.closest('#condensed-form-view')) {
+                const row = ae.closest('.cf-row');
+                restore = {
+                    originalId: (row && row.dataset.originalId) || '',
+                    elementId: (row && row.dataset.elementId) || '',
+                    classList: Array.from(ae.classList || []),
+                    dataIndex: ae.dataset ? ae.dataset.index : undefined,
+                    tag: ae.tagName,
+                    type: ae.type || '',
+                    selStart: (typeof ae.selectionStart === 'number') ? ae.selectionStart : null,
+                    selEnd: (typeof ae.selectionEnd === 'number') ? ae.selectionEnd : null
+                };
+            }
+
+            renderCondensedForm();
+
+            if (!restore) return;
+            try {
+                let row = restore.originalId
+                    ? document.querySelector('#condensed-form-view .cf-row[data-original-id="' + restore.originalId + '"]')
+                    : null;
+                if (!row && restore.elementId) {
+                    row = document.querySelector('#condensed-form-view .cf-row[data-element-id="' + restore.elementId + '"]');
+                }
+                if (!row) return;
+
+                let target = null;
+                if (restore.classList.includes('bp-systolic')) {
+                    target = row.querySelector('.bp-systolic');
+                } else if (restore.classList.includes('bp-diastolic')) {
+                    target = row.querySelector('.bp-diastolic');
+                } else if (restore.classList.includes('psr-input') && restore.dataIndex != null) {
+                    target = row.querySelector('.psr-input[data-index="' + restore.dataIndex + '"]');
+                } else if (restore.classList.includes('psr-asterisk') && restore.dataIndex != null) {
+                    target = row.querySelector('.psr-asterisk[data-index="' + restore.dataIndex + '"]');
+                } else if (restore.classList.includes('psr-asterisk-note') || (restore.tag === 'TEXTAREA' && row.querySelector('.psr-asterisk-note'))) {
+                    target = row.querySelector('.psr-asterisk-note');
+                } else if (restore.tag === 'SELECT') {
+                    target = row.querySelector('select');
+                } else if (restore.tag === 'INPUT' && restore.type === 'range') {
+                    target = row.querySelector('input[type="range"]');
+                } else if (restore.tag === 'INPUT') {
+                    // best-effort: same data-index or first matching type
+                    if (restore.dataIndex != null) {
+                        target = row.querySelector('input[data-index="' + restore.dataIndex + '"]');
+                    }
+                    if (!target) target = row.querySelector('input');
+                }
+
+                if (target) {
+                    target.focus();
+                    if (restore.selStart != null && typeof target.setSelectionRange === 'function') {
+                        try {
+                            const len = (target.value || '').length;
+                            const a = Math.min(restore.selStart, len);
+                            const b = Math.min(restore.selEnd != null ? restore.selEnd : a, len);
+                            target.setSelectionRange(a, b);
+                        } catch (e) { /* number inputs may not support selection */ }
+                    }
+                }
+            } catch (err) {
+                console.warn('Form focus restore failed', err);
+            }
+        }
+
+        // Form View display density + optional clinical skin (localStorage)
+        function applyFormDisplayPref(pref) {
+            const allowed = {
+                'default': true,
+                'comfortable': true,
+                'large': true,
+                'clinical': true,
+                'clinical-comfortable': true,
+                'clinical-large': true,
+                'graphite': true,
+                'graphite-comfortable': true,
+                'graphite-large': true
+            };
+            if (!allowed[pref]) pref = 'default';
+            localStorage.setItem('dentalNoteFormDisplay', pref);
+
+            document.body.classList.remove(
+                'cf-density-comfortable',
+                'cf-density-large',
+                'cf-skin-clinical',
+                'cf-skin-graphite'
+            );
+
+            if (pref === 'comfortable' || pref === 'clinical-comfortable' || pref === 'graphite-comfortable') {
+                document.body.classList.add('cf-density-comfortable');
+            } else if (pref === 'large' || pref === 'clinical-large' || pref === 'graphite-large') {
+                document.body.classList.add('cf-density-large');
+            }
+            if (pref.startsWith('clinical')) {
+                document.body.classList.add('cf-skin-clinical');
+            } else if (pref.startsWith('graphite')) {
+                document.body.classList.add('cf-skin-graphite');
+            }
+
+            const sel = document.getElementById('form-display-select');
+            if (sel && sel.value !== pref) sel.value = pref;
+        }
+
+        function applyUiMode(mode) {
+            uiMode = mode === 'form' ? 'form' : 'editor';
+            localStorage.setItem('dentalNoteUiMode', uiMode);
+            const btn = document.getElementById('ui-mode-toggle');
+            if (uiMode === 'form') {
+                document.body.classList.add('condensed-mode');
+                if (btn) btn.textContent = 'Editor View';
+                applyFormDisplayPref(localStorage.getItem('dentalNoteFormDisplay') || 'default');
+                renderCondensedForm();
+            } else {
+                document.body.classList.remove('condensed-mode');
+                if (btn) btn.textContent = 'Form View';
+            }
+            if (typeof updateDentalClassIndicator === 'function') updateDentalClassIndicator();
+        }
+
+        const uiModeToggleBtn = document.getElementById('ui-mode-toggle');
+        if (uiModeToggleBtn) {
+            uiModeToggleBtn.addEventListener('click', () => {
+                applyUiMode(uiMode === 'form' ? 'editor' : 'form');
+            });
+        }
+
+        const formDisplaySel = document.getElementById('form-display-select');
+        if (formDisplaySel) {
+            const saved = localStorage.getItem('dentalNoteFormDisplay') || 'default';
+            formDisplaySel.value = saved;
+            formDisplaySel.addEventListener('change', () => {
+                applyFormDisplayPref(formDisplaySel.value);
+            });
+        }
+
+        // Keep form previews in sync when live output / elements change
+        const _origUpdateLiveOutput = updateLiveOutput;
+        // Patch is optional; call refresh after common saves instead to avoid recursion risk
+        const _origUpdateEnhanced = typeof updateEnhancedTextboxUI === 'function' ? updateEnhancedTextboxUI : null;
+        if (_origUpdateEnhanced) {
+            // re-bind: updateEnhancedTextboxUI is const — wrap via prototype-less assignment on window
+            window.refreshCondensedForm = refreshCondensedForm;
+        } else {
+            window.refreshCondensedForm = refreshCondensedForm;
+        }
+
+        // After initial render / state loads, apply saved mode
+        function applyUiModeWhenReady(attempt = 0) {
+	const hasElements = document.querySelector('.dropzone .draggable-element');
+	if (hasElements || attempt >= 25) {
+		applyUiMode(localStorage.getItem('dentalNoteUiMode') || 'form');
+		return;
+	}
+	setTimeout(() => applyUiModeWhenReady(attempt + 1), 200);
+	}
+	setTimeout(() => applyUiModeWhenReady(), 100);
+
+        // Also refresh form when view-hidden toggle changes
+        const vht = document.getElementById('view-hidden-toggle');
+        if (vht) {
+            vht.addEventListener('change', () => {
+                if (uiMode === 'form') renderCondensedForm();
+            });
+        }
+
+        // Hook textbox save to refresh form
+        const tbSave = document.getElementById('textbox-editor-save-btn');
+        if (tbSave) {
+            const prev = tbSave.onclick;
+            tbSave.addEventListener('click', () => setTimeout(refreshCondensedForm, 50));
+        }
+        const txSave = document.getElementById('tx-plan-save-btn');
+        if (txSave) txSave.addEventListener('click', () => setTimeout(refreshCondensedForm, 50));
+        const allergySave = document.getElementById('allergy-save-btn');
+        if (allergySave) allergySave.addEventListener('click', () => setTimeout(refreshCondensedForm, 50));
+        const endoSave = document.getElementById('endo-testing-save-btn');
+        if (endoSave) endoSave.addEventListener('click', () => setTimeout(refreshCondensedForm, 50));
+        const anesthSave = document.getElementById('anesthetic-editor-save-btn');
+        if (anesthSave) anesthSave.addEventListener('click', () => setTimeout(refreshCondensedForm, 50));
 
    
     });
@@ -6833,7 +8724,9 @@ function attachEventListeners() {
             // Tooth number label
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
             label.setAttribute("x", x);
-            label.setAttribute("y", isUpper ? y + size + 8 : y - size - 4);
+            // Push numbers away from the circle so class badges on the facial side do not collide
+            // Upper: number on lingual (below). Lower: number on lingual (above).
+            label.setAttribute("y", isUpper ? y + size + 16 : y - size - 12);
             label.setAttribute("class", "tooth-label");
             label.textContent = toothNum;
             group.appendChild(label);
@@ -6865,13 +8758,15 @@ function attachEventListeners() {
 
             // --- Arch Lines (simplified path) ---
             const upperArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            upperArchLine.setAttribute("d", "M 20 120 C 200 60, 600 60, 830 120");
+            upperArchLine.setAttribute("d", "M 28 98 C 140 42, 710 42, 822 98");
             upperArchLine.setAttribute("class", "arch-line");
+            upperArchLine.setAttribute("fill", "none");
             dentalChartSVG.appendChild(upperArchLine);
 
             const lowerArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            lowerArchLine.setAttribute("d", "M 20 280 C 200 340, 600 340, 830 280");
+            lowerArchLine.setAttribute("d", "M 28 302 C 140 358, 710 358, 822 302");
             lowerArchLine.setAttribute("class", "arch-line");
+            lowerArchLine.setAttribute("fill", "none");
             dentalChartSVG.appendChild(lowerArchLine);
 
             // --- Tooth Elements ---
@@ -6984,10 +8879,15 @@ function attachEventListeners() {
         }
 
         function generateChart() {
-            initializeChart();
-            const prompt = document.getElementById('live-output').value;
-            const cariesToMark = parsePrompt(prompt);
-            markCaries(cariesToMark);
+            // Redundant bottom "Caries Charting Check" removed — keep as safe no-op
+            const dentalChartSVG = document.getElementById('dentalChart');
+            if (!dentalChartSVG) return;
+            try {
+                initializeChart();
+                const prompt = document.getElementById('live-output').value;
+                const cariesToMark = parsePrompt(prompt);
+                markCaries(cariesToMark);
+            } catch (e) { /* ignore */ }
         }
 
 
