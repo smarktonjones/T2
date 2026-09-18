@@ -7474,15 +7474,15 @@ techNameInput.addEventListener('keydown', (event) => {
                 discardChartingEditor();
             }
         });
-        // Click on modal backdrop (outside content) discards
+        // Backdrop close — same mousedown pattern as other modals (textbox).
+        // Using mousedown (not click) so dragging a tooth surface and releasing
+        // outside the modal does NOT close it.
         (function wireChartingBackdropClose() {
             const modal = document.getElementById('charting-editor-modal');
             if (!modal) return;
-            modal.addEventListener('click', (e) => {
+            modal.addEventListener('mousedown', (e) => {
                 if (e.target === modal) discardChartingEditor();
             });
-            const content = modal.querySelector('.modal-content');
-            if (content) content.addEventListener('click', (e) => e.stopPropagation());
         })();
 
 
