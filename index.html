@@ -1705,7 +1705,7 @@ body.cf-skin-graphite #user-status {
 
     <!-- **** START: Charting Element Modal **** -->
     <div id="charting-editor-modal" class="modal">
-        <div class="modal-content" style="max-width: 950px;">
+            <div class="modal-content" style="max-width: 950px; margin: 12px auto 16px; max-height: 96vh;">
             <div class="modal-header">
                 <h2>Charting Editor</h2>
                 <span class="close-btn" data-modal-id="charting-editor-modal">&times;</span>
@@ -1725,7 +1725,7 @@ body.cf-skin-graphite #user-status {
                         <!-- Transparent layer: only captures right-clicks so classify menu works on GitHub Pages / hardened browsers -->
                         <div id="charting-rclick-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; background: transparent;"></div>
                     </div>
-                    <p style="font-size: 0.75em; color: #888; margin: 2px 0 0;">Type e.g. 3mo , 14-DO , #19 M or click the chart. Auto-corrects to #3(MO). Right-click a surface or token to classify. Select text then use buttons below to send to Treatment Plan.</p>
+                    <p style="font-size: 0.75em; color: #888; margin: 2px 0 0;">Type e.g. 3mo , 14-DO , #19 M or click the chart. Auto-corrects to #3(MO). Right-click a surface to classify or select text then use buttons below to send to Treatment Plan.</p>
                 </div>
 
                 <!-- Send-to-Treatment-Plan buttons (replaces old snippets) -->
@@ -2253,7 +2253,8 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         "Tooth Slooth",
         "Periodontal",
         "Mobility",
-        "Transillumination"
+        "Transillumination",
+		"EPT"
       ],
       "endoData": {
         "teeth": [
