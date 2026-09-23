@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 18SEP26 mgh -->
+<!-- version as of 23SEP26 mgh collab-fix -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1429,6 +1429,17 @@ body.cf-skin-graphite #user-status {
     border: 1px solid rgba(255,255,255,0.08);
 }
 
+/* Read-only session: mute destructive layout controls */
+
+body.session-readonly #reset-btn,
+body.session-readonly #full-reset-btn,
+body.session-readonly #set-template-btn,
+body.session-readonly .add-element-btn {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+
 
 /* Dropdown rows in Form View: full-width select, no label column */
 .cf-row:has(select.inline) {
@@ -1486,7 +1497,7 @@ body.cf-skin-graphite #user-status {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.0</p>
+    <p class="landing-version">v6.1</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -4580,9 +4591,9 @@ document.getElementById('textbox-editor-replace-btn').click(); });
             });
             activeElementForEditor.dataset.txData = JSON.stringify(newData);
             updateTxPlanSummary(activeElementForEditor);
-            updateLiveOutput();
-
+            updateLiveOutput(true);
             txPlanModal.style.display = 'none';
+            if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
         };
 
         // --- Treatment Plan Properties ---
@@ -4676,8 +4687,8 @@ function updateChiefConcernDiagnosisHighlight() {
 
 
 
-        const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); activeElementForEditor.dataset.anestheticValues = JSON.stringify(newValues); activeElementForEditor.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(activeElementForEditor); updateLiveOutput(); anestheticEditorModal.style.display = 'none'; }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
-        const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(); endoModal.style.display = 'none'; };
+        const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); activeElementForEditor.dataset.anestheticValues = JSON.stringify(newValues); activeElementForEditor.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(activeElementForEditor); updateLiveOutput(true); anestheticEditorModal.style.display = 'none'; if (typeof flushPendingCloudState === 'function') flushPendingCloudState(); }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
+        const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(true); endoModal.style.display = 'none'; if (typeof flushPendingCloudState === 'function') flushPendingCloudState(); };
         const openPropertiesModal = (element) => {
             const state = getElementState(element); const body = document.getElementById('properties-body'); let mainPropsHtml = '', formattingHtml = '', generalPropsHtml = '';
             if (state.type === 'enhanced-textbox' || state.type === 'charting') { mainPropsHtml = `<fieldset><legend>Labels & Text</legend><label for="prop-internal-label">Internal Label (for maker only)</label><input type="text" id="prop-internal-label" value="${state.internalLabel}"><label for="prop-prefix-label">Prefix Label (for note output)</label><input type="text" id="prop-prefix-label" value="${state.prefixLabel}"><label for="prop-default-text">Default Text</label><input type="text" id="prop-default-text" value="${state.defaultText}"></fieldset><fieldset><legend>Dropdown Phrases / Snippets</legend><label for="prop-dropdown-options">(one per line)</label><textarea id="prop-dropdown-options" rows="6">${(state.dropdownOptions || []).join('\n')}</textarea></fieldset>`; }
@@ -4784,11 +4795,8 @@ function updateChiefConcernDiagnosisHighlight() {
 document.getElementById('allergy-save-btn').onclick = () => {
     if (!activeElementForEditor) return;
 
-    // 1. Set the 'isRenderingFromCloud' flag to true. This immediately blocks
-    //    the onSnapshot listener from overwriting any changes.
-    isRenderingFromCloud = true;
-
-    // 2. Gather the data from the modal.
+    // Gather modal data and write to the element (do NOT hold isRenderingFromCloud
+    // across updateLiveOutput — that would suppress the collab write).
     const selected = [];
     const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox:checked');
     checkboxes.forEach(cb => selected.push(cb.value));
@@ -4797,23 +4805,18 @@ document.getElementById('allergy-save-btn').onclick = () => {
         selected.push(`Custom: ${customValue}`);
     }
 
-    // 3. Update the local element's dataset directly.
     if (selected.includes("None")) {
         activeElementForEditor.dataset.alerts = JSON.stringify(["None"]);
     } else {
         activeElementForEditor.dataset.alerts = JSON.stringify(selected.filter(a => a !== "None"));
     }
 
-    // 4. Update the UI and close the modal.
     updateAlertElementUI(activeElementForEditor);
     allergyModal.style.display = 'none';
 
-    // 5. Call updateLiveOutput(). This will now queue the correct data to be sent to Firestore.
-    updateLiveOutput();
-    
-    // 6. IMPORTANT: Immediately after calling the save, release the lock so
-    //    the app can receive real-time updates again.
-    isRenderingFromCloud = false;
+    // Immediate field-level collab write
+    updateLiveOutput(true);
+    if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
 
     showFeedback("Alerts saved.", true);
 };
@@ -4843,6 +4846,406 @@ let unsubscribeFromNote = null;
 let currentNoteId = null;
 let isRenderingFromCloud = false;
 
+// ---- Collaborative sync (field-level merge + versioning) ----
+// Design goals:
+//  - One Firestore write per debounce (protect free quota) — NOT one write per field
+//  - Field-level winners via fieldMeta[originalId] = { rev, ts, by }
+//  - Transactional merge so concurrent doctor/tech edits don't clobber each other
+//  - Queue cloud snapshots while a modal is open; apply on close
+//  - Defer focused-field applies until blur (no caret steal, no permanent drop)
+let pendingCloudState = null;          // latest cloud payload deferred during modal
+let localFieldMeta = {};               // originalId -> { rev, ts, by }
+let knownDocRev = 0;
+let lastSyncedById = {};               // originalId -> last applied/written element state
+let pendingFocusApplies = new Map();   // originalId -> cloud stateItem waiting for blur
+let cloudApplyQueue = null;            // serialized apply while busy
+let isReadOnlySession = false;         // history / pure view — never write to live_notes
+let pendingLocalEdits = new Set();     // originalIds the user actually touched (robust dirty)
+// Debug helpers (optional): window.__collabStatus()
+window.__collabStatus = () => ({
+    isReadOnlySession,
+    currentNoteId,
+    pendingLocalEdits: Array.from(pendingLocalEdits),
+    lastSyncedCount: Object.keys(lastSyncedById || {}).length,
+    knownDocRev
+});
+
+function getCollabClientId() {
+    try {
+        let id = localStorage.getItem('dentalNoteMakerClientId');
+        if (!id) {
+            id = 'c_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+            localStorage.setItem('dentalNoteMakerClientId', id);
+        }
+        return id;
+    } catch (e) {
+        return 'c_anon_' + Date.now().toString(36);
+    }
+}
+
+function isAnyEditorModalOpen() {
+    // Prefer explicit display:block (this app toggles style.display)
+    const open = document.querySelector('.modal[style*="display: block"], .modal[style*="display:block"]');
+    if (open) return true;
+    // Fallback: computed style for any .modal
+    return Array.from(document.querySelectorAll('.modal')).some(m => {
+        try { return getComputedStyle(m).display === 'block'; } catch (e) { return false; }
+    });
+}
+
+function gatherLocalSections() {
+    const state = {};
+    SECTIONS.forEach((sectionId, secIndex) => {
+        state[sectionId] = [];
+        const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+        if (!zone) return;
+        zone.querySelectorAll('.draggable-element').forEach((el, itemIndex) => {
+            const item = getElementState(el);
+            if (!item.originalId) item.originalId = el.dataset.originalId || `${secIndex}-${itemIndex}`;
+            state[sectionId].push(item);
+        });
+    });
+    return state;
+}
+
+function indexSectionByOriginalId(sectionArr, secIndex) {
+    const map = {};
+    (sectionArr || []).forEach((item, i) => {
+        const id = (item && item.originalId) ? item.originalId : `${secIndex}-${i}`;
+        if (item) item.originalId = id;
+        map[id] = item;
+    });
+    return map;
+}
+
+/** Compare only value-bearing fields so layout/meta noise does not hide real edits. */
+function canonicalFieldValue(item) {
+    if (!item || typeof item !== 'object') return item;
+    const t = item.type;
+    const out = { type: t, originalId: item.originalId };
+    if (t === 'enhanced-textbox' || t === 'charting') {
+        out.content = item.content || '';
+        if (item.chartingMeta) out.chartingMeta = item.chartingMeta;
+    } else if (t === 'dropdown') {
+        out.selected = item.selected;
+    } else if (t === 'alert') {
+        out.alerts = item.alerts || [];
+    } else if (t === 'painscale') {
+        out.value = String(item.value != null ? item.value : '0');
+    } else if (t === 'bloodpressure') {
+        out.systolic = item.systolic || '';
+        out.diastolic = item.diastolic || '';
+        out.isPriorTxChecked = !!item.isPriorTxChecked;
+    } else if (t === 'psr') {
+        out.scores = item.scores || [];
+        out.asterisks = item.asterisks || [];
+        out.asteriskNote = item.asteriskNote || '';
+    } else if (t === 'tx-plan') {
+        out.txData = item.txData || {};
+    } else if (t === 'endo-testing') {
+        out.endoData = item.endoData || {};
+    } else if (t === 'anesthetic') {
+        out.anestheticValues = item.anestheticValues || {};
+        out.includeTopical = item.includeTopical;
+    } else if (t === 'checkbox') {
+        out.checked = item.checked;
+    } else {
+        // fallback: full item minus pure layout flags
+        return item;
+    }
+    return out;
+}
+
+function fieldsDiffer(a, b) {
+    try {
+        return JSON.stringify(canonicalFieldValue(a)) !== JSON.stringify(canonicalFieldValue(b));
+    } catch (e) {
+        return JSON.stringify(a) !== JSON.stringify(b);
+    }
+}
+
+/**
+ * @param {object} localSections
+ * @param {{stampMeta?: boolean}} opts - stampMeta only on user-initiated saves (not cloud apply)
+ */
+function computeDirtyOriginalIds(localSections, opts) {
+    const stampMeta = !!(opts && opts.stampMeta);
+    const dirty = new Set();
+    const now = Date.now();
+    const writerId = getCollabClientId();
+    SECTIONS.forEach((sectionId, secIndex) => {
+        (localSections[sectionId] || []).forEach((item, i) => {
+            const id = item.originalId || `${secIndex}-${i}`;
+            const prev = lastSyncedById[id];
+            if (!prev || fieldsDiffer(prev, item)) {
+                dirty.add(id);
+                if (stampMeta) {
+                    const prevMeta = localFieldMeta[id] || { rev: 0, ts: 0 };
+                    if (!prevMeta.ts || prevMeta.ts < now) {
+                        localFieldMeta[id] = { rev: prevMeta.rev || 0, ts: now, by: writerId };
+                    }
+                }
+            }
+        });
+    });
+    // Always include ids the user explicitly touched (modal save, input, etc.)
+    pendingLocalEdits.forEach(id => dirty.add(id));
+    return dirty;
+}
+
+function markLocalEdit(originalId) {
+    if (!originalId || isReadOnlySession) return;
+    pendingLocalEdits.add(String(originalId));
+}
+
+function rememberSyncedFromSections(sections, meta) {
+    SECTIONS.forEach((sectionId, secIndex) => {
+        (sections[sectionId] || []).forEach((item, i) => {
+            const id = (item && item.originalId) ? item.originalId : `${secIndex}-${i}`;
+            lastSyncedById[id] = JSON.parse(JSON.stringify(item));
+            if (meta && meta[id]) localFieldMeta[id] = { ...meta[id] };
+        });
+    });
+}
+
+/** After DOM render, snapshot local getElementState() shapes so pure viewing
+ *  does not look "dirty" due to key-order / default-field differences vs cloud JSON. */
+function seedSyncedFromDom() {
+    try {
+        const sections = gatherLocalSections();
+        SECTIONS.forEach((sectionId, secIndex) => {
+            (sections[sectionId] || []).forEach((item, i) => {
+                const id = item.originalId || `${secIndex}-${i}`;
+                lastSyncedById[id] = JSON.parse(JSON.stringify(item));
+            });
+        });
+    } catch (e) {
+        console.warn('seedSyncedFromDom failed', e);
+    }
+}
+
+function setReadOnlySession(on, message) {
+    isReadOnlySession = !!on;
+    let banner = document.getElementById('readonly-session-banner');
+    if (on) {
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'readonly-session-banner';
+            banner.setAttribute('role', 'status');
+            banner.style.cssText = [
+                'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:5000',
+                'background:#b45309', 'color:#fff', 'text-align:center',
+                'padding:8px 16px', 'font-weight:600', 'font-size:13px',
+                'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif',
+                'box-shadow:0 2px 8px rgba(0,0,0,0.2)'
+            ].join(';');
+            document.body.appendChild(banner);
+        }
+        banner.textContent = message || 'Read-only view — changes will not be saved to the live note.';
+        banner.style.display = 'block';
+        document.body.classList.add('session-readonly');
+    } else {
+        if (banner) banner.style.display = 'none';
+        document.body.classList.remove('session-readonly');
+    }
+}
+
+// Track real user edits so collab writes cannot be skipped by noisy state compares
+(function wireLocalEditTracking() {
+    if (window.__collabEditTrackingWired) return;
+    window.__collabEditTrackingWired = true;
+    const markFromEvent = (e) => {
+        if (isReadOnlySession) return;
+        const el = e.target && e.target.closest && e.target.closest('.draggable-element');
+        if (el && el.dataset && el.dataset.originalId) {
+            markLocalEdit(el.dataset.originalId);
+        }
+        // Form-view rows map back to originalId
+        const row = e.target && e.target.closest && e.target.closest('.cf-row');
+        if (row && row.dataset && row.dataset.originalId) {
+            markLocalEdit(row.dataset.originalId);
+        }
+    };
+    document.addEventListener('input', markFromEvent, true);
+    document.addEventListener('change', markFromEvent, true);
+})();
+
+
+/**
+ * Field-level merge: for each originalId, prefer the side with the newer fieldMeta.ts
+ * when both exist; local dirty fields win only if local ts >= cloud ts.
+ */
+function mergeSectionsFieldLevel(localSections, cloudDoc, dirtyIds, nowTs, writerId) {
+    const cloudMeta = (cloudDoc && cloudDoc.fieldMeta) || {};
+    const newMeta = { ...cloudMeta };
+    const merged = {};
+
+    SECTIONS.forEach((sectionId, secIndex) => {
+        const localById = indexSectionByOriginalId(localSections[sectionId], secIndex);
+        const cloudById = indexSectionByOriginalId((cloudDoc && cloudDoc[sectionId]) || [], secIndex);
+
+        // Preserve local order (same template); append cloud-only ids at end
+        const ordered = [];
+        const seen = new Set();
+        (localSections[sectionId] || []).forEach((item, i) => {
+            const id = item.originalId || `${secIndex}-${i}`;
+            if (!seen.has(id)) { ordered.push(id); seen.add(id); }
+        });
+        Object.keys(cloudById).forEach(id => {
+            if (!seen.has(id)) { ordered.push(id); seen.add(id); }
+        });
+
+        merged[sectionId] = ordered.map(id => {
+            const localItem = localById[id];
+            const cloudItem = cloudById[id];
+            const cMeta = cloudMeta[id] || { rev: 0, ts: 0 };
+            const lMeta = localFieldMeta[id] || { rev: 0, ts: 0 };
+            const isDirty = dirtyIds.has(id);
+
+            if (isDirty && localItem) {
+                // Local edit: win unless cloud strictly newer (another user saved this field after us)
+                if (!cloudItem || !cMeta.ts || (lMeta.ts || 0) >= (cMeta.ts || 0)) {
+                    const next = { rev: (Math.max(cMeta.rev || 0, lMeta.rev || 0) + 1), ts: nowTs, by: writerId };
+                    newMeta[id] = next;
+                    localFieldMeta[id] = next;
+                    return localItem;
+                }
+                // Cloud is newer for this field — keep cloud, drop local dirty
+                newMeta[id] = cMeta;
+                return cloudItem;
+            }
+
+            // Not dirty locally: take newer of cloud vs what we last had
+            if (cloudItem && localItem) {
+                if ((cMeta.ts || 0) >= (lMeta.ts || 0)) {
+                    newMeta[id] = cMeta.ts ? cMeta : (lMeta.ts ? lMeta : { rev: 0, ts: nowTs, by: writerId });
+                    return cloudItem;
+                }
+                newMeta[id] = lMeta.ts ? lMeta : { rev: 0, ts: nowTs, by: writerId };
+                return localItem;
+            }
+            if (cloudItem) {
+                newMeta[id] = cMeta.ts ? cMeta : { rev: 0, ts: nowTs, by: 'cloud' };
+                return cloudItem;
+            }
+            if (localItem) {
+                const next = lMeta.ts ? lMeta : { rev: 1, ts: nowTs, by: writerId };
+                newMeta[id] = next;
+                localFieldMeta[id] = next;
+                return localItem;
+            }
+            return null;
+        }).filter(Boolean);
+    });
+
+    return { sections: merged, fieldMeta: newMeta };
+}
+
+function elementIsFocused(el) {
+    const ae = document.activeElement;
+    return !!(ae && el && el.contains(ae));
+}
+
+/**
+ * Apply an incoming cloud document with field-level awareness.
+ * fullRebuild → renderState; otherwise surgical reconcile with focus deferral.
+ */
+function applyIncomingCloudState(docData, opts) {
+    if (!docData) return;
+    const options = opts || {};
+    const docTemplateId = docData.templateId || 'BUILT_IN';
+    const cloudMeta = docData.fieldMeta || {};
+
+    // Pure dirty check — do NOT stamp localFieldMeta (that is only for user saves)
+    const localSections = gatherLocalSections();
+    const dirty = computeDirtyOriginalIds(localSections, { stampMeta: false });
+
+    Object.keys(cloudMeta).forEach(id => {
+        if (!dirty.has(id)) {
+            localFieldMeta[id] = { ...cloudMeta[id] };
+        }
+    });
+    if (typeof docData.docRev === 'number') knownDocRev = docData.docRev;
+
+    const needsFullRebuild = options.forceFull || !lastLoadedState || activeTemplateId !== docTemplateId;
+
+    const run = async () => {
+        if (needsFullRebuild) {
+            activeTemplateId = docTemplateId;
+            if (typeof fetchAndSetTemplateState === 'function') {
+                await fetchAndSetTemplateState(docTemplateId);
+            }
+            isRenderingFromCloud = true;
+            renderState(docData, false);
+            isRenderingFromCloud = false;
+            // Fresh load: trust cloud, clear pending local edits for this session snapshot
+            pendingLocalEdits.clear();
+            rememberSyncedFromSections(
+                Object.fromEntries(SECTIONS.map(s => [s, docData[s] || []])),
+                cloudMeta
+            );
+            seedSyncedFromDom();
+            if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+            return;
+        }
+
+        // Surgical path: skip dirty local fields & defer focused
+        isRenderingFromCloud = true;
+        reconcileStateCollab(docData, dirty);
+        isRenderingFromCloud = false;
+        // Re-seed ONLY fields that were not locally dirty so next dirty-check stays accurate
+        try {
+            SECTIONS.forEach((sectionId, secIndex) => {
+                (docData[sectionId] || []).forEach((item, i) => {
+                    const id = (item && item.originalId) ? item.originalId : `${secIndex}-${i}`;
+                    if (!dirty.has(id) && !pendingLocalEdits.has(id)) {
+                        lastSyncedById[id] = JSON.parse(JSON.stringify(item));
+                    }
+                });
+            });
+        } catch (e) { /* ignore */ }
+        if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+    };
+
+    return run();
+}
+
+function flushPendingCloudState() {
+    if (!pendingCloudState) return;
+    if (isAnyEditorModalOpen()) return; // still open
+    const data = pendingCloudState;
+    pendingCloudState = null;
+    console.log("DEBUG: Flushing pending cloud state after modal close.");
+    applyIncomingCloudState(data, { forceFull: false });
+}
+
+// Drain deferred focus applies when focus leaves an element
+document.addEventListener('focusout', (e) => {
+    if (!pendingFocusApplies.size) return;
+    // Apply on next tick so activeElement has updated
+    setTimeout(() => {
+        if (!pendingFocusApplies.size) return;
+        const still = new Map();
+        pendingFocusApplies.forEach((stateItem, id) => {
+            const el = document.querySelector(`.draggable-element[data-original-id="${id}"]`);
+            if (el && elementIsFocused(el)) {
+                still.set(id, stateItem);
+                return;
+            }
+            if (el && typeof surgicallyUpdateElement === 'function') {
+                surgicallyUpdateElement(el, stateItem);
+            } else if (el) {
+                // fallback: replace
+                el.replaceWith(createElement(stateItem.type, stateItem));
+            }
+            if (stateItem) {
+                lastSyncedById[id] = JSON.parse(JSON.stringify(stateItem));
+            }
+        });
+        pendingFocusApplies = still;
+        if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+    }, 0);
+});
 
 // --- 2. UI Element References ---
 const userStatusEmail = document.getElementById('user-email');
@@ -4877,18 +5280,11 @@ const listenForActiveNotes = () => {
         snapshot.forEach(doc => {
             const data = doc.data();
             const date = data.lastUpdated?.toDate().toLocaleString() || 'No date';
-            // 1. Find the technician name element within the document's data.
             const techNameElement = data.footer?.find(el => el.originalId === "5-0");
-            
-            // 2. Get the name from the element's content, or default to "Unknown Tech".
             const technicianName = techNameElement?.content.trim() || 'Unknown Tech';
-            
             const li = document.createElement('li');
-            
-            // 3. Use the technician's NAME for display, but the unique ID for functionality.
             li.innerHTML = `<span>Note for: <b>${technicianName}</b></span><small>Last Update: ${date}</small>`;
-            li.dataset.noteId = doc.id; // The unique ID is still stored here for the click event.
-            
+            li.dataset.noteId = doc.id;
             li.addEventListener('click', () => startEditingSession(doc.id));
             noteList.appendChild(li);
         });
@@ -4910,30 +5306,30 @@ const listenForHistoryNotes = () => {
             const date = data.timestamp?.toDate().toLocaleString() || 'No date';
             
             const li = document.createElement('li');
-            // Display the technician's name and the archive date
             li.innerHTML = `<span>Note for: <b>${data.technicianName}</b></span><small>Last Update: ${date}</small>`;
-            li.dataset.historyDocId = doc.id; // Store the document ID
+            li.dataset.historyDocId = doc.id;
 
-            // --- THIS IS THE KEY ---
-            // The click handler takes a different path than live notes.
             li.onclick = async () => {
                 console.log(`Loading history note: ${doc.id}`);
-                
-                // 1. Ensure any live session is disconnected.
                 if (unsubscribeFromNote) {
                     unsubscribeFromNote();
                     unsubscribeFromNote = null;
                 }
-                currentNoteId = null; // IMPORTANT: Prevent any accidental writes.
+                currentNoteId = null;
+                pendingCloudState = null;
+                clearTimeout(window.firestoreSaveTimeout);
+                setReadOnlySession(true, 'Archived note (read-only) — edits will not be saved to live notes.');
 
-                // 2. Fetch the single, specific historical document.
                 const historyDoc = await db.collection('history_notes').doc(doc.id).get();
                 if (historyDoc.exists) {
-                    // 3. Render the state from the 'noteData' field within the history document.
+                    isRenderingFromCloud = true;
                     renderState(historyDoc.data().noteData);
+                    isRenderingFromCloud = false;
+                    seedSyncedFromDom();
                     showView('view-note-editor');
                     showFeedback("Viewing historical note. Edits will not be saved.", true);
                 } else {
+                    setReadOnlySession(false);
                     alert("Could not find the selected historical note.");
                 }
             };
@@ -4976,39 +5372,46 @@ const listenForHistoryNotes = () => {
 
 const startEditingSession = (noteId) => {
     console.log(`DEBUG: Starting editing session for note: "${noteId}"`);
+
+    // Live collab session — allow writes (never read-only for active notes)
+    setReadOnlySession(false);
+    pendingLocalEdits.clear();
+
+    // Switching notes: cancel any pending write from the previous note
+    clearTimeout(window.firestoreSaveTimeout);
+    pendingCloudState = null;
+    pendingFocusApplies.clear();
+
+    const isSwitchingNote = currentNoteId && currentNoteId !== noteId;
     currentNoteId = noteId;
     if (unsubscribeFromNote) unsubscribeFromNote();
-    
+
+    if (isSwitchingNote) {
+        lastLoadedState = null;
+        activeTemplateId = null;
+        localFieldMeta = {};
+        lastSyncedById = {};
+        knownDocRev = 0;
+        document.querySelectorAll('.dropzone').forEach(zone => { zone.innerHTML = ''; });
+    }
+
     showView('view-note-editor');
+
     const noteDocRef = db.collection('live_notes').doc(noteId);
     
-        unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
-        const isModalOpen = !!document.querySelector('.modal[style*="display: block"]');
-    
-        if (isModalOpen) {
-            console.log("DEBUG: A modal is open. Deferring real-time update to prevent data loss.");
+    unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
+        // Guard: only process events for the note we are currently editing
+        if (currentNoteId !== noteId) return;
+
+        if (isAnyEditorModalOpen()) {
+            console.log("DEBUG: A modal is open. Queueing cloud update (will apply on close).");
+            if (doc.exists) pendingCloudState = doc.data();
             return;
         }
 	
         console.log(`DEBUG: Real-time update received for note "${noteId}".`);
         if (doc.exists) {
-            const docData = doc.data();
-            const docTemplateId = docData.templateId || 'BUILT_IN';
-
-            // --- SELF-HEALING STATE RECOVERY ---
-            // If the local variable is null (e.g. from page reload, or doctor editing),
-            // silently restore the template in the background.
-            if (!lastLoadedState || activeTemplateId !== docTemplateId) {
-                activeTemplateId = docTemplateId;
-                await fetchAndSetTemplateState(docTemplateId);
-            }
-
-            // Set the flag to true BEFORE rendering.
-            isRenderingFromCloud = true;
-            reconcileState(docData);
-            // Set the flag back to false immediately after.
-            isRenderingFromCloud = false;
-			
+            await applyIncomingCloudState(doc.data(), { forceFull: false });
         } else {
             console.log(`DEBUG: Note "${noteId}" does not exist. Creating it.`);
             loadDefaults(noteId);
@@ -5018,39 +5421,97 @@ const startEditingSession = (noteId) => {
 
 
 
-// This REPLACES old `saveCurrentStateToLocalStorage` function.
+// Transactional field-level merge write (still 1 read + 1 write per debounce).
 const syncStateToFirestore = (forceImmediate = false) => {
     if (isRenderingFromCloud) {
         console.log("DEBUG: Suppressing Firestore sync because a cloud render is in progress.");
         return;
     }
 
+    // Read-only sessions (archived history, pure view) must never touch live_notes
+    if (isReadOnlySession) {
+        console.log("DEBUG: Read-only session — blocking Firestore write.");
+        return;
+    }
+
     if (!currentNoteId) return;
     clearTimeout(window.firestoreSaveTimeout);
 
-    const saveAction = () => {
-        const stateToSave = {};
-        SECTIONS.forEach(id => {
-            stateToSave[id] = [];
-            document.querySelector(`.dropzone[data-section-id="${id}"]`)
-                .querySelectorAll('.draggable-element').forEach(el => stateToSave[id].push(getElementState(el)));
-        });
-        stateToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
-        
-        // Preserve the session's active template ID metadata
-        if (activeTemplateId) {
-            stateToSave.templateId = activeTemplateId;
+    const saveAction = async () => {
+        const noteIdAtSchedule = currentNoteId;
+        if (!noteIdAtSchedule) return;
+        if (isReadOnlySession) return;
+
+        const localSections = gatherLocalSections();
+        // stampMeta: true — user-initiated path (or debounced follow-up)
+        const dirtyIds = computeDirtyOriginalIds(localSections, { stampMeta: true });
+        // No content change and no explicit local edits ⇒ no write (safe empty modal close)
+        if (dirtyIds.size === 0) {
+            console.log("DEBUG: No dirty fields — skipping Firestore write (safe view / empty save).");
+            return;
         }
-        
-        db.collection('live_notes').doc(currentNoteId).set(stateToSave, { merge: true });
+        console.log("DEBUG: Writing dirty fields:", Array.from(dirtyIds).slice(0, 12).join(", "), dirtyIds.size > 12 ? "..." : "");
+
+        const nowTs = Date.now();
+        const writerId = getCollabClientId();
+        const noteRef = db.collection('live_notes').doc(noteIdAtSchedule);
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                // Abort if user switched notes mid-flight
+                if (currentNoteId !== noteIdAtSchedule) {
+                    console.log("DEBUG: Note switched during transaction — aborting write.");
+                    return;
+                }
+                const snap = await transaction.get(noteRef);
+                const cloud = snap.exists ? snap.data() : {};
+                const { sections, fieldMeta } = mergeSectionsFieldLevel(
+                    localSections, cloud, dirtyIds, nowTs, writerId
+                );
+
+                const payload = {
+                    ...sections,
+                    fieldMeta,
+                    docRev: (cloud.docRev || 0) + 1,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                    templateId: activeTemplateId || cloud.templateId || 'BUILT_IN'
+                };
+
+                // Full document write of the *merged* result (not a blind local overwrite)
+                transaction.set(noteRef, payload);
+                knownDocRev = payload.docRev;
+            });
+
+            if (currentNoteId === noteIdAtSchedule) {
+                // Mark written fields as synced; clear pending-edit flags for them
+                dirtyIds.forEach(id => {
+                    for (const sectionId of SECTIONS) {
+                        const hit = (localSections[sectionId] || []).find(it => it.originalId === id);
+                        if (hit) {
+                            lastSyncedById[id] = JSON.parse(JSON.stringify(hit));
+                            break;
+                        }
+                    }
+                    pendingLocalEdits.delete(id);
+                });
+                console.log(`DEBUG: Collab write OK (dirty=${dirtyIds.size}, note=${noteIdAtSchedule}).`);
+            }
+        } catch (err) {
+            console.error("DEBUG: Collab transaction failed:", err);
+            // Retry once after a short delay on contention
+            if (!forceImmediate) {
+                clearTimeout(window.firestoreSaveTimeout);
+                window.firestoreSaveTimeout = setTimeout(() => syncStateToFirestore(true), 750);
+            }
+        }
     };
 
-    // If forceImmediate is true, save right away. Otherwise, wait 3 seconds.
     if (forceImmediate) {
         console.log("DEBUG: Bypassing delay. Writing to Firestore instantly!");
         saveAction();
     } else {
-        window.firestoreSaveTimeout = setTimeout(saveAction, 3000);
+        // 1s debounce balances live feel vs free-tier write volume
+        window.firestoreSaveTimeout = setTimeout(saveAction, 1000);
     }
 };
 
@@ -5058,16 +5519,11 @@ const syncStateToFirestore = (forceImmediate = false) => {
 
 // =================================================================
 // Data Reconciliation Function
-// This function surgically updates the DOM instead of re-rendering it.
+// Surgical DOM updates; collab-aware via reconcileStateCollab wrapper.
 // =================================================================
 
 
-const reconcileState = (newState) => {
-    console.log("DEBUG: Reconciling DOM with new cloud state...");
-    let changed = false;
-
-    // This is a helper function to update an element without replacing it.
-    const surgicallyUpdateElement = (element, newStateItem) => {
+const surgicallyUpdateElement = (element, newStateItem) => {
         // Update all dataset properties. This is safe and preserves the element.
         for (const key in newStateItem) {
             const value = newStateItem[key];
@@ -5077,21 +5533,13 @@ const reconcileState = (newState) => {
                 element.dataset[key] = value;
             }
         }
-        // Now, call the specific UI refresh function for this element type.
-        // This is the key to updating the view without destroying the element.
         if (newStateItem.type === 'enhanced-textbox' || newStateItem.type === 'charting') {
-            updateEnhancedTextboxUI(element); // We'll create this small helper
+            if (typeof updateEnhancedTextboxUI === 'function') updateEnhancedTextboxUI(element);
         } 
 		
 		else if (newStateItem.type === 'painscale') {
-        // For the pain scale, we need to update both the visible number
-        // and the position of the range slider itself.
-        console.log(`DEBUG: Surgically updating Pain Scale element (originalId: ${newStateItem.originalId})`);
-        
         const valueDisplay = element.querySelector('.pain-value');
         const slider = element.querySelector('.pain-slider');
-
-        // Update the values only if they have actually changed.
         if (valueDisplay && valueDisplay.textContent !== `${newStateItem.value}/10`) {
             valueDisplay.textContent = `${newStateItem.value}/10`;
         }
@@ -5102,128 +5550,164 @@ const reconcileState = (newState) => {
 		
 		
 		else if (newStateItem.type === 'bloodpressure') {
-        // For a blood pressure element, we need to update the values
-        // of the two input fields and the checkbox.
-        console.log(`DEBUG: Surgically updating Blood Pressure element (originalId: ${newStateItem.originalId})`);
-        
         const systolicInput = element.querySelector('.bp-systolic');
         const diastolicInput = element.querySelector('.bp-diastolic');
         const priorTxCheckbox = element.querySelector('.bp-prior-tx-check');
-
-        // Update the values only if they are different to prevent losing focus unnecessarily.
-        if (systolicInput.value !== newStateItem.systolic) {
+        if (systolicInput && systolicInput.value !== (newStateItem.systolic || '')) {
             systolicInput.value = newStateItem.systolic || '';
         }
-        if (diastolicInput.value !== newStateItem.diastolic) {
+        if (diastolicInput && diastolicInput.value !== (newStateItem.diastolic || '')) {
             diastolicInput.value = newStateItem.diastolic || '';
         }
-        if (priorTxCheckbox.checked !== newStateItem.isPriorTxChecked) {
-            priorTxCheckbox.checked = newStateItem.isPriorTxChecked;
+        if (priorTxCheckbox && priorTxCheckbox.checked !== !!newStateItem.isPriorTxChecked) {
+            priorTxCheckbox.checked = !!newStateItem.isPriorTxChecked;
         }
-
-        // Finally, call your existing UI updater to refresh the border color and visibility.
-        updateBPElementUI(element);
+        if (typeof updateBPElementUI === 'function') updateBPElementUI(element);
 		}	
 
 		else if (newStateItem.type === 'psr') {
-            // It's too complex to surgically update the PSR grid, so we will
-            // replace just this one element type as a compromise.
             element.replaceWith(createElement(newStateItem.type, newStateItem));
         } else if (newStateItem.type === 'alert') {
-            updateAlertElementUI(element); // You already have this!
+            if (typeof updateAlertElementUI === 'function') updateAlertElementUI(element);
         }
         else if (newStateItem.type === 'anesthetic') {
-            console.log(`DEBUG: Surgically updating Anesthetic summary (originalId: ${newStateItem.originalId})`);
-            updateAnestheticSummary(element);
+            if (typeof updateAnestheticSummary === 'function') updateAnestheticSummary(element);
         }
 		else if (newStateItem.type === 'dropdown') {
-        // For a dropdown, just update the selected value.
-        element.querySelector('select').value = newStateItem.selected;
+        const sel = element.querySelector('select');
+        if (sel) sel.value = newStateItem.selected;
 		}
 
 		else if (newStateItem.type === 'tx-plan') {
-        // For the treatment plan, we just need to call the existing summary
-        // update function. The dataset has already been updated above.
-        console.log(`DEBUG: Surgically updating Treatment Plan summary (originalId: ${newStateItem.originalId})`);
-        updateTxPlanSummary(element);
+        if (typeof updateTxPlanSummary === 'function') updateTxPlanSummary(element);
 		}
-		
-        // ... add other UI update functions here as needed ...
-    };
+		else if (newStateItem.type === 'endo-testing') {
+        if (typeof updateEndoTestingSummary === 'function') updateEndoTestingSummary(element);
+		}
+};
 
+/**
+ * Collab-aware reconcile: never overwrite locally-dirty fields; defer focused fields.
+ */
+const reconcileStateCollab = (newState, dirtyIds) => {
+    const dirty = dirtyIds || new Set();
+    let changed = false;
+    const cloudMeta = (newState && newState.fieldMeta) || {};
 
     SECTIONS.forEach((sectionId, secIndex) => {
         const elementsFromState = newState[sectionId] || [];
 
         elementsFromState.forEach((stateItem, itemIndex) => {
-            stateItem.originalId = `${secIndex}-${itemIndex}`;
-            let existingElement = document.querySelector(`.draggable-element[data-original-id="${stateItem.originalId}"]`);
+            stateItem.originalId = stateItem.originalId || `${secIndex}-${itemIndex}`;
+            const oid = stateItem.originalId;
+
+            // Protect in-progress local edits
+            if (dirty.has(oid)) {
+                console.log(`DEBUG: Keeping local dirty field ${oid}`);
+                return;
+            }
+
+            let existingElement = document.querySelector(`.draggable-element[data-original-id="${oid}"]`);
 
             if (!existingElement) {
-                // If element doesn't exist, create it.
-                console.log(`DEBUG: Element ${stateItem.originalId} not found. CREATING.`);
                 const dropzone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
                 if (dropzone) {
                     dropzone.appendChild(createElement(stateItem.type, stateItem));
                     changed = true;
+                    lastSyncedById[oid] = JSON.parse(JSON.stringify(stateItem));
+                    if (cloudMeta[oid]) localFieldMeta[oid] = { ...cloudMeta[oid] };
                 }
             } else {
-                // If element exists, compare its current state to the new state.
+                // Type mismatch → replace node (template drift / structural change)
+                if (existingElement.dataset.type && stateItem.type &&
+                    existingElement.dataset.type !== stateItem.type) {
+                    existingElement.replaceWith(createElement(stateItem.type, stateItem));
+                    changed = true;
+                    lastSyncedById[oid] = JSON.parse(JSON.stringify(stateItem));
+                    if (cloudMeta[oid]) localFieldMeta[oid] = { ...cloudMeta[oid] };
+                    return;
+                }
+
                 const localState = getElementState(existingElement);
-                
-                // Use JSON.stringify for a simple but effective deep comparison.
                 if (JSON.stringify(localState) !== JSON.stringify(stateItem)) {
-                    if (document.activeElement && document.activeElement.closest('.draggable-element') === existingElement) {
-                        console.log(`DEBUG: Skipping update for focused element ${stateItem.originalId}.`);
+                    if (elementIsFocused(existingElement)) {
+                        console.log(`DEBUG: Deferring update for focused element ${oid}`);
+                        pendingFocusApplies.set(oid, stateItem);
                         return;
                     }
-
-                    console.log(`%cDEBUG: State for element ${stateItem.originalId} differs. Replacing element to ensure UI consistency.`, 'color: orange');
-                    changed = true;
-                    
-// **THE FIX:** Call our new surgical update function.
                     surgicallyUpdateElement(existingElement, stateItem);
+                    changed = true;
+                    lastSyncedById[oid] = JSON.parse(JSON.stringify(stateItem));
+                    if (cloudMeta[oid]) localFieldMeta[oid] = { ...cloudMeta[oid] };
                 }
             }
         });
 
-        // This part for removing deleted elements remains the same.
+        // Remove elements not present in cloud (and not dirty-local-only)
         const elementsOnPage = document.querySelectorAll(`.dropzone[data-section-id="${sectionId}"] .draggable-element`);
         elementsOnPage.forEach(elOnPage => {
-            if (!elementsFromState.some(item => item.originalId === elOnPage.dataset.originalId)) {
+            const oid = elOnPage.dataset.originalId;
+            if (dirty.has(oid)) return;
+            if (!elementsFromState.some(item => item.originalId === oid)) {
                 elOnPage.remove();
                 changed = true;
+                delete lastSyncedById[oid];
             }
         });
     });
 
     if (changed) {
-        console.log("DEBUG: Reconciliation caused changes, updating live output.");
+        // Update live preview only — do NOT sync back (isRenderingFromCloud may already be set by caller)
+        const was = isRenderingFromCloud;
         isRenderingFromCloud = true;
-        updateLiveOutput();
-        isRenderingFromCloud = false;
+        if (typeof updateLiveOutput === 'function') updateLiveOutput();
+        isRenderingFromCloud = was;
     }
-	
-    // After any potential DOM changes from reconciliation, we must
-    // re-assert the layout lock state to ensure new elements are also locked.
+
     const lockToggle = document.getElementById('lock-layout-toggle');
     if (lockToggle && lockToggle.checked) {
-        console.log("DEBUG: Re-applying layout lock after reconciliation.");
         lockToggle.dispatchEvent(new Event('change'));
     }
-    // Keep Form View in sync after any cloud/surgical DOM update (Start My Day, Reset, multi-user)
     if (typeof window.refreshCondensedForm === 'function') {
         window.refreshCondensedForm();
     } else if (typeof refreshCondensedForm === 'function') {
         refreshCondensedForm();
     }
-    // --- END OF  CODE ---
-	
-	
 };
-// =================================================================
 
+// Back-compat alias used by older call sites
+const reconcileState = (newState) => {
+    const localSections = gatherLocalSections();
+    const dirty = computeDirtyOriginalIds(localSections);
+    reconcileStateCollab(newState, dirty);
+};
 
+// Hook modal close / save paths to flush queued cloud state
+(function wireModalCloudFlush() {
+    const flushSoon = () => setTimeout(flushPendingCloudState, 30);
+
+    document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!t) return;
+        // close buttons & save buttons inside modals
+        if (t.classList && (t.classList.contains('close-btn') || t.classList.contains('close-button'))) {
+            flushSoon();
+        }
+        const id = t.id || '';
+        if (/save-btn$|save-button$|editor-save-btn$/.test(id) ||
+            id === 'allergy-save-btn' || id === 'charting-editor-save-btn' ||
+            id === 'textbox-editor-save-btn' || id === 'tx-plan-save-btn' ||
+            id === 'endo-testing-save-btn' || id === 'anesthetic-editor-save-btn') {
+            // Saves already call updateLiveOutput; flush cloud after local write lands
+            flushSoon();
+        }
+    }, true);
+
+    // Escape closes many modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') flushSoon();
+    });
+})();
 
 // --- 4. Modified Existing Functions ---
 // These wrappers correctly link your original functions to the new cloud sync.
@@ -5762,12 +6246,16 @@ logoutButton.addEventListener('click', () => {
 });
 
 saveCopyButton.addEventListener('click', () => {
-    // **THE FIX for Doctor's 'Back' button**
-    // We simply need to stop the real-time listener and show the dashboard.
+    // Doctor leaves the note editor: stop live listener, cancel pending writes,
+    // clear read-only banner, return to dashboard without an extra cloud write.
+    clearTimeout(window.firestoreSaveTimeout);
+    pendingCloudState = null;
     if (unsubscribeFromNote) {
         unsubscribeFromNote();
         unsubscribeFromNote = null;
     }
+    currentNoteId = null;
+    setReadOnlySession(false);
     showView('view-doctor-dashboard');
 });
 
@@ -7432,7 +7920,6 @@ techNameInput.addEventListener('keydown', (event) => {
 
         document.getElementById('charting-editor-save-btn').onclick = () => {
             if (!activeElementForEditor) return;
-            isRenderingFromCloud = true;
             const ta = document.getElementById('charting-editor-textarea');
             // Normalize tokens in place (replaces raw "6 postfix" with "#6 postfix", no duplicates)
             chartingSelections = parseChartingTextToSelections(ta.value);
@@ -7451,7 +7938,10 @@ techNameInput.addEventListener('keydown', (event) => {
 
             const editedElementId = activeElementForEditor.dataset.originalId;
             chartingOpenSnapshot = null; // commit — do not restore on close
-            updateLiveOutput();
+
+            if (typeof markLocalEdit === 'function') markLocalEdit(editedElementId);
+            // Immediate collab write (do NOT set isRenderingFromCloud — that would suppress sync)
+            updateLiveOutput(true);
 
             // Re-evaluate Caries Risk when either charting block is saved
             // (2-5 = CARIES/DEFECTIVE, 2-6 = INCIPIENT)
@@ -7461,7 +7951,7 @@ techNameInput.addEventListener('keydown', (event) => {
             }
 
             document.getElementById('charting-editor-modal').style.display = 'none';
-            isRenderingFromCloud = false;
+            if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
             showFeedback("Charting saved.", true);
             if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
         };
