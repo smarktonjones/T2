@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 23SEP26 mgh collab-fix -->
+<!-- version as of 24SEP26 mgh originalId-stable + painscale flicker fix -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1497,7 +1497,7 @@ body.session-readonly .add-element-btn {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.1</p>
+    <p class="landing-version">v6.1.1</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -1797,6 +1797,9 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 
 
 
+
+
+
 {
   "header": [
     {
@@ -1883,7 +1886,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "options": [
         "Learning Type: Written/Verbal. ",
         "Learning Type: Written. ",
-	    "Learning Type: Visual. ",
+        "Learning Type: Visual. ",
         "Learning Type: Verbal. "
       ],
       "selected": "Learning Type: Written/Verbal. "
@@ -2126,6 +2129,8 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
       "defaultText": "No Pathology Noted.",
       "dropdownOptions": [
+        "Horizontal bone loss #",
+        "Vertical bone loss #",
         "Antral Pseudocyst Maxillary Sinus",
         "Periradicular Radiolucency #",
         "Condensing Osteitis #",
@@ -2192,8 +2197,8 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "dropdownOptions": [
         "Mandibular Tori",
         "Apthous Ulcer",
-   "Tobacco Keratosis",
-"Nicotine Keratosis",
+        "Tobacco Keratosis",
+        "Nicotine Keratosis",
         "Palatal Torus",
         "Fibroma",
         "Tonsillectomy",
@@ -2244,7 +2249,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         "Asymptomatic",
         "SRCT# ",
         "Draining sinus tract area #"
-	  ]
+      ]
     },
     {
       "type": "endo-testing",
@@ -2265,7 +2270,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         "Periodontal",
         "Mobility",
         "Transillumination",
-		"EPT"
+        "EPT"
       ],
       "endoData": {
         "teeth": [
@@ -2343,6 +2348,9 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "prefixLabel": "OCCLUSION: ",
       "defaultText": "WNL.",
       "dropdownOptions": [
+        "Angle's Class I",
+        "Angle's Class II",
+        "Angle's Class III",
         "Bonded Retainer 22-27",
         "Bonded Retainer 6-11",
         "Crossbite ",
@@ -2546,7 +2554,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-5",
       "isHidden": false,
       "doNotReset": false,
-      "width": "33%",
+      "width": "",
       "fillColor": "#e8e8e8",
       "options": [
         "CARIES RISK: Low",
@@ -2564,7 +2572,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-6",
       "isHidden": false,
       "doNotReset": false,
-      "width": "33%",
+      "width": "",
       "fillColor": "#e8e8e8",
       "options": [
         "PERIO RISK: Low",
@@ -2582,7 +2590,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-7",
       "isHidden": false,
       "doNotReset": false,
-      "width": "33%",
+      "width": "",
       "fillColor": "#e8e8e8",
       "options": [
         "CANCER RISK: Low",
@@ -2674,11 +2682,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         "SRP",
         "RECALL"
       ],
-      "txData": {
-        "Oral Hygiene-CLASS 2": {
-          "text": "RDH",
-          "priority": 1
-        } }
+      "txData": {}
     }
   ],
   "footer": [
@@ -2697,22 +2701,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "internalLabel": "Dental Technician Name",
       "prefixLabel": "DENTAL TECHNICIAN: ",
       "defaultText": "",
-      "dropdownOptions": [
-        "VARELA",
-        "LEONARDSON",
-        "DUPREY",
-        "PHILLIPS",
-        "BYRD",
-        "MITCHELL",
-        "STEWART",
-        "MORRIS",
-        "BABCOCK",
-        "VILLANUEVA",
-        "TURNER",
-        "HARDEN",
-        "FERGUSON",
-        "CISSE"
-      ]
+      "dropdownOptions": []
     },
     {
       "type": "formatter",
@@ -2744,13 +2733,13 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "prefixLabel": "DENTAL OFFICER: ",
       "defaultText": "",
       "dropdownOptions": [
-        "TP FLEMING",
-        "HT HOANG",
-        "RJ ALOVA",
-        "MG HORNING DDS  1912969445",
-        "RA NARDELLA",
-        "FC BERGER",
-	    "CJ COBB"
+        "CAPT Jackie Hogan,USN,DC,DMD,FACP\\nBoard Certified Prosthodontist\\nNMRTU Newport, RI\\nNPI: 1942535851",
+        "CDR Tracy D'Antonio, DDS, MS, FAGD\\nOperative Dentist\\nNMRTC New England\\nNewport, RI\\nNPI: 1285948885",
+        "CDR Juliana Fila, DDS\\nGeneral Dentist\\nNMRTC New England\\nNewport, RI\\nNPI: 1821424938  ",
+        "CDR Phillip Jenkins, DMD, MS\\nComprehensive Dentist\\nNMRTC Newport, RI\\nNewport, RI\\nNPI: 1386990653  ",
+        "LT Veronica Phen, DDS\\nGeneral Dentist\\nNMRTC New England\\nNewport, RI\\nNPI: 1154003960",
+        "LT Sarah Lessin, DMD\\nGeneral Dentist\\nNMRTC New England\\nNewport, RI\\nNPI: 1821893777",
+        "William Hickman, DMD\\nGeneral Dentist\\nNMRTC New England\\nNewport, RI\\nNPI: 1356458053"
       ]
     },
     {
@@ -2764,7 +2753,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "doNotReset": true,
       "width": "",
       "fillColor": "#fffbe6",
-      "content": "    .  . .   . ____ .  .    _   _    _    _  .  .  _   \n   /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n  / | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      ",
+      "content": "",
       "internalLabel": "Signature Block",
       "prefixLabel": "",
       "defaultText": "",
@@ -2776,6 +2765,12 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
     }
   ]
 }
+
+
+
+
+
+
 
 
 
@@ -5540,11 +5535,13 @@ const surgicallyUpdateElement = (element, newStateItem) => {
 		else if (newStateItem.type === 'painscale') {
         const valueDisplay = element.querySelector('.pain-value');
         const slider = element.querySelector('.pain-slider');
-        if (valueDisplay && valueDisplay.textContent !== `${newStateItem.value}/10`) {
-            valueDisplay.textContent = `${newStateItem.value}/10`;
+        const v = String(newStateItem.value != null ? newStateItem.value : '0');
+        // Skip DOM writes when unchanged — prevents flicker when collab echoes own edit
+        if (valueDisplay && valueDisplay.textContent !== `${v}/10`) {
+            valueDisplay.textContent = `${v}/10`;
         }
-        if (slider && slider.value !== newStateItem.value) {
-            slider.value = newStateItem.value;
+        if (slider && String(slider.value) !== v) {
+            slider.value = v;
         }
 		}
 		
@@ -5748,29 +5745,52 @@ const resetValues = () => {
 
             console.log("DEBUG: Checking for 'doNotReset' elements to preserve...");
 
-            // 5. LOOP through the clean state and PRESERVE data from the current state.
+            // 5. LOOP by originalId (NOT array index) so non-sequential ids (1-4, 1-5, 1-6) stay stable.
             for (const sectionId in newResetState) {
-                if (Array.isArray(newResetState[sectionId])) {
-                    newResetState[sectionId].forEach((templateElement, index) => {
-                        // Find the corresponding element in the current state on the server.
-                        const currentElement = currentState[sectionId]?.[index];
-                        
-                        // If the element in the TEMPLATE is marked as 'doNotReset'...
-                        if (templateElement.doNotReset === true && currentElement) {
-                            console.log(`%cPreserving data for element with originalId: ${templateElement.originalId}`, 'color: orange;');
-                            // ...then replace the clean template element with the one from the current state.
-                            newResetState[sectionId][index] = currentElement;
-                        }
-                    });
-                }
+                if (!Array.isArray(newResetState[sectionId])) continue;
+                const currentById = {};
+                (currentState[sectionId] || []).forEach((el, i) => {
+                    const id = (el && el.originalId) ? el.originalId : `${SECTIONS.indexOf(sectionId)}-${i}`;
+                    currentById[id] = el;
+                });
+                newResetState[sectionId].forEach((templateElement, index) => {
+                    const tid = templateElement.originalId || `${SECTIONS.indexOf(sectionId)}-${index}`;
+                    if (!templateElement.originalId) templateElement.originalId = tid;
+                    const currentElement = currentById[tid];
+                    if (templateElement.doNotReset === true && currentElement) {
+                        console.log(`%cPreserving data for element with originalId: ${tid}`, 'color: orange;');
+                        // Keep template layout flags; preserve value-bearing fields from current
+                        newResetState[sectionId][index] = {
+                            ...templateElement,
+                            ...currentElement,
+                            originalId: tid,
+                            doNotReset: true,
+                            type: templateElement.type
+                        };
+                    }
+                });
             }
-            
-            // 6. Add the timestamp for real-time ordering.
+
+            // Reset collab metadata so field-level merge starts clean for the next patient
+            newResetState.fieldMeta = {};
+            newResetState.docRev = (typeof currentState.docRev === 'number' ? currentState.docRev : 0) + 1;
+            if (currentState.templateId) newResetState.templateId = currentState.templateId;
+            if (currentState.technicianName) newResetState.technicianName = currentState.technicianName;
+            if (currentState.clinicName) newResetState.clinicName = currentState.clinicName;
+
+            // 6. Timestamp for real-time ordering
             newResetState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
 
-            // 7. Now, SAVE this newly merged state back to Firestore.
-            // The onSnapshot listener will automatically handle the UI update.
+            // 7. SAVE merged state — onSnapshot refreshes UI
             noteDocRef.set(newResetState).then(() => {
+                // Align local seed so next dirty-check matches template
+                try {
+                    pendingLocalEdits.clear();
+                    rememberSyncedFromSections(
+                        Object.fromEntries(SECTIONS.map(s => [s, newResetState[s] || []])),
+                        {}
+                    );
+                } catch (e) { /* ignore */ }
                 console.log("DEBUG: Smart Reset complete. The UI will now update via the real-time listener.");
             }).catch(err => {
                 console.error("Reset failed during save:", err);
@@ -5910,7 +5930,11 @@ const performLocalReset = () => {
                 const elements = state[sectionId] || [];
                 if (zone && Array.isArray(elements)) {
                     elements.forEach((item, itemIndex) => {
-                        item.originalId = `${secIndex}-${itemIndex}`;
+                        // CRITICAL: keep stable originalId from template/clinic JSON.
+                        // Only invent an id when missing. Never renumber 1-4/1-5/1-6 → sequential.
+                        if (!item.originalId) {
+                            item.originalId = `${secIndex}-${itemIndex}`;
+                        }
                         zone.appendChild(createElement(item.type, item));
                     });
                 }
@@ -8664,8 +8688,29 @@ techNameInput.addEventListener('keydown', (event) => {
             });
         }
 
-        function refreshCondensedForm() {
+        let _cfRefreshTimer = null;
+        function refreshCondensedForm(opts) {
             if (uiMode !== 'form') return;
+            // Debounce rapid cloud/local updates (stops painscale flicker)
+            const immediate = opts && opts.immediate;
+            if (!immediate) {
+                clearTimeout(_cfRefreshTimer);
+                _cfRefreshTimer = setTimeout(() => refreshCondensedForm({ immediate: true }), 80);
+                return;
+            }
+            // If user is mid-drag on a pain slider / BP / PSR, skip rebuild this tick
+            const ae0 = document.activeElement;
+            if (ae0 && ae0.closest && ae0.closest('#condensed-form-view')) {
+                if (ae0.classList && (ae0.classList.contains('pain-slider') ||
+                    ae0.classList.contains('bp-systolic') ||
+                    ae0.classList.contains('bp-diastolic') ||
+                    ae0.classList.contains('psr-input'))) {
+                    // schedule one more try after interaction
+                    clearTimeout(_cfRefreshTimer);
+                    _cfRefreshTimer = setTimeout(() => refreshCondensedForm({ immediate: true }), 200);
+                    return;
+                }
+            }
 
             // Preserve focus across form rebuild (PSR sextants, BP fields, etc.)
             const ae = document.activeElement;
