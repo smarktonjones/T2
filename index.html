@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 24SEP26 mgh originalId-stable + painscale flicker fix -->
+<!-- version as of 24SEP26 mgh BP pulse/temp vitals -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -84,6 +84,16 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         .alert-none { background-color: var(--success-color); border-color: var(--success-color)!important; }
         .alert-active { background-color: var(--danger-color); border-color: var(--danger-color)!important; }
         .bp-element input[type="number"] { width: 45px; text-align: center; }
+        .bp-element .bp-pulse, .bp-element .bp-temp { width: 52px; }
+        .bp-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
+        .bp-bp-group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .bp-extra-vitals { display: flex; flex-direction: column; gap: 2px; }
+        .bp-if-applicable {
+            font-size: 0.68em; color: #888; font-style: italic; font-weight: 400;
+            letter-spacing: 0.01em; line-height: 1.1; margin-bottom: 1px;
+        }
+        .bp-extra-inputs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .bp-extra-inputs label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.95em; }
         .bp-prior-tx-container { display: none; } .bp-prior-tx-container.visible { display: block; }
         
 /* **** START OF MODIFIED CSS to take precedence over other colors **** */
@@ -1497,7 +1507,7 @@ body.session-readonly .add-element-btn {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.1.1</p>
+    <p class="landing-version">v6.1.2</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -3236,7 +3246,27 @@ const updateLiveOutput = (forceImmediate = false) => {
         }
         else if (state.type === 'alert') { if (state.alerts && state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => { if (!a) return ''; if (a === 'PREGNANCY') return 'PREGNANCY'; if (String(a).startsWith('Custom: ')) return String(a).substring(8); return `${a} ALLERGY`; }).filter(Boolean).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
         else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
-        else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
+        else if (state.type === 'bloodpressure') {
+            const bpParts = [];
+            const sys = (state.systolic || '').toString().trim();
+            const dia = (state.diastolic || '').toString().trim();
+            const pulse = (state.pulse || '').toString().trim();
+            const temp = (state.temp || '').toString().trim();
+            if (sys && dia) {
+                let bp = `BP: ${sys}/${dia}`;
+                if (parseInt(sys, 10) >= parseInt(state.discussSystolic, 10) || parseInt(dia, 10) >= parseInt(state.discussDiastolic, 10)) {
+                    bp += " (BP discussed)";
+                }
+                if (state.isPriorTxChecked && (parseInt(sys, 10) >= parseInt(el.dataset.checkboxSystolic, 10) || parseInt(dia, 10) >= parseInt(el.dataset.checkboxDiastolic, 10))) {
+                    bp += ` (BP prior to treatment: ${sys}/${dia})`;
+                }
+                bpParts.push(bp);
+            }
+            if (pulse) bpParts.push(`Pulse: ${pulse}`);
+            if (temp) bpParts.push(`Temp: ${temp}`);
+            // 5 spaces between segments; empty if nothing entered
+            content = bpParts.join('     ');
+        }
         else if (state.type === 'psr') { const scores = state.scores; const topRow = `     ${padBox(scores[0])} ${padBox(scores[1])} ${padBox(scores[2])}`; const botRow = `     ${padBox(scores[5])} ${padBox(scores[4])} ${padBox(scores[3])}`; content = `PSR:\n${topRow}\n${botRow}`; if (state.asterisks.some(a => a) && state.asteriskNote.trim()) { content += `\n     (*: ${state.asteriskNote.trim()})`; } }
         else if (state.type === 'dropdown') { if (el.querySelector('select').selectedIndex > 0 || !state.required) content = el.querySelector('select').value; }
         else if (state.type === 'checkbox') { if(el.querySelector('input').checked) content = el.querySelector('span').innerText; }
@@ -3349,7 +3379,7 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
    
      else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
             else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
-            else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-inputs"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
+            else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-row"><div class="bp-bp-group"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-extra-vitals"><div class="bp-if-applicable">if applicable</div><div class="bp-extra-inputs"><label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="72" min="0" max="300" value="${data.pulse || ''}"></label><label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="${data.temp || ''}"></label></div></div></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
             else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; 
 
 
@@ -3446,7 +3476,19 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             else if (type === 'painscale') { state.value = element.querySelector('.pain-slider').value; }
             else if (type === 'anesthetic') { state.anestheticTypes = JSON.parse(element.dataset.anestheticTypes); state.anestheticValues = JSON.parse(element.dataset.anestheticValues); state.includeTopical = element.dataset.includeTopical === 'true'; }
             else if (type === 'endo-testing') { state.endoTests = JSON.parse(element.dataset.endoTests); state.endoData = JSON.parse(element.dataset.endoData); }
-            else if (type === 'bloodpressure') { state.systolic = element.querySelector('.bp-systolic').value; state.diastolic = element.querySelector('.bp-diastolic').value; state.isPriorTxChecked = element.querySelector('.bp-prior-tx-check').checked; state.discussSystolic = element.dataset.discussSystolic; state.discussDiastolic = element.dataset.discussDiastolic; state.checkboxSystolic = element.dataset.checkboxSystolic; state.checkboxDiastolic = element.dataset.checkboxDiastolic; }
+            else if (type === 'bloodpressure') {
+                const pulseEl = element.querySelector('.bp-pulse');
+                const tempEl = element.querySelector('.bp-temp');
+                state.systolic = element.querySelector('.bp-systolic').value;
+                state.diastolic = element.querySelector('.bp-diastolic').value;
+                state.pulse = pulseEl ? pulseEl.value : (element.dataset.pulse || '');
+                state.temp = tempEl ? tempEl.value : (element.dataset.temp || '');
+                state.isPriorTxChecked = element.querySelector('.bp-prior-tx-check').checked;
+                state.discussSystolic = element.dataset.discussSystolic;
+                state.discussDiastolic = element.dataset.discussDiastolic;
+                state.checkboxSystolic = element.dataset.checkboxSystolic;
+                state.checkboxDiastolic = element.dataset.checkboxDiastolic;
+            }
             else if (type === 'psr') { state.scores = Array(6).fill(''); state.asterisks = Array(6).fill(false); element.querySelectorAll('.psr-input').forEach(i => { state.scores[i.dataset.index] = i.value; }); element.querySelectorAll('.psr-asterisk').forEach(cb => { state.asterisks[cb.dataset.index] = cb.checked; }); state.asteriskNote = element.querySelector('.psr-asterisk-note').value; }
             else if (type === 'dropdown') { const select = element.querySelector('select'); state.options = Array.from(select.options).map(o => o.value); state.selected = select.value; }
             else if (type === 'checkbox') { state.checked = element.querySelector('input').checked; state.content = element.querySelector('span').innerText; }
@@ -5549,12 +5591,20 @@ const surgicallyUpdateElement = (element, newStateItem) => {
 		else if (newStateItem.type === 'bloodpressure') {
         const systolicInput = element.querySelector('.bp-systolic');
         const diastolicInput = element.querySelector('.bp-diastolic');
+        const pulseInput = element.querySelector('.bp-pulse');
+        const tempInput = element.querySelector('.bp-temp');
         const priorTxCheckbox = element.querySelector('.bp-prior-tx-check');
         if (systolicInput && systolicInput.value !== (newStateItem.systolic || '')) {
             systolicInput.value = newStateItem.systolic || '';
         }
         if (diastolicInput && diastolicInput.value !== (newStateItem.diastolic || '')) {
             diastolicInput.value = newStateItem.diastolic || '';
+        }
+        if (pulseInput && pulseInput.value !== (newStateItem.pulse || '')) {
+            pulseInput.value = newStateItem.pulse || '';
+        }
+        if (tempInput && tempInput.value !== (newStateItem.temp || '')) {
+            tempInput.value = newStateItem.temp || '';
         }
         if (priorTxCheckbox && priorTxCheckbox.checked !== !!newStateItem.isPriorTxChecked) {
             priorTxCheckbox.checked = !!newStateItem.isPriorTxChecked;
@@ -8096,8 +8146,11 @@ techNameInput.addEventListener('keydown', (event) => {
                 }
                 if (state.type === 'painscale') return `${state.value || 0}/10`;
                 if (state.type === 'bloodpressure') {
-                    if (state.systolic && state.diastolic) return `${state.systolic}/${state.diastolic}`;
-                    return 'Not recorded';
+                    const bits = [];
+                    if (state.systolic && state.diastolic) bits.push(`${state.systolic}/${state.diastolic}`);
+                    if (state.pulse) bits.push(`P ${state.pulse}`);
+                    if (state.temp) bits.push(`T ${state.temp}`);
+                    return bits.length ? bits.join(' · ') : 'Not recorded';
                 }
                 if (state.type === 'dropdown') {
                     const sel = el.querySelector('select');
@@ -8221,7 +8274,7 @@ techNameInput.addEventListener('keydown', (event) => {
                     return !(state.alerts.length === 1 && state.alerts[0] === 'None');
                 }
                 if (state.type === 'painscale') return String(state.value || '0') !== '0';
-                if (state.type === 'bloodpressure') return !!(state.systolic || state.diastolic);
+                if (state.type === 'bloodpressure') return !!(state.systolic || state.diastolic || state.pulse || state.temp);
                 if (state.type === 'psr') return (state.scores || []).some(s => s !== '' && s != null);
                 if (state.type === 'tx-plan') {
                     return Object.values(state.txData || {}).some(e => e && e.text && String(e.text).trim());
@@ -8273,38 +8326,49 @@ techNameInput.addEventListener('keydown', (event) => {
                 return;
             }
             if (type === 'bloodpressure') {
-                // Full BP chrome with same classes so status colors apply
+                // Full BP chrome + Pulse/Temp; same classes so status colors apply
                 const wrap = document.createElement('div');
                 wrap.className = 'cf-surface bp-element';
                 wrap.style.resize = 'none';
                 wrap.style.width = '100%';
-                // copy status class
                 ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
                     if (el.classList.contains(c)) wrap.classList.add(c);
                 });
                 const sSrc = el.querySelector('.bp-systolic');
                 const dSrc = el.querySelector('.bp-diastolic');
+                const pulseSrc = el.querySelector('.bp-pulse');
+                const tempSrc = el.querySelector('.bp-temp');
                 const priorSrc = el.querySelector('.bp-prior-tx-check');
                 const priorVis = el.querySelector('.bp-prior-tx-container');
                 wrap.innerHTML =
-                    '<div class="bp-inputs"><b>BP:</b> ' +
-                    '<input type="number" class="bp-systolic" placeholder="120" value="' + (sSrc ? sSrc.value : '') + '"> / ' +
-                    '<input type="number" class="bp-diastolic" placeholder="80" value="' + (dSrc ? dSrc.value : '') + '">' +
+                    '<div class="bp-row">' +
+                      '<div class="bp-bp-group"><b>BP:</b> ' +
+                        '<input type="number" class="bp-systolic" placeholder="120" value="' + (sSrc ? sSrc.value : '') + '"> / ' +
+                        '<input type="number" class="bp-diastolic" placeholder="80" value="' + (dSrc ? dSrc.value : '') + '">' +
+                      '</div>' +
+                      '<div class="bp-extra-vitals">' +
+                        '<div class="bp-if-applicable">if applicable</div>' +
+                        '<div class="bp-extra-inputs">' +
+                          '<label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="72" min="0" max="300" value="' + (pulseSrc ? pulseSrc.value : '') + '"></label>' +
+                          '<label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="' + (tempSrc ? tempSrc.value : '') + '"></label>' +
+                        '</div>' +
+                      '</div>' +
                     '</div>' +
                     '<div class="bp-prior-tx-container' + (priorVis && priorVis.classList.contains('visible') ? ' visible' : '') + '">' +
                     '<label><input type="checkbox" class="bp-prior-tx-check"' + (priorSrc && priorSrc.checked ? ' checked' : '') + '> BP Prior to Tx</label>' +
                     '</div>';
                 const sIn = wrap.querySelector('.bp-systolic');
                 const dIn = wrap.querySelector('.bp-diastolic');
+                const pulseIn = wrap.querySelector('.bp-pulse');
+                const tempIn = wrap.querySelector('.bp-temp');
                 const pIn = wrap.querySelector('.bp-prior-tx-check');
                 const sync = () => {
-                    // Silent write to source inputs — do NOT dispatch bubbled input events
-                    // (those re-enter editor handlers / risk form rebuild and focus loss)
                     if (sSrc) sSrc.value = sIn.value;
                     if (dSrc) dSrc.value = dIn.value;
+                    if (pulseSrc && pulseIn) pulseSrc.value = pulseIn.value;
+                    if (tempSrc && tempIn) tempSrc.value = tempIn.value;
                     if (priorSrc && pIn) priorSrc.checked = pIn.checked;
                     if (typeof updateBPElementUI === 'function') updateBPElementUI(el);
-                    // mirror status onto form clone in-place
                     ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => wrap.classList.remove(c));
                     ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
                         if (el.classList.contains(c)) wrap.classList.add(c);
@@ -8314,7 +8378,6 @@ techNameInput.addEventListener('keydown', (event) => {
                     if (pc && srcPc) {
                         pc.classList.toggle('visible', srcPc.classList.contains('visible'));
                     }
-                    // Keep prior-tx visibility on form clone too
                     if (pc) {
                         const s = parseInt(sIn.value, 10);
                         const d = parseInt(dIn.value, 10);
@@ -8327,12 +8390,12 @@ techNameInput.addEventListener('keydown', (event) => {
                         }
                     }
                     updateLiveOutput();
-                    // Never refreshCondensedForm while typing BP
                 };
-                sIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
-                dIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
-                sIn.addEventListener('keydown', (e) => e.stopPropagation());
-                dIn.addEventListener('keydown', (e) => e.stopPropagation());
+                [sIn, dIn, pulseIn, tempIn].forEach(inp => {
+                    if (!inp) return;
+                    inp.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
+                    inp.addEventListener('keydown', (e) => e.stopPropagation());
+                });
                 if (pIn) pIn.addEventListener('change', (e) => { e.stopPropagation(); sync(); });
                 host.appendChild(wrap);
                 return;
@@ -8550,11 +8613,11 @@ techNameInput.addEventListener('keydown', (event) => {
                     label.className = 'cf-label';
 
                     // PSR: no extra label. Dropdowns: no label (option text is the control, like Editor).
-                    if (state.type === 'psr' || state.type === 'dropdown') {
+                    if (state.type === 'psr' || state.type === 'dropdown' || state.type === 'bloodpressure') {
                         label.textContent = '';
                         label.style.display = 'none';
-                        if (state.type === 'dropdown') {
-                            // Label column gone → select gets the full row
+                        if (state.type === 'dropdown' || state.type === 'bloodpressure') {
+                            // Label column gone → control gets the full row
                             row.style.gridTemplateColumns = '1fr';
                         }
                     } else {
@@ -8704,6 +8767,8 @@ techNameInput.addEventListener('keydown', (event) => {
                 if (ae0.classList && (ae0.classList.contains('pain-slider') ||
                     ae0.classList.contains('bp-systolic') ||
                     ae0.classList.contains('bp-diastolic') ||
+                    ae0.classList.contains('bp-pulse') ||
+                    ae0.classList.contains('bp-temp') ||
                     ae0.classList.contains('psr-input'))) {
                     // schedule one more try after interaction
                     clearTimeout(_cfRefreshTimer);
@@ -8746,6 +8811,10 @@ techNameInput.addEventListener('keydown', (event) => {
                     target = row.querySelector('.bp-systolic');
                 } else if (restore.classList.includes('bp-diastolic')) {
                     target = row.querySelector('.bp-diastolic');
+                } else if (restore.classList.includes('bp-pulse')) {
+                    target = row.querySelector('.bp-pulse');
+                } else if (restore.classList.includes('bp-temp')) {
+                    target = row.querySelector('.bp-temp');
                 } else if (restore.classList.includes('psr-input') && restore.dataIndex != null) {
                     target = row.querySelector('.psr-input[data-index="' + restore.dataIndex + '"]');
                 } else if (restore.classList.includes('psr-asterisk') && restore.dataIndex != null) {
