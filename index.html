@@ -2692,7 +2692,11 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         "SRP",
         "RECALL"
       ],
-      "txData": {}
+      "txData": {
+        "Oral Hygiene-CLASS 2": {
+          "text": "RDH",
+          "priority": 1
+        } }
     }
   ],
   "footer": [
@@ -3379,7 +3383,7 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
    
      else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
             else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
-            else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-row"><div class="bp-bp-group"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-extra-vitals"><div class="bp-if-applicable">if applicable</div><div class="bp-extra-inputs"><label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="72" min="0" max="300" value="${data.pulse || ''}"></label><label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="${data.temp || ''}"></label></div></div></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
+            else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-row"><div class="bp-bp-group"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-extra-vitals"><div class="bp-if-applicable">if applicable</div><div class="bp-extra-inputs"><label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="00" min="0" max="300" value="${data.pulse || ''}"></label><label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="${data.temp || ''}"></label></div></div></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
             else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; 
 
 
