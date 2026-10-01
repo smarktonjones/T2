@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 17SEP26 mgh -->
+<!-- version as of 01OCT26 mgh doctor session localStorage restore -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -15,7 +15,7 @@
             --warning-color: #fd7e14; --success-color: #28a745; --success-color2: yellow; --success-hover: #218838;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; 
- background-image: linear-gradient(to left, #fafafa, #e8e8e8); /* The gradient */
+ background-image: linear-gradient(to left, #e2e5ea, #e8e8e8); /* The gradient */
  color: var(--text-color); margin: 0; padding: 20px; }
         h1 { font-size: 48px; text-align: left; margin-top: 0; text-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);}
 h2 { text-align: center; margin-top: 0; color: var(--danger-color); font-weight: bold; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);}
@@ -84,6 +84,16 @@ h5 { text-align: center; margin-top: 0; font-weight: light;}
         .alert-none { background-color: var(--success-color); border-color: var(--success-color)!important; }
         .alert-active { background-color: var(--danger-color); border-color: var(--danger-color)!important; }
         .bp-element input[type="number"] { width: 45px; text-align: center; }
+        .bp-element .bp-pulse, .bp-element .bp-temp { width: 52px; }
+        .bp-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
+        .bp-bp-group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .bp-extra-vitals { display: flex; flex-direction: column; gap: 2px; }
+        .bp-if-applicable {
+            font-size: 0.68em; color: #888; font-style: italic; font-weight: 400;
+            letter-spacing: 0.01em; line-height: 1.1; margin-bottom: 1px;
+        }
+        .bp-extra-inputs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .bp-extra-inputs label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.95em; }
         .bp-prior-tx-container { display: none; } .bp-prior-tx-container.visible { display: block; }
         
 /* **** START OF MODIFIED CSS to take precedence over other colors **** */
@@ -324,14 +334,37 @@ opacity: 0.4;
             fill: red !important; /* Mark caries in red */
         }
         .tooth-label {
-            font-size: 7px; /* Labels for tooth numbers */
+            font-size: 12px; /* larger tooth numbers; circles stay put */
             text-anchor: middle;
-            fill: #333;
-            font-weight: bold;
+            fill: #222;
+            font-weight: 700;
         }
+        .class-badge {
+            font-size: 13px;
+            font-weight: 800;
+            pointer-events: none;
+        }
+        #dental-class-indicator {
+            display: none;
+            margin-left: 8px;
+            padding: 5px 12px;
+            border-radius: 980px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        #dental-class-indicator.dc-1 { background: #28a745; color: #fff; }
+        #dental-class-indicator.dc-2 { background: #ffc107; color: #1d1d1f; }
+        #dental-class-indicator.dc-3 { background: #d93025; color: #fff; }
+        body.cf-skin-graphite #dental-class-indicator.dc-1 { background: #30d158; }
+        body.cf-skin-graphite #dental-class-indicator.dc-2 { background: #ffd60a; }
+        body.cf-skin-graphite #dental-class-indicator.dc-3 { background: #ff453a; }
         .arch-line {
-            stroke: #aaa;
-            stroke-width: 2;
+            stroke: #888;
+            stroke-width: 2.5;
             fill: none;
         }
         .mouth-label {
@@ -599,7 +632,7 @@ body:not(.condensed-mode) #condensed-form-view { display: none !important; }
     align-items: center;
     justify-content: space-between;
     padding: 8px 14px;
-    background: linear-gradient(to right, #fef2f2, #fff);
+    background: linear-gradient(to right, #fecaca, #fff);
     border-bottom: 1px solid #d0d7de;
 }
 .cf-section-hd h2 {
@@ -1406,6 +1439,32 @@ body.cf-skin-graphite #user-status {
     border: 1px solid rgba(255,255,255,0.08);
 }
 
+/* Read-only session: mute destructive layout controls */
+
+body.session-readonly #reset-btn,
+body.session-readonly #full-reset-btn,
+body.session-readonly #set-template-btn,
+body.session-readonly .add-element-btn {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+
+
+/* Dropdown rows in Form View: full-width select, no label column */
+.cf-row:has(select.inline) {
+    grid-template-columns: 1fr !important;
+}
+.cf-preview:has(select.inline) {
+    overflow: visible !important;
+    white-space: normal !important;
+}
+.cf-preview select.inline {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
    
     </style>
 	
@@ -1435,6 +1494,7 @@ body.cf-skin-graphite #user-status {
 <div id="user-status" style="position: fixed; top: 10px; right: 20px; background: #fff; padding: 5px 10px; border-radius: 5px; box-shadow: var(--element-shadow); z-index: 100;">
     <span id="user-email"></span>
     <button id="logout-button" class="view-hidden">Logout</button>
+    <span id="dental-class-indicator" class="dc-1" title="Derived from Treatment Plan Class 2 / Class 3 entries">Dental Class 1</span>
 <!-- ================================================================= -->
 <!--  Doctor's "Save Final Copy or Go Back" Button                 -->
 <!-- ================================================================= -->
@@ -1447,7 +1507,7 @@ body.cf-skin-graphite #user-status {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.0</p>
+    <p class="landing-version">v6.1.6</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -1554,7 +1614,7 @@ body.cf-skin-graphite #user-status {
         <button id="import-note-button" class="import-btn-prominent">Import Previous Note...</button>
         <button id="copy-btn-top" class="control-btn copy-btn-prominent">Copy Note to Clipboard (<i>shortcut: Shift + Enter</i>)</button>
         <button id="ui-mode-toggle" type="button" title="Switch between block editor and condensed form">Form View</button>
-        <select id="form-display-select" title="Form View size and skin (does not affect Editor View)" aria-label="Form display options">
+        <select id="form-display-select" title="Form View display size and style (does not affect Editor View)" aria-label="Form display options">
             <option value="default">Display: Default</option>
             <option value="comfortable">Display: Comfortable</option>
             <option value="large">Display: Large</option>
@@ -1666,7 +1726,7 @@ body.cf-skin-graphite #user-status {
 
     <!-- **** START: Charting Element Modal **** -->
     <div id="charting-editor-modal" class="modal">
-        <div class="modal-content" style="max-width: 950px;">
+            <div class="modal-content" style="max-width: 950px; margin: 12px auto 16px; max-height: 96vh;">
             <div class="modal-header">
                 <h2>Charting Editor</h2>
                 <span class="close-btn" data-modal-id="charting-editor-modal">&times;</span>
@@ -1686,7 +1746,7 @@ body.cf-skin-graphite #user-status {
                         <!-- Transparent layer: only captures right-clicks so classify menu works on GitHub Pages / hardened browsers -->
                         <div id="charting-rclick-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; background: transparent;"></div>
                     </div>
-                    <p style="font-size: 0.75em; color: #888; margin: 2px 0 0;">Type e.g. 3mo , 14-DO , #19 M or click the chart. Auto-corrects to #3(MO). Right-click a surface or token to classify. Select text then use buttons below to send to Treatment Plan.</p>
+                    <p style="font-size: 0.75em; color: #888; margin: 2px 0 0;">Type e.g. 3mo , 14-DO , #19 M or click the chart. Auto-corrects to #3(MO). Right-click a surface to classify or select text then use buttons below to send to Treatment Plan.</p>
                 </div>
 
                 <!-- Send-to-Treatment-Plan buttons (replaces old snippets) -->
@@ -1744,6 +1804,9 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
 
     <!-- **** insert JSON data here inside {} -->
 <script type="application/json" id="default-json-data">
+
+
+
 
 
 
@@ -1833,7 +1896,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "options": [
         "Learning Type: Written/Verbal. ",
         "Learning Type: Written. ",
-	    "Learning Type: Visual. ",
+        "Learning Type: Visual. ",
         "Learning Type: Verbal. "
       ],
       "selected": "Learning Type: Written/Verbal. "
@@ -1939,7 +2002,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "1-1",
       "isHidden": false,
       "doNotReset": false,
-      "width": "",
+      "width": "100%",
       "fillColor": "#f9f0ff",
       "content": "None",
       "internalLabel": "Chief Concern:",
@@ -2076,6 +2139,8 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "prefixLabel": "RADIOGRAPHIC FINDINGS: ",
       "defaultText": "No Pathology Noted.",
       "dropdownOptions": [
+        "Horizontal bone loss #",
+        "Vertical bone loss #",
         "Antral Pseudocyst Maxillary Sinus",
         "Periradicular Radiolucency #",
         "Condensing Osteitis #",
@@ -2142,8 +2207,8 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "dropdownOptions": [
         "Mandibular Tori",
         "Apthous Ulcer",
-   "Tobacco Keratosis",
-"Nicotine Keratosis",
+        "Tobacco Keratosis",
+        "Nicotine Keratosis",
         "Palatal Torus",
         "Fibroma",
         "Tonsillectomy",
@@ -2194,7 +2259,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         "Asymptomatic",
         "SRCT# ",
         "Draining sinus tract area #"
-	  ]
+      ]
     },
     {
       "type": "endo-testing",
@@ -2214,7 +2279,8 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
         "Tooth Slooth",
         "Periodontal",
         "Mobility",
-        "Transillumination"
+        "Transillumination",
+        "EPT"
       ],
       "endoData": {
         "teeth": [
@@ -2292,6 +2358,9 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "prefixLabel": "OCCLUSION: ",
       "defaultText": "WNL.",
       "dropdownOptions": [
+        "Angle's Class I",
+        "Angle's Class II",
+        "Angle's Class III",
         "Bonded Retainer 22-27",
         "Bonded Retainer 6-11",
         "Crossbite ",
@@ -2495,7 +2564,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-5",
       "isHidden": false,
       "doNotReset": false,
-      "width": "33%",
+      "width": "",
       "fillColor": "#e8e8e8",
       "options": [
         "CARIES RISK: Low",
@@ -2513,7 +2582,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-6",
       "isHidden": false,
       "doNotReset": false,
-      "width": "33%",
+      "width": "",
       "fillColor": "#e8e8e8",
       "options": [
         "PERIO RISK: Low",
@@ -2531,7 +2600,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "3-7",
       "isHidden": false,
       "doNotReset": false,
-      "width": "33%",
+      "width": "",
       "fillColor": "#e8e8e8",
       "options": [
         "CANCER RISK: Low",
@@ -2607,7 +2676,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "originalId": "4-2",
       "isHidden": false,
       "doNotReset": false,
-      "width": "66%",
+      "width": "100%",
       "fillColor": "#d9f7be",
       "txRows": [
         "Operative",
@@ -2646,22 +2715,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "internalLabel": "Dental Technician Name",
       "prefixLabel": "DENTAL TECHNICIAN: ",
       "defaultText": "",
-      "dropdownOptions": [
-        "SANDERSON",
-        "LEONARDSON",
-        "DUPREY",
-        "PHILLIPS",
-        "BYRD",
-        "MITCHELL",
-        "STEWART",
-        "MORRIS",
-        "BABCOCK",
-        "VILLANUEVA",
-        "TURNER",
-        "HARDEN",
-        "FERGUSON",
-        "CISSE"
-      ]
+      "dropdownOptions": []
     },
     {
       "type": "formatter",
@@ -2713,7 +2767,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "doNotReset": true,
       "width": "",
       "fillColor": "#fffbe6",
-      "content": "    .  . .   . ____ .  .    _   _    _    _  .  .  _   \n   /|/ /|,/ /_/ / /  /    / / / ` /_` /_/ /|/ /_/  \n  / | /  / / \\  / /_/    /_/ /_, /_, /  / / |  / /      ",
+      "content": "",
       "internalLabel": "Signature Block",
       "prefixLabel": "",
       "defaultText": "",
@@ -2725,6 +2779,12 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
     }
   ]
 }
+
+
+
+
+
+
 
 
 
@@ -2759,6 +2819,11 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+// Prefer browser localStorage over IndexedDB — more resilient on locked
+// government machines that wipe IndexedDB/session storage on unlock/idle.
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
+    console.warn('Could not set Firebase LOCAL persistence:', err);
+});
 // =================================================================
 
 
@@ -3040,7 +3105,33 @@ const updateEnhancedTextboxUI = (element) => {
 const getBPStatus = (s, d) => {if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 85) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal';};
 const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
 
-		const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
+		
+/** Always return a length-6 string array for PSR scores (prevents trailing empties / object maps from wiping sextants). */
+const normalizePsrScores = (scores) => {
+    const out = Array(6).fill('');
+    if (Array.isArray(scores)) {
+        for (let i = 0; i < 6; i++) {
+            if (scores[i] != null && scores[i] !== undefined) out[i] = String(scores[i]);
+        }
+    } else if (scores && typeof scores === 'object') {
+        for (let i = 0; i < 6; i++) {
+            if (scores[i] != null && scores[i] !== undefined) out[i] = String(scores[i]);
+            else if (scores[String(i)] != null) out[i] = String(scores[String(i)]);
+        }
+    }
+    return out;
+};
+const normalizePsrAsterisks = (asterisks) => {
+    const out = Array(6).fill(false);
+    if (Array.isArray(asterisks)) {
+        for (let i = 0; i < 6; i++) out[i] = !!asterisks[i];
+    } else if (asterisks && typeof asterisks === 'object') {
+        for (let i = 0; i < 6; i++) out[i] = !!(asterisks[i] ?? asterisks[String(i)]);
+    }
+    return out;
+};
+
+const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
 
 // Improved PSR auto-tabbing that works in BOTH Editor View and Form View
 const handlePSRTabbing = (event) => {
@@ -3190,7 +3281,27 @@ const updateLiveOutput = (forceImmediate = false) => {
         }
         else if (state.type === 'alert') { if (state.alerts && state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => { if (!a) return ''; if (a === 'PREGNANCY') return 'PREGNANCY'; if (String(a).startsWith('Custom: ')) return String(a).substring(8); return `${a} ALLERGY`; }).filter(Boolean).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
         else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
-        else if (state.type === 'bloodpressure') { if (state.systolic && state.diastolic) { content = `BP ${state.systolic}/${state.diastolic}`; if (parseInt(state.systolic) >= parseInt(state.discussSystolic) || parseInt(state.diastolic) >= parseInt(state.discussDiastolic)) content += " (BP discussed)"; if (state.isPriorTxChecked && (parseInt(state.systolic) >= parseInt(el.dataset.checkboxSystolic) || parseInt(state.diastolic) >= parseInt(el.dataset.checkboxDiastolic))) content += ` (BP prior to treatment: ${state.systolic}/${state.diastolic})`; } }
+        else if (state.type === 'bloodpressure') {
+            const bpParts = [];
+            const sys = (state.systolic || '').toString().trim();
+            const dia = (state.diastolic || '').toString().trim();
+            const pulse = (state.pulse || '').toString().trim();
+            const temp = (state.temp || '').toString().trim();
+            if (sys && dia) {
+                let bp = `BP: ${sys}/${dia}`;
+                if (parseInt(sys, 10) >= parseInt(state.discussSystolic, 10) || parseInt(dia, 10) >= parseInt(state.discussDiastolic, 10)) {
+                    bp += " (BP discussed)";
+                }
+                if (state.isPriorTxChecked && (parseInt(sys, 10) >= parseInt(el.dataset.checkboxSystolic, 10) || parseInt(dia, 10) >= parseInt(el.dataset.checkboxDiastolic, 10))) {
+                    bp += ` (BP prior to treatment: ${sys}/${dia})`;
+                }
+                bpParts.push(bp);
+            }
+            if (pulse) bpParts.push(`Pulse: ${pulse}`);
+            if (temp) bpParts.push(`Temp: ${temp}`);
+            // 5 spaces between segments; empty if nothing entered
+            content = bpParts.join('     ');
+        }
         else if (state.type === 'psr') { const scores = state.scores; const topRow = `     ${padBox(scores[0])} ${padBox(scores[1])} ${padBox(scores[2])}`; const botRow = `     ${padBox(scores[5])} ${padBox(scores[4])} ${padBox(scores[3])}`; content = `PSR:\n${topRow}\n${botRow}`; if (state.asterisks.some(a => a) && state.asteriskNote.trim()) { content += `\n     (*: ${state.asteriskNote.trim()})`; } }
         else if (state.type === 'dropdown') { if (el.querySelector('select').selectedIndex > 0 || !state.required) content = el.querySelector('select').value; }
         else if (state.type === 'checkbox') { if(el.querySelector('input').checked) content = el.querySelector('span').innerText; }
@@ -3201,6 +3312,7 @@ const updateLiveOutput = (forceImmediate = false) => {
 
     console.log("DEBUG: updateLiveOutput finished. Triggering cloud sync.");
     syncStateToFirestore(forceImmediate); // Pass the flag along
+    if (typeof updateDentalClassIndicator === 'function') updateDentalClassIndicator();
 
     if (typeof generateChart === 'function') {
         try { generateChart(); } catch (e) { /* chart removed / optional */ }
@@ -3302,8 +3414,8 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
    
      else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
             else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
-            else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-inputs"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
-            else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; 
+            else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-row"><div class="bp-bp-group"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-extra-vitals"><div class="bp-if-applicable">if applicable</div><div class="bp-extra-inputs"><label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="00" min="0" max="300" value="${data.pulse || ''}"></label><label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="${data.temp || ''}"></label></div></div></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
+            else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = normalizePsrScores(data.scores); const asterisks = normalizePsrAsterisks(data.asterisks); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; 
 
 
 draggable.querySelectorAll('.psr-input').forEach(input => {
@@ -3399,8 +3511,35 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
             else if (type === 'painscale') { state.value = element.querySelector('.pain-slider').value; }
             else if (type === 'anesthetic') { state.anestheticTypes = JSON.parse(element.dataset.anestheticTypes); state.anestheticValues = JSON.parse(element.dataset.anestheticValues); state.includeTopical = element.dataset.includeTopical === 'true'; }
             else if (type === 'endo-testing') { state.endoTests = JSON.parse(element.dataset.endoTests); state.endoData = JSON.parse(element.dataset.endoData); }
-            else if (type === 'bloodpressure') { state.systolic = element.querySelector('.bp-systolic').value; state.diastolic = element.querySelector('.bp-diastolic').value; state.isPriorTxChecked = element.querySelector('.bp-prior-tx-check').checked; state.discussSystolic = element.dataset.discussSystolic; state.discussDiastolic = element.dataset.discussDiastolic; state.checkboxSystolic = element.dataset.checkboxSystolic; state.checkboxDiastolic = element.dataset.checkboxDiastolic; }
-            else if (type === 'psr') { state.scores = Array(6).fill(''); state.asterisks = Array(6).fill(false); element.querySelectorAll('.psr-input').forEach(i => { state.scores[i.dataset.index] = i.value; }); element.querySelectorAll('.psr-asterisk').forEach(cb => { state.asterisks[cb.dataset.index] = cb.checked; }); state.asteriskNote = element.querySelector('.psr-asterisk-note').value; }
+            else if (type === 'bloodpressure') {
+                const pulseEl = element.querySelector('.bp-pulse');
+                const tempEl = element.querySelector('.bp-temp');
+                state.systolic = element.querySelector('.bp-systolic').value;
+                state.diastolic = element.querySelector('.bp-diastolic').value;
+                state.pulse = pulseEl ? pulseEl.value : (element.dataset.pulse || '');
+                state.temp = tempEl ? tempEl.value : (element.dataset.temp || '');
+                state.isPriorTxChecked = element.querySelector('.bp-prior-tx-check').checked;
+                state.discussSystolic = element.dataset.discussSystolic;
+                state.discussDiastolic = element.dataset.discussDiastolic;
+                state.checkboxSystolic = element.dataset.checkboxSystolic;
+                state.checkboxDiastolic = element.dataset.checkboxDiastolic;
+            }
+            else if (type === 'psr') {
+                state.scores = Array(6).fill('');
+                state.asterisks = Array(6).fill(false);
+                element.querySelectorAll('.psr-input').forEach(i => {
+                    const idx = parseInt(i.dataset.index, 10);
+                    if (!isNaN(idx) && idx >= 0 && idx < 6) state.scores[idx] = i.value;
+                });
+                element.querySelectorAll('.psr-asterisk').forEach(cb => {
+                    const idx = parseInt(cb.dataset.index, 10);
+                    if (!isNaN(idx) && idx >= 0 && idx < 6) state.asterisks[idx] = cb.checked;
+                });
+                const noteEl = element.querySelector('.psr-asterisk-note');
+                state.asteriskNote = noteEl ? noteEl.value : '';
+                state.scores = normalizePsrScores(state.scores);
+                state.asterisks = normalizePsrAsterisks(state.asterisks);
+            }
             else if (type === 'dropdown') { const select = element.querySelector('select'); state.options = Array.from(select.options).map(o => o.value); state.selected = select.value; }
             else if (type === 'checkbox') { state.checked = element.querySelector('input').checked; state.content = element.querySelector('span').innerText; }
             else if ((type || '').startsWith('label-')) { state.content = element.querySelector('[contenteditable]').innerText; }
@@ -3784,6 +3923,7 @@ const updatePerioRiskDropdown = (riskLevel) => {
     const summarySpan = element.querySelector('.tx-plan-summary');
     const entryCount = Object.values(state.txData).filter(d => d.text && d.text.trim() !== '').length;
     summarySpan.textContent = entryCount > 0 ? `Treatment Plan: ${entryCount} Entries` : 'Click to set Treatment Plan'; 
+    if (typeof updateDentalClassIndicator === 'function') updateDentalClassIndicator();
 };
    
   
@@ -4538,9 +4678,9 @@ document.getElementById('textbox-editor-replace-btn').click(); });
             });
             activeElementForEditor.dataset.txData = JSON.stringify(newData);
             updateTxPlanSummary(activeElementForEditor);
-            updateLiveOutput();
-
+            updateLiveOutput(true);
             txPlanModal.style.display = 'none';
+            if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
         };
 
         // --- Treatment Plan Properties ---
@@ -4634,8 +4774,8 @@ function updateChiefConcernDiagnosisHighlight() {
 
 
 
-        const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); activeElementForEditor.dataset.anestheticValues = JSON.stringify(newValues); activeElementForEditor.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(activeElementForEditor); updateLiveOutput(); anestheticEditorModal.style.display = 'none'; }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
-        const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(); endoModal.style.display = 'none'; };
+        const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); activeElementForEditor.dataset.anestheticValues = JSON.stringify(newValues); activeElementForEditor.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(activeElementForEditor); updateLiveOutput(true); anestheticEditorModal.style.display = 'none'; if (typeof flushPendingCloudState === 'function') flushPendingCloudState(); }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
+        const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(true); endoModal.style.display = 'none'; if (typeof flushPendingCloudState === 'function') flushPendingCloudState(); };
         const openPropertiesModal = (element) => {
             const state = getElementState(element); const body = document.getElementById('properties-body'); let mainPropsHtml = '', formattingHtml = '', generalPropsHtml = '';
             if (state.type === 'enhanced-textbox' || state.type === 'charting') { mainPropsHtml = `<fieldset><legend>Labels & Text</legend><label for="prop-internal-label">Internal Label (for maker only)</label><input type="text" id="prop-internal-label" value="${state.internalLabel}"><label for="prop-prefix-label">Prefix Label (for note output)</label><input type="text" id="prop-prefix-label" value="${state.prefixLabel}"><label for="prop-default-text">Default Text</label><input type="text" id="prop-default-text" value="${state.defaultText}"></fieldset><fieldset><legend>Dropdown Phrases / Snippets</legend><label for="prop-dropdown-options">(one per line)</label><textarea id="prop-dropdown-options" rows="6">${(state.dropdownOptions || []).join('\n')}</textarea></fieldset>`; }
@@ -4742,11 +4882,8 @@ function updateChiefConcernDiagnosisHighlight() {
 document.getElementById('allergy-save-btn').onclick = () => {
     if (!activeElementForEditor) return;
 
-    // 1. Set the 'isRenderingFromCloud' flag to true. This immediately blocks
-    //    the onSnapshot listener from overwriting any changes.
-    isRenderingFromCloud = true;
-
-    // 2. Gather the data from the modal.
+    // Gather modal data and write to the element (do NOT hold isRenderingFromCloud
+    // across updateLiveOutput — that would suppress the collab write).
     const selected = [];
     const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox:checked');
     checkboxes.forEach(cb => selected.push(cb.value));
@@ -4755,23 +4892,18 @@ document.getElementById('allergy-save-btn').onclick = () => {
         selected.push(`Custom: ${customValue}`);
     }
 
-    // 3. Update the local element's dataset directly.
     if (selected.includes("None")) {
         activeElementForEditor.dataset.alerts = JSON.stringify(["None"]);
     } else {
         activeElementForEditor.dataset.alerts = JSON.stringify(selected.filter(a => a !== "None"));
     }
 
-    // 4. Update the UI and close the modal.
     updateAlertElementUI(activeElementForEditor);
     allergyModal.style.display = 'none';
 
-    // 5. Call updateLiveOutput(). This will now queue the correct data to be sent to Firestore.
-    updateLiveOutput();
-    
-    // 6. IMPORTANT: Immediately after calling the save, release the lock so
-    //    the app can receive real-time updates again.
-    isRenderingFromCloud = false;
+    // Immediate field-level collab write
+    updateLiveOutput(true);
+    if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
 
     showFeedback("Alerts saved.", true);
 };
@@ -4801,6 +4933,406 @@ let unsubscribeFromNote = null;
 let currentNoteId = null;
 let isRenderingFromCloud = false;
 
+// ---- Collaborative sync (field-level merge + versioning) ----
+// Design goals:
+//  - One Firestore write per debounce (protect free quota) — NOT one write per field
+//  - Field-level winners via fieldMeta[originalId] = { rev, ts, by }
+//  - Transactional merge so concurrent doctor/tech edits don't clobber each other
+//  - Queue cloud snapshots while a modal is open; apply on close
+//  - Defer focused-field applies until blur (no caret steal, no permanent drop)
+let pendingCloudState = null;          // latest cloud payload deferred during modal
+let localFieldMeta = {};               // originalId -> { rev, ts, by }
+let knownDocRev = 0;
+let lastSyncedById = {};               // originalId -> last applied/written element state
+let pendingFocusApplies = new Map();   // originalId -> cloud stateItem waiting for blur
+let cloudApplyQueue = null;            // serialized apply while busy
+let isReadOnlySession = false;         // history / pure view — never write to live_notes
+let pendingLocalEdits = new Set();     // originalIds the user actually touched (robust dirty)
+// Debug helpers (optional): window.__collabStatus()
+window.__collabStatus = () => ({
+    isReadOnlySession,
+    currentNoteId,
+    pendingLocalEdits: Array.from(pendingLocalEdits),
+    lastSyncedCount: Object.keys(lastSyncedById || {}).length,
+    knownDocRev
+});
+
+function getCollabClientId() {
+    try {
+        let id = localStorage.getItem('dentalNoteMakerClientId');
+        if (!id) {
+            id = 'c_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+            localStorage.setItem('dentalNoteMakerClientId', id);
+        }
+        return id;
+    } catch (e) {
+        return 'c_anon_' + Date.now().toString(36);
+    }
+}
+
+function isAnyEditorModalOpen() {
+    // Prefer explicit display:block (this app toggles style.display)
+    const open = document.querySelector('.modal[style*="display: block"], .modal[style*="display:block"]');
+    if (open) return true;
+    // Fallback: computed style for any .modal
+    return Array.from(document.querySelectorAll('.modal')).some(m => {
+        try { return getComputedStyle(m).display === 'block'; } catch (e) { return false; }
+    });
+}
+
+function gatherLocalSections() {
+    const state = {};
+    SECTIONS.forEach((sectionId, secIndex) => {
+        state[sectionId] = [];
+        const zone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
+        if (!zone) return;
+        zone.querySelectorAll('.draggable-element').forEach((el, itemIndex) => {
+            const item = getElementState(el);
+            if (!item.originalId) item.originalId = el.dataset.originalId || `${secIndex}-${itemIndex}`;
+            state[sectionId].push(item);
+        });
+    });
+    return state;
+}
+
+function indexSectionByOriginalId(sectionArr, secIndex) {
+    const map = {};
+    (sectionArr || []).forEach((item, i) => {
+        const id = (item && item.originalId) ? item.originalId : `${secIndex}-${i}`;
+        if (item) item.originalId = id;
+        map[id] = item;
+    });
+    return map;
+}
+
+/** Compare only value-bearing fields so layout/meta noise does not hide real edits. */
+function canonicalFieldValue(item) {
+    if (!item || typeof item !== 'object') return item;
+    const t = item.type;
+    const out = { type: t, originalId: item.originalId };
+    if (t === 'enhanced-textbox' || t === 'charting') {
+        out.content = item.content || '';
+        if (item.chartingMeta) out.chartingMeta = item.chartingMeta;
+    } else if (t === 'dropdown') {
+        out.selected = item.selected;
+    } else if (t === 'alert') {
+        out.alerts = item.alerts || [];
+    } else if (t === 'painscale') {
+        out.value = String(item.value != null ? item.value : '0');
+    } else if (t === 'bloodpressure') {
+        out.systolic = item.systolic || '';
+        out.diastolic = item.diastolic || '';
+        out.isPriorTxChecked = !!item.isPriorTxChecked;
+    } else if (t === 'psr') {
+        out.scores = (typeof normalizePsrScores === 'function') ? normalizePsrScores(item.scores) : (item.scores || Array(6).fill(''));
+        out.asterisks = (typeof normalizePsrAsterisks === 'function') ? normalizePsrAsterisks(item.asterisks) : (item.asterisks || Array(6).fill(false));
+        out.asteriskNote = item.asteriskNote || '';
+    } else if (t === 'tx-plan') {
+        out.txData = item.txData || {};
+    } else if (t === 'endo-testing') {
+        out.endoData = item.endoData || {};
+    } else if (t === 'anesthetic') {
+        out.anestheticValues = item.anestheticValues || {};
+        out.includeTopical = item.includeTopical;
+    } else if (t === 'checkbox') {
+        out.checked = item.checked;
+    } else {
+        // fallback: full item minus pure layout flags
+        return item;
+    }
+    return out;
+}
+
+function fieldsDiffer(a, b) {
+    try {
+        return JSON.stringify(canonicalFieldValue(a)) !== JSON.stringify(canonicalFieldValue(b));
+    } catch (e) {
+        return JSON.stringify(a) !== JSON.stringify(b);
+    }
+}
+
+/**
+ * @param {object} localSections
+ * @param {{stampMeta?: boolean}} opts - stampMeta only on user-initiated saves (not cloud apply)
+ */
+function computeDirtyOriginalIds(localSections, opts) {
+    const stampMeta = !!(opts && opts.stampMeta);
+    const dirty = new Set();
+    const now = Date.now();
+    const writerId = getCollabClientId();
+    SECTIONS.forEach((sectionId, secIndex) => {
+        (localSections[sectionId] || []).forEach((item, i) => {
+            const id = item.originalId || `${secIndex}-${i}`;
+            const prev = lastSyncedById[id];
+            if (!prev || fieldsDiffer(prev, item)) {
+                dirty.add(id);
+                if (stampMeta) {
+                    const prevMeta = localFieldMeta[id] || { rev: 0, ts: 0 };
+                    if (!prevMeta.ts || prevMeta.ts < now) {
+                        localFieldMeta[id] = { rev: prevMeta.rev || 0, ts: now, by: writerId };
+                    }
+                }
+            }
+        });
+    });
+    // Always include ids the user explicitly touched (modal save, input, etc.)
+    pendingLocalEdits.forEach(id => dirty.add(id));
+    return dirty;
+}
+
+function markLocalEdit(originalId) {
+    if (!originalId || isReadOnlySession) return;
+    pendingLocalEdits.add(String(originalId));
+}
+
+function rememberSyncedFromSections(sections, meta) {
+    SECTIONS.forEach((sectionId, secIndex) => {
+        (sections[sectionId] || []).forEach((item, i) => {
+            const id = (item && item.originalId) ? item.originalId : `${secIndex}-${i}`;
+            lastSyncedById[id] = JSON.parse(JSON.stringify(item));
+            if (meta && meta[id]) localFieldMeta[id] = { ...meta[id] };
+        });
+    });
+}
+
+/** After DOM render, snapshot local getElementState() shapes so pure viewing
+ *  does not look "dirty" due to key-order / default-field differences vs cloud JSON. */
+function seedSyncedFromDom() {
+    try {
+        const sections = gatherLocalSections();
+        SECTIONS.forEach((sectionId, secIndex) => {
+            (sections[sectionId] || []).forEach((item, i) => {
+                const id = item.originalId || `${secIndex}-${i}`;
+                lastSyncedById[id] = JSON.parse(JSON.stringify(item));
+            });
+        });
+    } catch (e) {
+        console.warn('seedSyncedFromDom failed', e);
+    }
+}
+
+function setReadOnlySession(on, message) {
+    isReadOnlySession = !!on;
+    let banner = document.getElementById('readonly-session-banner');
+    if (on) {
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'readonly-session-banner';
+            banner.setAttribute('role', 'status');
+            banner.style.cssText = [
+                'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:5000',
+                'background:#b45309', 'color:#fff', 'text-align:center',
+                'padding:8px 16px', 'font-weight:600', 'font-size:13px',
+                'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif',
+                'box-shadow:0 2px 8px rgba(0,0,0,0.2)'
+            ].join(';');
+            document.body.appendChild(banner);
+        }
+        banner.textContent = message || 'Read-only view — changes will not be saved to the live note.';
+        banner.style.display = 'block';
+        document.body.classList.add('session-readonly');
+    } else {
+        if (banner) banner.style.display = 'none';
+        document.body.classList.remove('session-readonly');
+    }
+}
+
+// Track real user edits so collab writes cannot be skipped by noisy state compares
+(function wireLocalEditTracking() {
+    if (window.__collabEditTrackingWired) return;
+    window.__collabEditTrackingWired = true;
+    const markFromEvent = (e) => {
+        if (isReadOnlySession) return;
+        const el = e.target && e.target.closest && e.target.closest('.draggable-element');
+        if (el && el.dataset && el.dataset.originalId) {
+            markLocalEdit(el.dataset.originalId);
+        }
+        // Form-view rows map back to originalId
+        const row = e.target && e.target.closest && e.target.closest('.cf-row');
+        if (row && row.dataset && row.dataset.originalId) {
+            markLocalEdit(row.dataset.originalId);
+        }
+    };
+    document.addEventListener('input', markFromEvent, true);
+    document.addEventListener('change', markFromEvent, true);
+})();
+
+
+/**
+ * Field-level merge: for each originalId, prefer the side with the newer fieldMeta.ts
+ * when both exist; local dirty fields win only if local ts >= cloud ts.
+ */
+function mergeSectionsFieldLevel(localSections, cloudDoc, dirtyIds, nowTs, writerId) {
+    const cloudMeta = (cloudDoc && cloudDoc.fieldMeta) || {};
+    const newMeta = { ...cloudMeta };
+    const merged = {};
+
+    SECTIONS.forEach((sectionId, secIndex) => {
+        const localById = indexSectionByOriginalId(localSections[sectionId], secIndex);
+        const cloudById = indexSectionByOriginalId((cloudDoc && cloudDoc[sectionId]) || [], secIndex);
+
+        // Preserve local order (same template); append cloud-only ids at end
+        const ordered = [];
+        const seen = new Set();
+        (localSections[sectionId] || []).forEach((item, i) => {
+            const id = item.originalId || `${secIndex}-${i}`;
+            if (!seen.has(id)) { ordered.push(id); seen.add(id); }
+        });
+        Object.keys(cloudById).forEach(id => {
+            if (!seen.has(id)) { ordered.push(id); seen.add(id); }
+        });
+
+        merged[sectionId] = ordered.map(id => {
+            const localItem = localById[id];
+            const cloudItem = cloudById[id];
+            const cMeta = cloudMeta[id] || { rev: 0, ts: 0 };
+            const lMeta = localFieldMeta[id] || { rev: 0, ts: 0 };
+            const isDirty = dirtyIds.has(id);
+
+            if (isDirty && localItem) {
+                // Local edit: win unless cloud strictly newer (another user saved this field after us)
+                if (!cloudItem || !cMeta.ts || (lMeta.ts || 0) >= (cMeta.ts || 0)) {
+                    const next = { rev: (Math.max(cMeta.rev || 0, lMeta.rev || 0) + 1), ts: nowTs, by: writerId };
+                    newMeta[id] = next;
+                    localFieldMeta[id] = next;
+                    return localItem;
+                }
+                // Cloud is newer for this field — keep cloud, drop local dirty
+                newMeta[id] = cMeta;
+                return cloudItem;
+            }
+
+            // Not dirty locally: take newer of cloud vs what we last had
+            if (cloudItem && localItem) {
+                if ((cMeta.ts || 0) >= (lMeta.ts || 0)) {
+                    newMeta[id] = cMeta.ts ? cMeta : (lMeta.ts ? lMeta : { rev: 0, ts: nowTs, by: writerId });
+                    return cloudItem;
+                }
+                newMeta[id] = lMeta.ts ? lMeta : { rev: 0, ts: nowTs, by: writerId };
+                return localItem;
+            }
+            if (cloudItem) {
+                newMeta[id] = cMeta.ts ? cMeta : { rev: 0, ts: nowTs, by: 'cloud' };
+                return cloudItem;
+            }
+            if (localItem) {
+                const next = lMeta.ts ? lMeta : { rev: 1, ts: nowTs, by: writerId };
+                newMeta[id] = next;
+                localFieldMeta[id] = next;
+                return localItem;
+            }
+            return null;
+        }).filter(Boolean);
+    });
+
+    return { sections: merged, fieldMeta: newMeta };
+}
+
+function elementIsFocused(el) {
+    const ae = document.activeElement;
+    return !!(ae && el && el.contains(ae));
+}
+
+/**
+ * Apply an incoming cloud document with field-level awareness.
+ * fullRebuild → renderState; otherwise surgical reconcile with focus deferral.
+ */
+function applyIncomingCloudState(docData, opts) {
+    if (!docData) return;
+    const options = opts || {};
+    const docTemplateId = docData.templateId || 'BUILT_IN';
+    const cloudMeta = docData.fieldMeta || {};
+
+    // Pure dirty check — do NOT stamp localFieldMeta (that is only for user saves)
+    const localSections = gatherLocalSections();
+    const dirty = computeDirtyOriginalIds(localSections, { stampMeta: false });
+
+    Object.keys(cloudMeta).forEach(id => {
+        if (!dirty.has(id)) {
+            localFieldMeta[id] = { ...cloudMeta[id] };
+        }
+    });
+    if (typeof docData.docRev === 'number') knownDocRev = docData.docRev;
+
+    const needsFullRebuild = options.forceFull || !lastLoadedState || activeTemplateId !== docTemplateId;
+
+    const run = async () => {
+        if (needsFullRebuild) {
+            activeTemplateId = docTemplateId;
+            if (typeof fetchAndSetTemplateState === 'function') {
+                await fetchAndSetTemplateState(docTemplateId);
+            }
+            isRenderingFromCloud = true;
+            renderState(docData, false);
+            isRenderingFromCloud = false;
+            // Fresh load: trust cloud, clear pending local edits for this session snapshot
+            pendingLocalEdits.clear();
+            rememberSyncedFromSections(
+                Object.fromEntries(SECTIONS.map(s => [s, docData[s] || []])),
+                cloudMeta
+            );
+            seedSyncedFromDom();
+            if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+            return;
+        }
+
+        // Surgical path: skip dirty local fields & defer focused
+        isRenderingFromCloud = true;
+        reconcileStateCollab(docData, dirty);
+        isRenderingFromCloud = false;
+        // Re-seed ONLY fields that were not locally dirty so next dirty-check stays accurate
+        try {
+            SECTIONS.forEach((sectionId, secIndex) => {
+                (docData[sectionId] || []).forEach((item, i) => {
+                    const id = (item && item.originalId) ? item.originalId : `${secIndex}-${i}`;
+                    if (!dirty.has(id) && !pendingLocalEdits.has(id)) {
+                        lastSyncedById[id] = JSON.parse(JSON.stringify(item));
+                    }
+                });
+            });
+        } catch (e) { /* ignore */ }
+        if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+    };
+
+    return run();
+}
+
+function flushPendingCloudState() {
+    if (!pendingCloudState) return;
+    if (isAnyEditorModalOpen()) return; // still open
+    const data = pendingCloudState;
+    pendingCloudState = null;
+    console.log("DEBUG: Flushing pending cloud state after modal close.");
+    applyIncomingCloudState(data, { forceFull: false });
+}
+
+// Drain deferred focus applies when focus leaves an element
+document.addEventListener('focusout', (e) => {
+    if (!pendingFocusApplies.size) return;
+    // Apply on next tick so activeElement has updated
+    setTimeout(() => {
+        if (!pendingFocusApplies.size) return;
+        const still = new Map();
+        pendingFocusApplies.forEach((stateItem, id) => {
+            const el = document.querySelector(`.draggable-element[data-original-id="${id}"]`);
+            if (el && elementIsFocused(el)) {
+                still.set(id, stateItem);
+                return;
+            }
+            if (el && typeof surgicallyUpdateElement === 'function') {
+                surgicallyUpdateElement(el, stateItem);
+            } else if (el) {
+                // fallback: replace
+                el.replaceWith(createElement(stateItem.type, stateItem));
+            }
+            if (stateItem) {
+                lastSyncedById[id] = JSON.parse(JSON.stringify(stateItem));
+            }
+        });
+        pendingFocusApplies = still;
+        if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+    }, 0);
+});
 
 // --- 2. UI Element References ---
 const userStatusEmail = document.getElementById('user-email');
@@ -4835,18 +5367,11 @@ const listenForActiveNotes = () => {
         snapshot.forEach(doc => {
             const data = doc.data();
             const date = data.lastUpdated?.toDate().toLocaleString() || 'No date';
-            // 1. Find the technician name element within the document's data.
             const techNameElement = data.footer?.find(el => el.originalId === "5-0");
-            
-            // 2. Get the name from the element's content, or default to "Unknown Tech".
             const technicianName = techNameElement?.content.trim() || 'Unknown Tech';
-            
             const li = document.createElement('li');
-            
-            // 3. Use the technician's NAME for display, but the unique ID for functionality.
             li.innerHTML = `<span>Note for: <b>${technicianName}</b></span><small>Last Update: ${date}</small>`;
-            li.dataset.noteId = doc.id; // The unique ID is still stored here for the click event.
-            
+            li.dataset.noteId = doc.id;
             li.addEventListener('click', () => startEditingSession(doc.id));
             noteList.appendChild(li);
         });
@@ -4868,30 +5393,30 @@ const listenForHistoryNotes = () => {
             const date = data.timestamp?.toDate().toLocaleString() || 'No date';
             
             const li = document.createElement('li');
-            // Display the technician's name and the archive date
             li.innerHTML = `<span>Note for: <b>${data.technicianName}</b></span><small>Last Update: ${date}</small>`;
-            li.dataset.historyDocId = doc.id; // Store the document ID
+            li.dataset.historyDocId = doc.id;
 
-            // --- THIS IS THE KEY ---
-            // The click handler takes a different path than live notes.
             li.onclick = async () => {
                 console.log(`Loading history note: ${doc.id}`);
-                
-                // 1. Ensure any live session is disconnected.
                 if (unsubscribeFromNote) {
                     unsubscribeFromNote();
                     unsubscribeFromNote = null;
                 }
-                currentNoteId = null; // IMPORTANT: Prevent any accidental writes.
+                currentNoteId = null;
+                pendingCloudState = null;
+                clearTimeout(window.firestoreSaveTimeout);
+                setReadOnlySession(true, 'Archived note (read-only) — edits will not be saved to live notes.');
 
-                // 2. Fetch the single, specific historical document.
                 const historyDoc = await db.collection('history_notes').doc(doc.id).get();
                 if (historyDoc.exists) {
-                    // 3. Render the state from the 'noteData' field within the history document.
+                    isRenderingFromCloud = true;
                     renderState(historyDoc.data().noteData);
+                    isRenderingFromCloud = false;
+                    seedSyncedFromDom();
                     showView('view-note-editor');
                     showFeedback("Viewing historical note. Edits will not be saved.", true);
                 } else {
+                    setReadOnlySession(false);
                     alert("Could not find the selected historical note.");
                 }
             };
@@ -4934,39 +5459,53 @@ const listenForHistoryNotes = () => {
 
 const startEditingSession = (noteId) => {
     console.log(`DEBUG: Starting editing session for note: "${noteId}"`);
+
+    // Remember last open note so a forced refresh can rejoin it (doctors only)
+    try {
+        if (auth && auth.currentUser) {
+            writeDoctorSessionMeta({ lastNoteId: noteId, lastView: 'note-editor' });
+        }
+    } catch (e) { /* ignore */ }
+
+    // Live collab session — allow writes (never read-only for active notes)
+    setReadOnlySession(false);
+    pendingLocalEdits.clear();
+
+    // Switching notes: cancel any pending write from the previous note
+    clearTimeout(window.firestoreSaveTimeout);
+    pendingCloudState = null;
+    pendingFocusApplies.clear();
+
+    const isSwitchingNote = currentNoteId && currentNoteId !== noteId;
     currentNoteId = noteId;
     if (unsubscribeFromNote) unsubscribeFromNote();
-    
+
+    if (isSwitchingNote) {
+        lastLoadedState = null;
+        activeTemplateId = null;
+        localFieldMeta = {};
+        lastSyncedById = {};
+        knownDocRev = 0;
+        document.querySelectorAll('.dropzone').forEach(zone => { zone.innerHTML = ''; });
+    }
+
     showView('view-note-editor');
+
     const noteDocRef = db.collection('live_notes').doc(noteId);
     
-        unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
-        const isModalOpen = !!document.querySelector('.modal[style*="display: block"]');
-    
-        if (isModalOpen) {
-            console.log("DEBUG: A modal is open. Deferring real-time update to prevent data loss.");
+    unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
+        // Guard: only process events for the note we are currently editing
+        if (currentNoteId !== noteId) return;
+
+        if (isAnyEditorModalOpen()) {
+            console.log("DEBUG: A modal is open. Queueing cloud update (will apply on close).");
+            if (doc.exists) pendingCloudState = doc.data();
             return;
         }
 	
         console.log(`DEBUG: Real-time update received for note "${noteId}".`);
         if (doc.exists) {
-            const docData = doc.data();
-            const docTemplateId = docData.templateId || 'BUILT_IN';
-
-            // --- SELF-HEALING STATE RECOVERY ---
-            // If the local variable is null (e.g. from page reload, or doctor editing),
-            // silently restore the template in the background.
-            if (!lastLoadedState || activeTemplateId !== docTemplateId) {
-                activeTemplateId = docTemplateId;
-                await fetchAndSetTemplateState(docTemplateId);
-            }
-
-            // Set the flag to true BEFORE rendering.
-            isRenderingFromCloud = true;
-            reconcileState(docData);
-            // Set the flag back to false immediately after.
-            isRenderingFromCloud = false;
-			
+            await applyIncomingCloudState(doc.data(), { forceFull: false });
         } else {
             console.log(`DEBUG: Note "${noteId}" does not exist. Creating it.`);
             loadDefaults(noteId);
@@ -4976,39 +5515,97 @@ const startEditingSession = (noteId) => {
 
 
 
-// This REPLACES old `saveCurrentStateToLocalStorage` function.
+// Transactional field-level merge write (still 1 read + 1 write per debounce).
 const syncStateToFirestore = (forceImmediate = false) => {
     if (isRenderingFromCloud) {
         console.log("DEBUG: Suppressing Firestore sync because a cloud render is in progress.");
         return;
     }
 
+    // Read-only sessions (archived history, pure view) must never touch live_notes
+    if (isReadOnlySession) {
+        console.log("DEBUG: Read-only session — blocking Firestore write.");
+        return;
+    }
+
     if (!currentNoteId) return;
     clearTimeout(window.firestoreSaveTimeout);
 
-    const saveAction = () => {
-        const stateToSave = {};
-        SECTIONS.forEach(id => {
-            stateToSave[id] = [];
-            document.querySelector(`.dropzone[data-section-id="${id}"]`)
-                .querySelectorAll('.draggable-element').forEach(el => stateToSave[id].push(getElementState(el)));
-        });
-        stateToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
-        
-        // Preserve the session's active template ID metadata
-        if (activeTemplateId) {
-            stateToSave.templateId = activeTemplateId;
+    const saveAction = async () => {
+        const noteIdAtSchedule = currentNoteId;
+        if (!noteIdAtSchedule) return;
+        if (isReadOnlySession) return;
+
+        const localSections = gatherLocalSections();
+        // stampMeta: true — user-initiated path (or debounced follow-up)
+        const dirtyIds = computeDirtyOriginalIds(localSections, { stampMeta: true });
+        // No content change and no explicit local edits ⇒ no write (safe empty modal close)
+        if (dirtyIds.size === 0) {
+            console.log("DEBUG: No dirty fields — skipping Firestore write (safe view / empty save).");
+            return;
         }
-        
-        db.collection('live_notes').doc(currentNoteId).set(stateToSave, { merge: true });
+        console.log("DEBUG: Writing dirty fields:", Array.from(dirtyIds).slice(0, 12).join(", "), dirtyIds.size > 12 ? "..." : "");
+
+        const nowTs = Date.now();
+        const writerId = getCollabClientId();
+        const noteRef = db.collection('live_notes').doc(noteIdAtSchedule);
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                // Abort if user switched notes mid-flight
+                if (currentNoteId !== noteIdAtSchedule) {
+                    console.log("DEBUG: Note switched during transaction — aborting write.");
+                    return;
+                }
+                const snap = await transaction.get(noteRef);
+                const cloud = snap.exists ? snap.data() : {};
+                const { sections, fieldMeta } = mergeSectionsFieldLevel(
+                    localSections, cloud, dirtyIds, nowTs, writerId
+                );
+
+                const payload = {
+                    ...sections,
+                    fieldMeta,
+                    docRev: (cloud.docRev || 0) + 1,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                    templateId: activeTemplateId || cloud.templateId || 'BUILT_IN'
+                };
+
+                // Full document write of the *merged* result (not a blind local overwrite)
+                transaction.set(noteRef, payload);
+                knownDocRev = payload.docRev;
+            });
+
+            if (currentNoteId === noteIdAtSchedule) {
+                // Mark written fields as synced; clear pending-edit flags for them
+                dirtyIds.forEach(id => {
+                    for (const sectionId of SECTIONS) {
+                        const hit = (localSections[sectionId] || []).find(it => it.originalId === id);
+                        if (hit) {
+                            lastSyncedById[id] = JSON.parse(JSON.stringify(hit));
+                            break;
+                        }
+                    }
+                    pendingLocalEdits.delete(id);
+                });
+                console.log(`DEBUG: Collab write OK (dirty=${dirtyIds.size}, note=${noteIdAtSchedule}).`);
+            }
+        } catch (err) {
+            console.error("DEBUG: Collab transaction failed:", err);
+            // Retry once after a short delay on contention
+            if (!forceImmediate) {
+                clearTimeout(window.firestoreSaveTimeout);
+                window.firestoreSaveTimeout = setTimeout(() => syncStateToFirestore(true), 750);
+            }
+        }
     };
 
-    // If forceImmediate is true, save right away. Otherwise, wait 3 seconds.
     if (forceImmediate) {
         console.log("DEBUG: Bypassing delay. Writing to Firestore instantly!");
         saveAction();
     } else {
-        window.firestoreSaveTimeout = setTimeout(saveAction, 3000);
+        // 1s debounce balances live feel vs free-tier write volume
+        window.firestoreSaveTimeout = setTimeout(saveAction, 1000);
     }
 };
 
@@ -5016,16 +5613,11 @@ const syncStateToFirestore = (forceImmediate = false) => {
 
 // =================================================================
 // Data Reconciliation Function
-// This function surgically updates the DOM instead of re-rendering it.
+// Surgical DOM updates; collab-aware via reconcileStateCollab wrapper.
 // =================================================================
 
 
-const reconcileState = (newState) => {
-    console.log("DEBUG: Reconciling DOM with new cloud state...");
-    let changed = false;
-
-    // This is a helper function to update an element without replacing it.
-    const surgicallyUpdateElement = (element, newStateItem) => {
+const surgicallyUpdateElement = (element, newStateItem) => {
         // Update all dataset properties. This is safe and preserves the element.
         for (const key in newStateItem) {
             const value = newStateItem[key];
@@ -5035,153 +5627,217 @@ const reconcileState = (newState) => {
                 element.dataset[key] = value;
             }
         }
-        // Now, call the specific UI refresh function for this element type.
-        // This is the key to updating the view without destroying the element.
         if (newStateItem.type === 'enhanced-textbox' || newStateItem.type === 'charting') {
-            updateEnhancedTextboxUI(element); // We'll create this small helper
+            if (typeof updateEnhancedTextboxUI === 'function') updateEnhancedTextboxUI(element);
         } 
 		
 		else if (newStateItem.type === 'painscale') {
-        // For the pain scale, we need to update both the visible number
-        // and the position of the range slider itself.
-        console.log(`DEBUG: Surgically updating Pain Scale element (originalId: ${newStateItem.originalId})`);
-        
         const valueDisplay = element.querySelector('.pain-value');
         const slider = element.querySelector('.pain-slider');
-
-        // Update the values only if they have actually changed.
-        if (valueDisplay && valueDisplay.textContent !== `${newStateItem.value}/10`) {
-            valueDisplay.textContent = `${newStateItem.value}/10`;
+        const v = String(newStateItem.value != null ? newStateItem.value : '0');
+        // Skip DOM writes when unchanged — prevents flicker when collab echoes own edit
+        if (valueDisplay && valueDisplay.textContent !== `${v}/10`) {
+            valueDisplay.textContent = `${v}/10`;
         }
-        if (slider && slider.value !== newStateItem.value) {
-            slider.value = newStateItem.value;
+        if (slider && String(slider.value) !== v) {
+            slider.value = v;
         }
 		}
 		
 		
 		else if (newStateItem.type === 'bloodpressure') {
-        // For a blood pressure element, we need to update the values
-        // of the two input fields and the checkbox.
-        console.log(`DEBUG: Surgically updating Blood Pressure element (originalId: ${newStateItem.originalId})`);
-        
         const systolicInput = element.querySelector('.bp-systolic');
         const diastolicInput = element.querySelector('.bp-diastolic');
+        const pulseInput = element.querySelector('.bp-pulse');
+        const tempInput = element.querySelector('.bp-temp');
         const priorTxCheckbox = element.querySelector('.bp-prior-tx-check');
-
-        // Update the values only if they are different to prevent losing focus unnecessarily.
-        if (systolicInput.value !== newStateItem.systolic) {
+        if (systolicInput && systolicInput.value !== (newStateItem.systolic || '')) {
             systolicInput.value = newStateItem.systolic || '';
         }
-        if (diastolicInput.value !== newStateItem.diastolic) {
+        if (diastolicInput && diastolicInput.value !== (newStateItem.diastolic || '')) {
             diastolicInput.value = newStateItem.diastolic || '';
         }
-        if (priorTxCheckbox.checked !== newStateItem.isPriorTxChecked) {
-            priorTxCheckbox.checked = newStateItem.isPriorTxChecked;
+        if (pulseInput && pulseInput.value !== (newStateItem.pulse || '')) {
+            pulseInput.value = newStateItem.pulse || '';
         }
-
-        // Finally, call your existing UI updater to refresh the border color and visibility.
-        updateBPElementUI(element);
+        if (tempInput && tempInput.value !== (newStateItem.temp || '')) {
+            tempInput.value = newStateItem.temp || '';
+        }
+        if (priorTxCheckbox && priorTxCheckbox.checked !== !!newStateItem.isPriorTxChecked) {
+            priorTxCheckbox.checked = !!newStateItem.isPriorTxChecked;
+        }
+        if (typeof updateBPElementUI === 'function') updateBPElementUI(element);
 		}	
 
 		else if (newStateItem.type === 'psr') {
-            // It's too complex to surgically update the PSR grid, so we will
-            // replace just this one element type as a compromise.
-            element.replaceWith(createElement(newStateItem.type, newStateItem));
+            // In-place update (never replaceWith). replaceWith destroyed element identity;
+            // Form View clones could then write into a detached node and wipe sextants
+            // (often the last 3 / bottom row) when a collab echo arrived mid-entry.
+            const scores = normalizePsrScores(newStateItem.scores);
+            const asterisks = normalizePsrAsterisks(newStateItem.asterisks);
+            element.querySelectorAll('.psr-input').forEach(inp => {
+                const idx = parseInt(inp.dataset.index, 10);
+                if (isNaN(idx) || idx < 0 || idx > 5) return;
+                const next = scores[idx] != null ? String(scores[idx]) : '';
+                if (inp.value !== next && document.activeElement !== inp) {
+                    inp.value = next;
+                }
+            });
+            element.querySelectorAll('.psr-asterisk').forEach(cb => {
+                const idx = parseInt(cb.dataset.index, 10);
+                if (isNaN(idx) || idx < 0 || idx > 5) return;
+                const want = !!asterisks[idx];
+                if (cb.checked !== want && document.activeElement !== cb) {
+                    cb.checked = want;
+                }
+            });
+            const note = element.querySelector('.psr-asterisk-note');
+            const nextNote = newStateItem.asteriskNote || '';
+            if (note && note.value !== nextNote && document.activeElement !== note) {
+                note.value = nextNote;
+            }
+            if (typeof updatePSRElementUI === 'function') updatePSRElementUI(element);
         } else if (newStateItem.type === 'alert') {
-            updateAlertElementUI(element); // You already have this!
+            if (typeof updateAlertElementUI === 'function') updateAlertElementUI(element);
         }
         else if (newStateItem.type === 'anesthetic') {
-            console.log(`DEBUG: Surgically updating Anesthetic summary (originalId: ${newStateItem.originalId})`);
-            updateAnestheticSummary(element);
+            if (typeof updateAnestheticSummary === 'function') updateAnestheticSummary(element);
         }
 		else if (newStateItem.type === 'dropdown') {
-        // For a dropdown, just update the selected value.
-        element.querySelector('select').value = newStateItem.selected;
+        const sel = element.querySelector('select');
+        if (sel) sel.value = newStateItem.selected;
 		}
 
 		else if (newStateItem.type === 'tx-plan') {
-        // For the treatment plan, we just need to call the existing summary
-        // update function. The dataset has already been updated above.
-        console.log(`DEBUG: Surgically updating Treatment Plan summary (originalId: ${newStateItem.originalId})`);
-        updateTxPlanSummary(element);
+        if (typeof updateTxPlanSummary === 'function') updateTxPlanSummary(element);
 		}
-		
-        // ... add other UI update functions here as needed ...
-    };
+		else if (newStateItem.type === 'endo-testing') {
+        if (typeof updateEndoTestingSummary === 'function') updateEndoTestingSummary(element);
+		}
+};
 
+/**
+ * Collab-aware reconcile: never overwrite locally-dirty fields; defer focused fields.
+ */
+const reconcileStateCollab = (newState, dirtyIds) => {
+    const dirty = dirtyIds || new Set();
+    let changed = false;
+    const cloudMeta = (newState && newState.fieldMeta) || {};
 
     SECTIONS.forEach((sectionId, secIndex) => {
         const elementsFromState = newState[sectionId] || [];
 
         elementsFromState.forEach((stateItem, itemIndex) => {
-            stateItem.originalId = `${secIndex}-${itemIndex}`;
-            let existingElement = document.querySelector(`.draggable-element[data-original-id="${stateItem.originalId}"]`);
+            stateItem.originalId = stateItem.originalId || `${secIndex}-${itemIndex}`;
+            const oid = stateItem.originalId;
+
+            // Protect in-progress local edits
+            if (dirty.has(oid)) {
+                console.log(`DEBUG: Keeping local dirty field ${oid}`);
+                return;
+            }
+
+            let existingElement = document.querySelector(`.draggable-element[data-original-id="${oid}"]`);
 
             if (!existingElement) {
-                // If element doesn't exist, create it.
-                console.log(`DEBUG: Element ${stateItem.originalId} not found. CREATING.`);
                 const dropzone = document.querySelector(`.dropzone[data-section-id="${sectionId}"]`);
                 if (dropzone) {
                     dropzone.appendChild(createElement(stateItem.type, stateItem));
                     changed = true;
+                    lastSyncedById[oid] = JSON.parse(JSON.stringify(stateItem));
+                    if (cloudMeta[oid]) localFieldMeta[oid] = { ...cloudMeta[oid] };
                 }
             } else {
-                // If element exists, compare its current state to the new state.
+                // Type mismatch → replace node (template drift / structural change)
+                if (existingElement.dataset.type && stateItem.type &&
+                    existingElement.dataset.type !== stateItem.type) {
+                    existingElement.replaceWith(createElement(stateItem.type, stateItem));
+                    changed = true;
+                    lastSyncedById[oid] = JSON.parse(JSON.stringify(stateItem));
+                    if (cloudMeta[oid]) localFieldMeta[oid] = { ...cloudMeta[oid] };
+                    return;
+                }
+
                 const localState = getElementState(existingElement);
-                
-                // Use JSON.stringify for a simple but effective deep comparison.
                 if (JSON.stringify(localState) !== JSON.stringify(stateItem)) {
-                    if (document.activeElement && document.activeElement.closest('.draggable-element') === existingElement) {
-                        console.log(`DEBUG: Skipping update for focused element ${stateItem.originalId}.`);
+                    if (elementIsFocused(existingElement)) {
+                        console.log(`DEBUG: Deferring update for focused element ${oid}`);
+                        pendingFocusApplies.set(oid, stateItem);
                         return;
                     }
-
-                    console.log(`%cDEBUG: State for element ${stateItem.originalId} differs. Replacing element to ensure UI consistency.`, 'color: orange');
-                    changed = true;
-                    
-// **THE FIX:** Call our new surgical update function.
                     surgicallyUpdateElement(existingElement, stateItem);
+                    changed = true;
+                    lastSyncedById[oid] = JSON.parse(JSON.stringify(stateItem));
+                    if (cloudMeta[oid]) localFieldMeta[oid] = { ...cloudMeta[oid] };
                 }
             }
         });
 
-        // This part for removing deleted elements remains the same.
+        // Remove elements not present in cloud (and not dirty-local-only)
         const elementsOnPage = document.querySelectorAll(`.dropzone[data-section-id="${sectionId}"] .draggable-element`);
         elementsOnPage.forEach(elOnPage => {
-            if (!elementsFromState.some(item => item.originalId === elOnPage.dataset.originalId)) {
+            const oid = elOnPage.dataset.originalId;
+            if (dirty.has(oid)) return;
+            if (!elementsFromState.some(item => item.originalId === oid)) {
                 elOnPage.remove();
                 changed = true;
+                delete lastSyncedById[oid];
             }
         });
     });
 
     if (changed) {
-        console.log("DEBUG: Reconciliation caused changes, updating live output.");
+        // Update live preview only — do NOT sync back (isRenderingFromCloud may already be set by caller)
+        const was = isRenderingFromCloud;
         isRenderingFromCloud = true;
-        updateLiveOutput();
-        isRenderingFromCloud = false;
+        if (typeof updateLiveOutput === 'function') updateLiveOutput();
+        isRenderingFromCloud = was;
     }
-	
-    // After any potential DOM changes from reconciliation, we must
-    // re-assert the layout lock state to ensure new elements are also locked.
+
     const lockToggle = document.getElementById('lock-layout-toggle');
     if (lockToggle && lockToggle.checked) {
-        console.log("DEBUG: Re-applying layout lock after reconciliation.");
         lockToggle.dispatchEvent(new Event('change'));
     }
-    // Keep Form View in sync after any cloud/surgical DOM update (Start My Day, Reset, multi-user)
     if (typeof window.refreshCondensedForm === 'function') {
         window.refreshCondensedForm();
     } else if (typeof refreshCondensedForm === 'function') {
         refreshCondensedForm();
     }
-    // --- END OF  CODE ---
-	
-	
 };
-// =================================================================
 
+// Back-compat alias used by older call sites
+const reconcileState = (newState) => {
+    const localSections = gatherLocalSections();
+    const dirty = computeDirtyOriginalIds(localSections);
+    reconcileStateCollab(newState, dirty);
+};
 
+// Hook modal close / save paths to flush queued cloud state
+(function wireModalCloudFlush() {
+    const flushSoon = () => setTimeout(flushPendingCloudState, 30);
+
+    document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!t) return;
+        // close buttons & save buttons inside modals
+        if (t.classList && (t.classList.contains('close-btn') || t.classList.contains('close-button'))) {
+            flushSoon();
+        }
+        const id = t.id || '';
+        if (/save-btn$|save-button$|editor-save-btn$/.test(id) ||
+            id === 'allergy-save-btn' || id === 'charting-editor-save-btn' ||
+            id === 'textbox-editor-save-btn' || id === 'tx-plan-save-btn' ||
+            id === 'endo-testing-save-btn' || id === 'anesthetic-editor-save-btn') {
+            // Saves already call updateLiveOutput; flush cloud after local write lands
+            flushSoon();
+        }
+    }, true);
+
+    // Escape closes many modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') flushSoon();
+    });
+})();
 
 // --- 4. Modified Existing Functions ---
 // These wrappers correctly link your original functions to the new cloud sync.
@@ -5222,29 +5878,52 @@ const resetValues = () => {
 
             console.log("DEBUG: Checking for 'doNotReset' elements to preserve...");
 
-            // 5. LOOP through the clean state and PRESERVE data from the current state.
+            // 5. LOOP by originalId (NOT array index) so non-sequential ids (1-4, 1-5, 1-6) stay stable.
             for (const sectionId in newResetState) {
-                if (Array.isArray(newResetState[sectionId])) {
-                    newResetState[sectionId].forEach((templateElement, index) => {
-                        // Find the corresponding element in the current state on the server.
-                        const currentElement = currentState[sectionId]?.[index];
-                        
-                        // If the element in the TEMPLATE is marked as 'doNotReset'...
-                        if (templateElement.doNotReset === true && currentElement) {
-                            console.log(`%cPreserving data for element with originalId: ${templateElement.originalId}`, 'color: orange;');
-                            // ...then replace the clean template element with the one from the current state.
-                            newResetState[sectionId][index] = currentElement;
-                        }
-                    });
-                }
+                if (!Array.isArray(newResetState[sectionId])) continue;
+                const currentById = {};
+                (currentState[sectionId] || []).forEach((el, i) => {
+                    const id = (el && el.originalId) ? el.originalId : `${SECTIONS.indexOf(sectionId)}-${i}`;
+                    currentById[id] = el;
+                });
+                newResetState[sectionId].forEach((templateElement, index) => {
+                    const tid = templateElement.originalId || `${SECTIONS.indexOf(sectionId)}-${index}`;
+                    if (!templateElement.originalId) templateElement.originalId = tid;
+                    const currentElement = currentById[tid];
+                    if (templateElement.doNotReset === true && currentElement) {
+                        console.log(`%cPreserving data for element with originalId: ${tid}`, 'color: orange;');
+                        // Keep template layout flags; preserve value-bearing fields from current
+                        newResetState[sectionId][index] = {
+                            ...templateElement,
+                            ...currentElement,
+                            originalId: tid,
+                            doNotReset: true,
+                            type: templateElement.type
+                        };
+                    }
+                });
             }
-            
-            // 6. Add the timestamp for real-time ordering.
+
+            // Reset collab metadata so field-level merge starts clean for the next patient
+            newResetState.fieldMeta = {};
+            newResetState.docRev = (typeof currentState.docRev === 'number' ? currentState.docRev : 0) + 1;
+            if (currentState.templateId) newResetState.templateId = currentState.templateId;
+            if (currentState.technicianName) newResetState.technicianName = currentState.technicianName;
+            if (currentState.clinicName) newResetState.clinicName = currentState.clinicName;
+
+            // 6. Timestamp for real-time ordering
             newResetState.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
 
-            // 7. Now, SAVE this newly merged state back to Firestore.
-            // The onSnapshot listener will automatically handle the UI update.
+            // 7. SAVE merged state — onSnapshot refreshes UI
             noteDocRef.set(newResetState).then(() => {
+                // Align local seed so next dirty-check matches template
+                try {
+                    pendingLocalEdits.clear();
+                    rememberSyncedFromSections(
+                        Object.fromEntries(SECTIONS.map(s => [s, newResetState[s] || []])),
+                        {}
+                    );
+                } catch (e) { /* ignore */ }
                 console.log("DEBUG: Smart Reset complete. The UI will now update via the real-time listener.");
             }).catch(err => {
                 console.error("Reset failed during save:", err);
@@ -5384,7 +6063,11 @@ const performLocalReset = () => {
                 const elements = state[sectionId] || [];
                 if (zone && Array.isArray(elements)) {
                     elements.forEach((item, itemIndex) => {
-                        item.originalId = `${secIndex}-${itemIndex}`;
+                        // CRITICAL: keep stable originalId from template/clinic JSON.
+                        // Only invent an id when missing. Never renumber 1-4/1-5/1-6 → sequential.
+                        if (!item.originalId) {
+                            item.originalId = `${secIndex}-${itemIndex}`;
+                        }
                         zone.appendChild(createElement(item.type, item));
                     });
                 }
@@ -5454,6 +6137,46 @@ async function loadDefaults() {
 console.log("DEBUG: Attaching main auth listener and all UI event handlers...");
 
 // The "brain" of the app. It runs on page load and controls the entire UI flow.
+// =================================================================
+// Doctor session resilience (localStorage) — survives F5 / tab discard
+// =================================================================
+const DOCTOR_EMAIL_KEY = 'dentalNoteDoctorEmail';
+const DOCTOR_META_KEY = 'dentalNoteDoctorSessionMeta';
+// Auto-rejoin the last open note only if lastActive is within this window
+const DOCTOR_NOTE_REJOIN_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+function readDoctorSessionMeta() {
+    try {
+        return JSON.parse(localStorage.getItem(DOCTOR_META_KEY) || 'null') || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeDoctorSessionMeta(patch) {
+    const prev = readDoctorSessionMeta() || {};
+    const next = Object.assign({}, prev, patch || {}, { lastActive: Date.now() });
+    try {
+        localStorage.setItem(DOCTOR_META_KEY, JSON.stringify(next));
+        if (next.email) localStorage.setItem(DOCTOR_EMAIL_KEY, next.email);
+    } catch (e) {
+        console.warn('Could not write doctor session meta', e);
+    }
+}
+
+function clearDoctorSessionMeta() {
+    try {
+        localStorage.removeItem(DOCTOR_META_KEY);
+        localStorage.removeItem(DOCTOR_EMAIL_KEY);
+    } catch (e) { /* ignore */ }
+}
+
+function touchDoctorSessionActivity(extra) {
+    const meta = readDoctorSessionMeta();
+    if (!meta || !meta.email) return;
+    writeDoctorSessionMeta(Object.assign({}, extra || {}));
+}
+
 auth.onAuthStateChanged(user => {
     if (unsubscribeFromNote) unsubscribeFromNote();
 
@@ -5469,10 +6192,30 @@ auth.onAuthStateChanged(user => {
         lockLayoutToggleLabel.classList.remove('view-hidden');
 		document.getElementById('import-btn').classList.remove('element-hidden');
         document.getElementById('export-btn').classList.remove('element-hidden');
-        showView('view-doctor-dashboard');
+
+        // Read prior meta BEFORE writing, so a mid-note refresh can rejoin
+        const prior = readDoctorSessionMeta();
+        const canRejoinNote = prior && prior.lastNoteId && prior.lastView === 'note-editor' &&
+            prior.lastActive && (Date.now() - prior.lastActive) < DOCTOR_NOTE_REJOIN_MS;
+
+        // Persist doctor identity + activity for forced-refresh recovery
+        writeDoctorSessionMeta({
+            email: user.email,
+            uid: user.uid,
+            lastView: canRejoinNote ? 'note-editor' : 'dashboard',
+            lastNoteId: canRejoinNote ? prior.lastNoteId : (prior && prior.lastNoteId) || null
+        });
+
         listenForActiveNotes();
 		listenForHistoryNotes();
-    } else { // TECHNICIAN
+
+        if (canRejoinNote) {
+            console.log('Restoring doctor into last note after refresh:', prior.lastNoteId);
+            startEditingSession(prior.lastNoteId);
+        } else {
+            showView('view-doctor-dashboard');
+        }
+    } else { // TECHNICIAN (or signed-out doctor)
         userStatusEmail.textContent = "Technician Mode";
         logoutButton.classList.add('view-hidden');
         saveCopyButton.classList.add('view-hidden');
@@ -5494,7 +6237,26 @@ auth.onAuthStateChanged(user => {
             userStatusEmail.textContent = `Tech: ${savedTechName}`;
             logoutButton.classList.remove('view-hidden');
         } else {
-            showView('view-technician-start');
+            // If a doctor was recently logged in but Firebase session was wiped
+            // (common on locked government browsers), land on doctor login with
+            // email pre-filled instead of the tech start screen.
+            const lastDoctorEmail = localStorage.getItem(DOCTOR_EMAIL_KEY) || '';
+            const meta = readDoctorSessionMeta();
+            const recentDoctor = meta && meta.lastActive &&
+                (Date.now() - meta.lastActive) < DOCTOR_NOTE_REJOIN_MS && lastDoctorEmail;
+
+            if (recentDoctor) {
+                showView('view-doctor-login');
+                const emailEl = document.getElementById('email-input');
+                if (emailEl && !emailEl.value) emailEl.value = lastDoctorEmail;
+                const errEl = document.getElementById('login-error-message');
+                if (errEl) {
+                    errEl.style.color = '#b45309';
+                    errEl.textContent = 'Session was interrupted (browser refresh / lock). Please sign in again — email is pre-filled.';
+                }
+            } else {
+                showView('view-technician-start');
+            }
         }
     }
 
@@ -5712,6 +6474,7 @@ logoutButton.addEventListener('click', () => {
     if (confirm("Are you sure you want to log out or end the session?")) {
         localStorage.removeItem('dentalNoteMakerTechName');
 		localStorage.removeItem('dentalNoteSessionID');
+        clearDoctorSessionMeta();
         auth.signOut().then(() => {
             // After successful sign out, reload the page to get a clean start.
             window.location.reload();
@@ -5719,13 +6482,40 @@ logoutButton.addEventListener('click', () => {
     }
 });
 
+// Keep doctor session "lastActive" fresh so a lock-screen refresh still
+// counts as recent (rejoin / prefill). Throttled to once per minute.
+(function wireDoctorSessionHeartbeat() {
+    let lastTouch = 0;
+    const touch = () => {
+        try {
+            if (!(auth && auth.currentUser)) return;
+            const now = Date.now();
+            if (now - lastTouch < 60 * 1000) return;
+            lastTouch = now;
+            touchDoctorSessionActivity();
+        } catch (e) { /* ignore */ }
+    };
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') touch();
+    });
+    window.addEventListener('focus', touch);
+    setInterval(touch, 5 * 60 * 1000);
+})();
+
+
+
 saveCopyButton.addEventListener('click', () => {
-    // **THE FIX for Doctor's 'Back' button**
-    // We simply need to stop the real-time listener and show the dashboard.
+    // Doctor leaves the note editor: stop live listener, cancel pending writes,
+    // clear read-only banner, return to dashboard without an extra cloud write.
+    clearTimeout(window.firestoreSaveTimeout);
+    pendingCloudState = null;
     if (unsubscribeFromNote) {
         unsubscribeFromNote();
         unsubscribeFromNote = null;
     }
+    currentNoteId = null;
+    setReadOnlySession(false);
+    try { writeDoctorSessionMeta({ lastView: 'dashboard' }); } catch (e) {}
     showView('view-doctor-dashboard');
 });
 
@@ -6574,23 +7364,28 @@ techNameInput.addEventListener('keydown', (event) => {
                     }
                 });
 
-                // Red "3" (or 2 / 1) badge above the tooth if classified
+                // Class 1/2/3 badge on the FACIAL side (away from tooth-number on lingual)
+                // Upper teeth: above the circle. Lower teeth: below the circle.
                 if (highestClass > 0 && data['O']) {
                     const cx = parseFloat(data['O'].getAttribute('x')) + parseFloat(data['O'].getAttribute('width')) / 2;
-                    // Approximate tooth center Y from the outer circle if available
                     const group = document.getElementById(`modal-tooth-group-${tooth}`);
-                    let cy = 80;
+                    const isUpperTooth = (tooth >= 1 && tooth <= 16);
+                    let cy = isUpperTooth ? 70 : 340;
                     if (group) {
                         const circle = group.querySelector('circle');
-                        if (circle) cy = parseFloat(circle.getAttribute('cy')) - 22;
+                        if (circle) {
+                            const centerY = parseFloat(circle.getAttribute('cy'));
+                            // ~30px beyond outer radius so badge clears tooth number
+                            cy = isUpperTooth ? (centerY - 32) : (centerY + 38);
+                        }
                     }
                     const badge = document.createElementNS("http://www.w3.org/2000/svg", "text");
                     badge.setAttribute("x", cx);
                     badge.setAttribute("y", cy);
                     badge.setAttribute("class", "class-badge");
                     badge.setAttribute("text-anchor", "middle");
-                    badge.setAttribute("font-size", "11");
-                    badge.setAttribute("font-weight", "bold");
+                    badge.setAttribute("font-size", "13");
+                    badge.setAttribute("font-weight", "800");
                     badge.setAttribute("fill", CLASS_COLORS[highestClass] || '#d93025');
                     badge.textContent = String(highestClass);
                     if (svg) svg.appendChild(badge);
@@ -6692,7 +7487,9 @@ techNameInput.addEventListener('keydown', (event) => {
 
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
             label.setAttribute("x", x);
-            label.setAttribute("y", isUpper ? y + size + 8 : y - size - 4);
+            // Push numbers away from the circle so class badges on the facial side do not collide
+            // Upper: number on lingual (below). Lower: number on lingual (above).
+            label.setAttribute("y", isUpper ? y + size + 16 : y - size - 12);
             label.setAttribute("class", "tooth-label");
             label.textContent = toothNum;
             group.appendChild(label);
@@ -6716,18 +7513,24 @@ techNameInput.addEventListener('keydown', (event) => {
                 l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2); l.setAttribute("class", "label-line");
                 svg.appendChild(l);
             };
-            addLabel("Facial", 425, 30); addLine(20, 40, 780, 40);
-            addLabel("Lingual", 425, 170); addLine(20, 180, 780, 180);
-            addLabel("Lingual", 425, 230); addLine(20, 240, 780, 240);
-            addLabel("Facial", 425, 370); addLine(20, 380, 780, 380);
+            // Facial = outer/lip side; Lingual = inner (between arches)
+            addLabel("Facial", 425, 22); addLine(20, 32, 830, 32);
+            addLabel("Lingual", 425, 168); addLine(20, 178, 830, 178);
+            addLabel("Lingual", 425, 232); addLine(20, 242, 830, 242);
+            addLabel("Facial", 425, 388); addLine(20, 378, 830, 378);
 
+            // Outer lip / facial curves (tweak control-point Y for more/less arch bulge)
+            // Upper facial — superior to teeth 1–16; ends near terminal molars
             const upperArch = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            upperArch.setAttribute("d", "M 20 120 C 200 60, 600 60, 830 120");
+            upperArch.setAttribute("d", "M 28 98 C 140 42, 710 42, 822 98");
             upperArch.setAttribute("class", "arch-line");
+            upperArch.setAttribute("fill", "none");
             svg.appendChild(upperArch);
+            // Lower facial — inferior to teeth 32–17
             const lowerArch = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            lowerArch.setAttribute("d", "M 20 280 C 200 340, 600 340, 830 280");
+            lowerArch.setAttribute("d", "M 28 302 C 140 358, 710 358, 822 302");
             lowerArch.setAttribute("class", "arch-line");
+            lowerArch.setAttribute("fill", "none");
             svg.appendChild(lowerArch);
 
             const positions = (typeof toothPositions !== 'undefined') ? toothPositions : {
@@ -7377,7 +8180,6 @@ techNameInput.addEventListener('keydown', (event) => {
 
         document.getElementById('charting-editor-save-btn').onclick = () => {
             if (!activeElementForEditor) return;
-            isRenderingFromCloud = true;
             const ta = document.getElementById('charting-editor-textarea');
             // Normalize tokens in place (replaces raw "6 postfix" with "#6 postfix", no duplicates)
             chartingSelections = parseChartingTextToSelections(ta.value);
@@ -7396,7 +8198,10 @@ techNameInput.addEventListener('keydown', (event) => {
 
             const editedElementId = activeElementForEditor.dataset.originalId;
             chartingOpenSnapshot = null; // commit — do not restore on close
-            updateLiveOutput();
+
+            if (typeof markLocalEdit === 'function') markLocalEdit(editedElementId);
+            // Immediate collab write (do NOT set isRenderingFromCloud — that would suppress sync)
+            updateLiveOutput(true);
 
             // Re-evaluate Caries Risk when either charting block is saved
             // (2-5 = CARIES/DEFECTIVE, 2-6 = INCIPIENT)
@@ -7406,7 +8211,7 @@ techNameInput.addEventListener('keydown', (event) => {
             }
 
             document.getElementById('charting-editor-modal').style.display = 'none';
-            isRenderingFromCloud = false;
+            if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
             showFeedback("Charting saved.", true);
             if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
         };
@@ -7420,20 +8225,66 @@ techNameInput.addEventListener('keydown', (event) => {
                 discardChartingEditor();
             }
         });
-        // Click on modal backdrop (outside content) discards
+        // Backdrop close — same mousedown pattern as other modals (textbox).
+        // Using mousedown (not click) so dragging a tooth surface and releasing
+        // outside the modal does NOT close it.
         (function wireChartingBackdropClose() {
             const modal = document.getElementById('charting-editor-modal');
             if (!modal) return;
-            modal.addEventListener('click', (e) => {
+            modal.addEventListener('mousedown', (e) => {
                 if (e.target === modal) discardChartingEditor();
             });
-            const content = modal.querySelector('.modal-content');
-            if (content) content.addEventListener('click', (e) => e.stopPropagation());
         })();
 
 
         // =================================================================
-        // DUAL MODE: Editor (blocks) <-> Condensed Form
+
+        // ---- Dental Class 1/2/3 status chip (from Treatment Plan content) ----
+        function updateDentalClassIndicator() {
+            const chip = document.getElementById('dental-class-indicator');
+            if (!chip) return;
+            let hasClass3 = false;
+            let hasClass2 = false;
+            try {
+                document.querySelectorAll('.dropzone .draggable-element[data-type="tx-plan"]').forEach(el => {
+                    let txData = {};
+                    try {
+                        if (typeof getElementState === 'function') {
+                            const st = getElementState(el);
+                            txData = (st && st.txData) || {};
+                        } else {
+                            txData = JSON.parse(el.dataset.txData || '{}');
+                        }
+                    } catch (e) { txData = {}; }
+                    Object.keys(txData).forEach(key => {
+                        const entry = txData[key];
+                        if (!entry || !String(entry.text || '').trim()) return;
+                        const k = String(key).toUpperCase();
+                        if (k.includes('CLASS 3')) hasClass3 = true;
+                        else if (k.includes('CLASS 2')) hasClass2 = true;
+                    });
+                });
+            } catch (err) {
+                console.warn('Dental Class indicator update failed', err);
+            }
+            chip.classList.remove('dc-1', 'dc-2', 'dc-3');
+            if (hasClass3) {
+                chip.textContent = 'Dental Class 3';
+                chip.classList.add('dc-3');
+            } else if (hasClass2) {
+                chip.textContent = 'Dental Class 2';
+                chip.classList.add('dc-2');
+            } else {
+                chip.textContent = 'Dental Class 1';
+                chip.classList.add('dc-1');
+            }
+            // Visible whenever note editor is shown
+            const editor = document.getElementById('view-note-editor');
+            const editorVisible = editor && !editor.classList.contains('view-hidden');
+            chip.style.display = editorVisible ? 'inline-block' : 'none';
+        }
+
+                // DUAL MODE: Editor (blocks) <-> Condensed Form
         // Same dropzone elements, same modals, alternate renderer only.
         // =================================================================
         let uiMode = localStorage.getItem('dentalNoteUiMode') || 'form'; // 'editor' | 'form'
@@ -7481,8 +8332,11 @@ techNameInput.addEventListener('keydown', (event) => {
                 }
                 if (state.type === 'painscale') return `${state.value || 0}/10`;
                 if (state.type === 'bloodpressure') {
-                    if (state.systolic && state.diastolic) return `${state.systolic}/${state.diastolic}`;
-                    return 'Not recorded';
+                    const bits = [];
+                    if (state.systolic && state.diastolic) bits.push(`${state.systolic}/${state.diastolic}`);
+                    if (state.pulse) bits.push(`P ${state.pulse}`);
+                    if (state.temp) bits.push(`T ${state.temp}`);
+                    return bits.length ? bits.join(' · ') : 'Not recorded';
                 }
                 if (state.type === 'dropdown') {
                     const sel = el.querySelector('select');
@@ -7606,7 +8460,7 @@ techNameInput.addEventListener('keydown', (event) => {
                     return !(state.alerts.length === 1 && state.alerts[0] === 'None');
                 }
                 if (state.type === 'painscale') return String(state.value || '0') !== '0';
-                if (state.type === 'bloodpressure') return !!(state.systolic || state.diastolic);
+                if (state.type === 'bloodpressure') return !!(state.systolic || state.diastolic || state.pulse || state.temp);
                 if (state.type === 'psr') return (state.scores || []).some(s => s !== '' && s != null);
                 if (state.type === 'tx-plan') {
                     return Object.values(state.txData || {}).some(e => e && e.text && String(e.text).trim());
@@ -7658,38 +8512,49 @@ techNameInput.addEventListener('keydown', (event) => {
                 return;
             }
             if (type === 'bloodpressure') {
-                // Full BP chrome with same classes so status colors apply
+                // Full BP chrome + Pulse/Temp; same classes so status colors apply
                 const wrap = document.createElement('div');
                 wrap.className = 'cf-surface bp-element';
                 wrap.style.resize = 'none';
                 wrap.style.width = '100%';
-                // copy status class
                 ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
                     if (el.classList.contains(c)) wrap.classList.add(c);
                 });
                 const sSrc = el.querySelector('.bp-systolic');
                 const dSrc = el.querySelector('.bp-diastolic');
+                const pulseSrc = el.querySelector('.bp-pulse');
+                const tempSrc = el.querySelector('.bp-temp');
                 const priorSrc = el.querySelector('.bp-prior-tx-check');
                 const priorVis = el.querySelector('.bp-prior-tx-container');
                 wrap.innerHTML =
-                    '<div class="bp-inputs"><b>BP:</b> ' +
-                    '<input type="number" class="bp-systolic" placeholder="120" value="' + (sSrc ? sSrc.value : '') + '"> / ' +
-                    '<input type="number" class="bp-diastolic" placeholder="80" value="' + (dSrc ? dSrc.value : '') + '">' +
+                    '<div class="bp-row">' +
+                      '<div class="bp-bp-group"><b>BP:</b> ' +
+                        '<input type="number" class="bp-systolic" placeholder="120" value="' + (sSrc ? sSrc.value : '') + '"> / ' +
+                        '<input type="number" class="bp-diastolic" placeholder="80" value="' + (dSrc ? dSrc.value : '') + '">' +
+                      '</div>' +
+                      '<div class="bp-extra-vitals">' +
+                        '<div class="bp-if-applicable">if applicable</div>' +
+                        '<div class="bp-extra-inputs">' +
+                          '<label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="--" min="0" max="300" value="' + (pulseSrc ? pulseSrc.value : '') + '"></label>' +
+                          '<label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="' + (tempSrc ? tempSrc.value : '') + '"></label>' +
+                        '</div>' +
+                      '</div>' +
                     '</div>' +
                     '<div class="bp-prior-tx-container' + (priorVis && priorVis.classList.contains('visible') ? ' visible' : '') + '">' +
                     '<label><input type="checkbox" class="bp-prior-tx-check"' + (priorSrc && priorSrc.checked ? ' checked' : '') + '> BP Prior to Tx</label>' +
                     '</div>';
                 const sIn = wrap.querySelector('.bp-systolic');
                 const dIn = wrap.querySelector('.bp-diastolic');
+                const pulseIn = wrap.querySelector('.bp-pulse');
+                const tempIn = wrap.querySelector('.bp-temp');
                 const pIn = wrap.querySelector('.bp-prior-tx-check');
                 const sync = () => {
-                    // Silent write to source inputs — do NOT dispatch bubbled input events
-                    // (those re-enter editor handlers / risk form rebuild and focus loss)
                     if (sSrc) sSrc.value = sIn.value;
                     if (dSrc) dSrc.value = dIn.value;
+                    if (pulseSrc && pulseIn) pulseSrc.value = pulseIn.value;
+                    if (tempSrc && tempIn) tempSrc.value = tempIn.value;
                     if (priorSrc && pIn) priorSrc.checked = pIn.checked;
                     if (typeof updateBPElementUI === 'function') updateBPElementUI(el);
-                    // mirror status onto form clone in-place
                     ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => wrap.classList.remove(c));
                     ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
                         if (el.classList.contains(c)) wrap.classList.add(c);
@@ -7699,7 +8564,6 @@ techNameInput.addEventListener('keydown', (event) => {
                     if (pc && srcPc) {
                         pc.classList.toggle('visible', srcPc.classList.contains('visible'));
                     }
-                    // Keep prior-tx visibility on form clone too
                     if (pc) {
                         const s = parseInt(sIn.value, 10);
                         const d = parseInt(dIn.value, 10);
@@ -7712,12 +8576,12 @@ techNameInput.addEventListener('keydown', (event) => {
                         }
                     }
                     updateLiveOutput();
-                    // Never refreshCondensedForm while typing BP
                 };
-                sIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
-                dIn.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
-                sIn.addEventListener('keydown', (e) => e.stopPropagation());
-                dIn.addEventListener('keydown', (e) => e.stopPropagation());
+                [sIn, dIn, pulseIn, tempIn].forEach(inp => {
+                    if (!inp) return;
+                    inp.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
+                    inp.addEventListener('keydown', (e) => e.stopPropagation());
+                });
                 if (pIn) pIn.addEventListener('change', (e) => { e.stopPropagation(); sync(); });
                 host.appendChild(wrap);
                 return;
@@ -7869,6 +8733,7 @@ techNameInput.addEventListener('keydown', (event) => {
                     const isLiveWidget = state.type === 'alert' || state.type === 'bloodpressure' || state.type === 'psr';
                     const contentChanged = isCfContentChanged(el, state);
 
+
                     const widthVal = state.width || el.dataset.width || '';
                     // Live widgets default to a sensible width so they fit the column
                     let spanClass = getCfSpanClass(widthVal);
@@ -7877,17 +8742,31 @@ techNameInput.addEventListener('keydown', (event) => {
                         else if (state.type === 'alert') spanClass = 'cf-span-6';
                         else if (state.type === 'bloodpressure') spanClass = 'cf-span-6';
                     }
+                    // Assessment risk triad (3-5 / 3-6 / 3-7): always 3-up, start on a fresh row
+                    // so a preceding span-6 (e.g. Oral Surgery Diagnosis) cannot break the packing.
+                    if (state.originalId === '3-5' || state.originalId === '3-6' || state.originalId === '3-7') {
+                        spanClass = 'cf-span-4';
+                    }
+
+
                     const fillColor = state.fillColor || el.dataset.fillColor || '';
 
                     const row = document.createElement('div');
                     // Alert uses solid green/red/orange status — never blue "changed" wash
                     const useChanged = contentChanged && state.type !== 'alert';
+
+
                     row.className = 'cf-row ' + spanClass +
                         (isHidden ? ' cf-hidden-row' : '') +
                         (isLiveWidget ? ' cf-live-widget' : '') +
                         (useChanged ? ' cf-changed' : '');
                     row.dataset.elementId = el.id;
                     row.dataset.originalId = state.originalId || '';
+                    // Caries Risk starts column 1 so Perio + Cancer land beside it (4+4+4 = 12)
+                    if (state.originalId === '3-5') {
+                        row.style.gridColumn = '1 / span 4';
+                    }
+
                     // Do not apply template fillColor to alert (status colors must win)
                     if (state.type !== 'alert') {
                         applyCfColor(row, fillColor);
@@ -7918,14 +8797,21 @@ techNameInput.addEventListener('keydown', (event) => {
 
                     const label = document.createElement('div');
                     label.className = 'cf-label';
-                    // PSR widget already shows "PSR:" inside the element — skip duplicate label
-                    if (state.type === 'psr') {
+
+                    // PSR: no extra label. Dropdowns: no label (option text is the control, like Editor).
+                    if (state.type === 'psr' || state.type === 'dropdown' || state.type === 'bloodpressure') {
                         label.textContent = '';
                         label.style.display = 'none';
+                        if (state.type === 'dropdown' || state.type === 'bloodpressure') {
+                            // Label column gone → control gets the full row
+                            row.style.gridTemplateColumns = '1fr';
+                        }
                     } else {
                         label.textContent = getCondensedLabel(el, state);
                     }
                     row.appendChild(label);
+
+
 
                     if (isLiveWidget) {
                         // For PSR full-width live widget, use single-column layout without empty label gap
@@ -7951,9 +8837,17 @@ techNameInput.addEventListener('keydown', (event) => {
                         const src = el.querySelector('select');
                         if (src) {
                             const clone = src.cloneNode(true);
+
                             clone.className = 'inline';
                             clone.style.maxWidth = '100%';
                             clone.style.width = '100%';
+                            clone.style.boxSizing = 'border-box';
+                            // Let long option text show (e.g. "CARIES RISK: Moderate")
+                            preview.style.overflow = 'visible';
+                            preview.style.whiteSpace = 'normal';
+                            preview.style.minWidth = '0';
+
+
                             // Force mirror of current editor selection (cloneNode alone can be stale)
                             clone.value = src.value;
                             clone.selectedIndex = src.selectedIndex;
@@ -7983,12 +8877,20 @@ techNameInput.addEventListener('keydown', (event) => {
                         wrap.style.display = 'flex';
                         wrap.style.alignItems = 'center';
                         wrap.style.gap = '8px';
+                        const painVal = String(
+                            (src && src.value !== '' && src.value != null) ? src.value
+                            : (state.value != null && state.value !== '' ? state.value : '0')
+                        );
                         const range = document.createElement('input');
                         range.type = 'range';
-                        range.min = '0'; range.max = '10';
-                        range.value = src ? src.value : (state.value || '0');
+                        range.min = '0';
+                        range.max = '10';
+                        range.step = '1';
+                        // Set value attribute BEFORE insert — avoids browser painting max/default (flicker to 10/10)
+                        range.setAttribute('value', painVal);
+                        range.value = painVal;
                         const val = document.createElement('strong');
-                        val.textContent = `${range.value}/10`;
+                        val.textContent = painVal + '/10';
                         range.addEventListener('input', () => {
                             val.textContent = `${range.value}/10`;
                             if (src) {
@@ -7996,10 +8898,11 @@ techNameInput.addEventListener('keydown', (event) => {
                                 src.dispatchEvent(new Event('input', { bubbles: true }));
                             }
                             const pv = el.querySelector('.pain-value');
-                            if (pv) pv.textContent = `${range.value}/10`;
+                            if (pv) pv.textContent = range.value + '/10';
                             updateLiveOutput();
+                            // Do NOT full-refresh form on every change — remounting the range
+                            // is what caused the brief 10/10 → correct-value flicker.
                         });
-                        range.addEventListener('change', () => setTimeout(refreshCondensedForm, 30));
                         wrap.appendChild(range);
                         wrap.appendChild(val);
                         preview.className = 'cf-preview';
@@ -8014,12 +8917,14 @@ techNameInput.addEventListener('keydown', (event) => {
                     if (state.type === 'charting') btn.textContent = 'Open Chart';
                     else if (state.type === 'tx-plan') btn.textContent = 'Open Tx Plan';
                     else if (state.type === 'endo-testing') btn.textContent = 'Open Table';
+
                     else if (state.type === 'dropdown' || state.type === 'painscale') {
                         btn.textContent = '—';
                         btn.disabled = true;
-                        btn.style.opacity = '0.35';
-                        btn.style.cursor = 'default';
+                        btn.style.display = 'none'; // no chrome; full width for the control
                     } else btn.textContent = 'Edit';
+
+
 
                     const open = (e) => {
                         e.preventDefault();
@@ -8041,8 +8946,192 @@ techNameInput.addEventListener('keydown', (event) => {
             });
         }
 
-        function refreshCondensedForm() {
+        /** Patch existing Form View rows in place (pain / PSR / BP / dropdowns / previews).
+         *  Avoids destroying & recreating range/inputs — main source of pain-scale flicker.
+         *  Returns false if structure is missing/stale and a full render is required. */
+        function patchCondensedFormInPlace() {
+            const host = document.getElementById('condensed-form-view');
+            if (!host || !host.querySelector('.cf-section')) return false;
+            let rowsFound = 0;
+            let expected = 0;
+
+            /** Yellow flash on Diagnosis of Chief Concern when chief is set but dx still default. */
+            function applyAssessmentFlash(row, el, state) {
+                if (!row) return;
+                const isDxRow = state.originalId === '3-1' ||
+                    (state.internalLabel || '').toLowerCase().includes('diagnosis of chief');
+                if (!isDxRow) {
+                    row.classList.remove('cf-flash-assessment');
+                    return;
+                }
+                const chiefEl = document.querySelector('[data-original-id="1-1"]');
+                let chiefNeedsDx = false;
+                if (chiefEl) {
+                    const cs = getElementState(chiefEl);
+                    const chiefText = String(cs.content || '').trim().toLowerCase();
+                    const chiefDef = String(cs.defaultText || 'None').trim().toLowerCase();
+                    chiefNeedsDx = chiefText !== '' && chiefText !== chiefDef && chiefText !== 'none' && chiefText !== 'none.';
+                }
+                const dxText = String(state.content || '').trim().toLowerCase();
+                const dxDef = String(state.defaultText || 'None.').trim().toLowerCase();
+                const dxStillDefault = !dxText || dxText === dxDef || dxText === 'none' || dxText === 'none.';
+                const shouldFlash = chiefNeedsDx && dxStillDefault;
+                row.classList.toggle('cf-flash-assessment', shouldFlash);
+                if (el) {
+                    if (shouldFlash) el.classList.add('element-highlighted2');
+                    else el.classList.remove('element-highlighted2');
+                }
+            }
+
+            try {
+                SECTIONS.forEach(sectionId => {
+                    const dropzone = document.querySelector('.dropzone[data-section-id="' + sectionId + '"]');
+                    if (!dropzone) return;
+                    dropzone.querySelectorAll('.draggable-element').forEach(el => {
+                        const state = getElementState(el);
+                        if (state.type === 'formatter') return;
+                        const isHidden = el.classList.contains('element-hidden') || state.isHidden;
+                        const showHidden = document.body.classList.contains('show-hidden-elements') ||
+                            (document.getElementById('view-hidden-toggle') && document.getElementById('view-hidden-toggle').checked);
+                        if (isHidden && !showHidden) return;
+                        expected++;
+                        const oid = state.originalId || el.dataset.originalId || '';
+                        const row = oid
+                            ? host.querySelector('.cf-row[data-original-id="' + oid + '"]')
+                            : host.querySelector('.cf-row[data-element-id="' + el.id + '"]');
+                        if (!row) return;
+                        rowsFound++;
+
+                        // --- Visual state that full renderCondensedForm used to set ---
+                        // Blue "changed" wash (skip pure alert status tiles)
+                        const contentChanged = (typeof isCfContentChanged === 'function')
+                            ? isCfContentChanged(el, state) : false;
+                        const useChanged = contentChanged && state.type !== 'alert';
+                        row.classList.toggle('cf-changed', !!useChanged);
+
+                        // Diagnosis-of-chief yellow flash
+                        applyAssessmentFlash(row, el, state);
+
+                        // Value sync by type
+                        if (state.type === 'painscale') {
+                            const src = el.querySelector('.pain-slider');
+                            const range = row.querySelector('input[type="range"]');
+                            const label = row.querySelector('strong');
+                            const v = String((src && src.value != null && src.value !== '') ? src.value : (state.value != null ? state.value : '0'));
+                            if (range && document.activeElement !== range && range.value !== v) {
+                                range.value = v;
+                                range.setAttribute('value', v);
+                            }
+                            if (label && label.textContent !== v + '/10') label.textContent = v + '/10';
+                        } else if (state.type === 'psr') {
+                            el.querySelectorAll('.psr-input').forEach(srcInp => {
+                                const idx = srcInp.dataset.index;
+                                const dst = row.querySelector('.psr-input[data-index="' + idx + '"]');
+                                if (dst && document.activeElement !== dst && dst.value !== srcInp.value) {
+                                    dst.value = srcInp.value;
+                                }
+                            });
+                            el.querySelectorAll('.psr-asterisk').forEach(srcCb => {
+                                const idx = srcCb.dataset.index;
+                                const dst = row.querySelector('.psr-asterisk[data-index="' + idx + '"]');
+                                if (dst && document.activeElement !== dst && dst.checked !== srcCb.checked) {
+                                    dst.checked = srcCb.checked;
+                                }
+                            });
+                            const srcNote = el.querySelector('.psr-asterisk-note');
+                            const dstNote = row.querySelector('.psr-asterisk-note');
+                            if (srcNote && dstNote && document.activeElement !== dstNote && dstNote.value !== srcNote.value) {
+                                dstNote.value = srcNote.value;
+                            }
+                        } else if (state.type === 'bloodpressure') {
+                            [['.bp-systolic', state.systolic], ['.bp-diastolic', state.diastolic],
+                             ['.bp-pulse', state.pulse], ['.bp-temp', state.temp]].forEach(([sel, v]) => {
+                                const dst = row.querySelector(sel);
+                                const next = v != null ? String(v) : '';
+                                if (dst && document.activeElement !== dst && dst.value !== next) dst.value = next;
+                            });
+                            // Mirror BP stage border colors onto the form surface
+                            const wrap = row.querySelector('.bp-element') || row.querySelector('.cf-surface');
+                            if (wrap) {
+                                ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
+                                    wrap.classList.toggle(c, el.classList.contains(c));
+                                });
+                            }
+                        } else if (state.type === 'dropdown') {
+                            const src = el.querySelector('select');
+                            const dst = row.querySelector('select');
+                            if (src && dst && document.activeElement !== dst && dst.value !== src.value) {
+                                dst.value = src.value;
+                                dst.selectedIndex = src.selectedIndex;
+                            }
+                        } else if (state.type === 'alert') {
+                            const srcDisp = el.querySelector('.alert-display');
+                            const dstDisp = row.querySelector('.alert-display');
+                            if (srcDisp && dstDisp && dstDisp.textContent !== srcDisp.textContent) {
+                                dstDisp.textContent = srcDisp.textContent;
+                            }
+                            const box = row.querySelector('.alert-element') || row.querySelector('.cf-surface');
+                            if (box) {
+                                ['alert-blank', 'alert-none', 'alert-active'].forEach(c => {
+                                    box.classList.toggle(c, el.classList.contains(c));
+                                });
+                            }
+                        } else {
+                            // Text / charting / tx-plan preview + chip / empty classes
+                            const preview = row.querySelector('.cf-preview');
+                            if (preview && !preview.querySelector('input, select, textarea')) {
+                                const text = (typeof getCondensedPreview === 'function') ? getCondensedPreview(el, state) : '';
+                                const isEmpty = !text || /^(none\.?|—|not recorded|not set|unchecked)?$/i.test(String(text).trim());
+                                const isChart = state.type === 'charting' || state.type === 'tx-plan' || state.type === 'endo-testing';
+                                if (preview.textContent !== text) preview.textContent = text;
+                                preview.classList.toggle('empty', !!isEmpty);
+                                preview.classList.toggle('chip', !isEmpty && (isChart || contentChanged));
+                            }
+                        }
+
+                        // When chief concern (1-1) changes, re-evaluate flash on diagnosis row
+                        if (oid === '1-1') {
+                            const dxRow = host.querySelector('.cf-row[data-original-id="3-1"]');
+                            const dxEl = document.querySelector('[data-original-id="3-1"]');
+                            if (dxRow && dxEl) {
+                                applyAssessmentFlash(dxRow, dxEl, getElementState(dxEl));
+                            }
+                        }
+                    });
+                });
+            } catch (err) {
+                console.warn('patchCondensedFormInPlace failed', err);
+                return false;
+            }
+            // If row count is way off, force full render next time
+            return expected > 0 && rowsFound >= Math.max(1, expected - 1);
+        }
+
+        let _cfRefreshTimer = null;
+        function refreshCondensedForm(opts) {
             if (uiMode !== 'form') return;
+            // Debounce rapid cloud/local updates (stops painscale flicker)
+            const immediate = opts && opts.immediate;
+            if (!immediate) {
+                clearTimeout(_cfRefreshTimer);
+                _cfRefreshTimer = setTimeout(() => refreshCondensedForm({ immediate: true }), 80);
+                return;
+            }
+            // If user is mid-drag on a pain slider / BP / PSR, skip rebuild this tick
+            const ae0 = document.activeElement;
+            if (ae0 && ae0.closest && ae0.closest('#condensed-form-view')) {
+                if (ae0.classList && (ae0.classList.contains('pain-slider') ||
+                    ae0.classList.contains('bp-systolic') ||
+                    ae0.classList.contains('bp-diastolic') ||
+                    ae0.classList.contains('bp-pulse') ||
+                    ae0.classList.contains('bp-temp') ||
+                    ae0.classList.contains('psr-input'))) {
+                    // schedule one more try after interaction
+                    clearTimeout(_cfRefreshTimer);
+                    _cfRefreshTimer = setTimeout(() => refreshCondensedForm({ immediate: true }), 200);
+                    return;
+                }
+            }
 
             // Preserve focus across form rebuild (PSR sextants, BP fields, etc.)
             const ae = document.activeElement;
@@ -8061,7 +9150,11 @@ techNameInput.addEventListener('keydown', (event) => {
                 };
             }
 
-            renderCondensedForm();
+            // Prefer in-place value patch (no DOM destroy) unless forced or structure missing
+            const forceFull = opts && opts.force;
+            if (forceFull || !patchCondensedFormInPlace()) {
+                renderCondensedForm();
+            }
 
             if (!restore) return;
             try {
@@ -8078,6 +9171,10 @@ techNameInput.addEventListener('keydown', (event) => {
                     target = row.querySelector('.bp-systolic');
                 } else if (restore.classList.includes('bp-diastolic')) {
                     target = row.querySelector('.bp-diastolic');
+                } else if (restore.classList.includes('bp-pulse')) {
+                    target = row.querySelector('.bp-pulse');
+                } else if (restore.classList.includes('bp-temp')) {
+                    target = row.querySelector('.bp-temp');
                 } else if (restore.classList.includes('psr-input') && restore.dataIndex != null) {
                     target = row.querySelector('.psr-input[data-index="' + restore.dataIndex + '"]');
                 } else if (restore.classList.includes('psr-asterisk') && restore.dataIndex != null) {
@@ -8163,6 +9260,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 document.body.classList.remove('condensed-mode');
                 if (btn) btn.textContent = 'Form View';
             }
+            if (typeof updateDentalClassIndicator === 'function') updateDentalClassIndicator();
         }
 
         const uiModeToggleBtn = document.getElementById('ui-mode-toggle');
@@ -8638,7 +9736,9 @@ function attachEventListeners() {
             // Tooth number label
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
             label.setAttribute("x", x);
-            label.setAttribute("y", isUpper ? y + size + 8 : y - size - 4);
+            // Push numbers away from the circle so class badges on the facial side do not collide
+            // Upper: number on lingual (below). Lower: number on lingual (above).
+            label.setAttribute("y", isUpper ? y + size + 16 : y - size - 12);
             label.setAttribute("class", "tooth-label");
             label.textContent = toothNum;
             group.appendChild(label);
@@ -8670,13 +9770,15 @@ function attachEventListeners() {
 
             // --- Arch Lines (simplified path) ---
             const upperArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            upperArchLine.setAttribute("d", "M 20 120 C 200 60, 600 60, 830 120");
+            upperArchLine.setAttribute("d", "M 28 98 C 140 42, 710 42, 822 98");
             upperArchLine.setAttribute("class", "arch-line");
+            upperArchLine.setAttribute("fill", "none");
             dentalChartSVG.appendChild(upperArchLine);
 
             const lowerArchLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            lowerArchLine.setAttribute("d", "M 20 280 C 200 340, 600 340, 830 280");
+            lowerArchLine.setAttribute("d", "M 28 302 C 140 358, 710 358, 822 302");
             lowerArchLine.setAttribute("class", "arch-line");
+            lowerArchLine.setAttribute("fill", "none");
             dentalChartSVG.appendChild(lowerArchLine);
 
             // --- Tooth Elements ---
