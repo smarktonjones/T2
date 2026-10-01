@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 24SEP26 mgh BP pulse/temp vitals -->
+<!-- version as of 01OCT26 mgh patch visual state (changed + flash) -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1507,7 +1507,7 @@ body.session-readonly .add-element-btn {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.1.2</p>
+    <p class="landing-version">v6.1.5</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -3100,7 +3100,33 @@ const updateEnhancedTextboxUI = (element) => {
 const getBPStatus = (s, d) => {if (!s || !d) return 'normal'; if (s >= 180 || d >= 120) return 'crisis'; if (s >= 140 || d >= 90) return 'stage2'; if (s >= 130 || d >= 85) return 'stage1'; if (s >= 120 && d < 80) return 'elevated'; return 'normal';};
 const updateBPElementUI = (element) => { const s = parseInt(element.querySelector('.bp-systolic').value, 10); const d = parseInt(element.querySelector('.bp-diastolic').value, 10); const status = getBPStatus(s, d); element.classList.remove('bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'); element.classList.add(`bp-${status}`); const priorTxContainer = element.querySelector('.bp-prior-tx-container'); const triggerS = parseInt(element.dataset.checkboxSystolic, 10); const triggerD = parseInt(element.dataset.checkboxDiastolic, 10); if (s >= triggerS || d >= triggerD) { priorTxContainer.classList.add('visible'); } else { priorTxContainer.classList.remove('visible'); } };
 
-		const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
+		
+/** Always return a length-6 string array for PSR scores (prevents trailing empties / object maps from wiping sextants). */
+const normalizePsrScores = (scores) => {
+    const out = Array(6).fill('');
+    if (Array.isArray(scores)) {
+        for (let i = 0; i < 6; i++) {
+            if (scores[i] != null && scores[i] !== undefined) out[i] = String(scores[i]);
+        }
+    } else if (scores && typeof scores === 'object') {
+        for (let i = 0; i < 6; i++) {
+            if (scores[i] != null && scores[i] !== undefined) out[i] = String(scores[i]);
+            else if (scores[String(i)] != null) out[i] = String(scores[String(i)]);
+        }
+    }
+    return out;
+};
+const normalizePsrAsterisks = (asterisks) => {
+    const out = Array(6).fill(false);
+    if (Array.isArray(asterisks)) {
+        for (let i = 0; i < 6; i++) out[i] = !!asterisks[i];
+    } else if (asterisks && typeof asterisks === 'object') {
+        for (let i = 0; i < 6; i++) out[i] = !!(asterisks[i] ?? asterisks[String(i)]);
+    }
+    return out;
+};
+
+const updatePSRElementUI = (element) => { const hasAsterisk = Array.from(element.querySelectorAll('.psr-asterisk')).some(cb => cb.checked); const noteContainer = element.querySelector('.psr-asterisk-note'); if (hasAsterisk) { noteContainer.classList.add('visible'); } else { noteContainer.classList.remove('visible'); } };
 
 // Improved PSR auto-tabbing that works in BOTH Editor View and Form View
 const handlePSRTabbing = (event) => {
@@ -3384,7 +3410,7 @@ contextMenu.style.top = `${e.clientY + window.scrollY}px`; contextMenu.style.lef
      else if (type === 'endo-testing') { draggable.classList.add('endo-testing-element'); draggable.innerHTML = `<span class="endo-summary"></span>`; updateEndoTestingSummary(draggable); draggable.addEventListener('click', () => openEndoTestingEditor(draggable)); }
             else if (type === 'painscale') { const val = data.value || 0; draggable.innerHTML = `<label>Pain Scale: <b class="pain-value">${val}/10</b></label><div class="pain-scale-container"><input type="range" min="0" max="10" value="${val}" class="pain-slider"></div>`; draggable.querySelector('.pain-slider').addEventListener('input', e => { draggable.querySelector('.pain-value').textContent = `${e.target.value}/10`; }); }
             else if (type === 'bloodpressure') { draggable.classList.add('bp-element'); draggable.innerHTML = `<div class="bp-row"><div class="bp-bp-group"><b>BP:</b> <input type="number" class="bp-systolic" placeholder="120" value="${data.systolic || ''}"> / <input type="number" class="bp-diastolic" placeholder="80" value="${data.diastolic || ''}"></div><div class="bp-extra-vitals"><div class="bp-if-applicable">if applicable</div><div class="bp-extra-inputs"><label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="00" min="0" max="300" value="${data.pulse || ''}"></label><label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="${data.temp || ''}"></label></div></div></div><div class="bp-prior-tx-container"><label><input type="checkbox" class="bp-prior-tx-check" ${data.isPriorTxChecked ? 'checked' : ''}> BP Prior to Tx</label></div>`; draggable.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('input', () => updateBPElementUI(draggable)); }); updateBPElementUI(draggable); }
-            else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = data.scores || Array(6).fill(''); const asterisks = data.asterisks || Array(6).fill(false); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; 
+            else if (type === 'psr') { draggable.classList.add('psr-element'); const scores = normalizePsrScores(data.scores); const asterisks = normalizePsrAsterisks(data.asterisks); const visualOrder = [[0, "[1]"], [1, "[2]"], [2, "[3]"], [5, "[6]"], [4, "[5]"], [3, "[4]"]]; let gridHtml = ''; [visualOrder.slice(0,3), visualOrder.slice(3,6)].forEach(row => { gridHtml += row.map(([index, label]) => `<div class="psr-sextant"><input type="checkbox" class="psr-asterisk" data-index="${index}" ${asterisks[index] ? 'checked' : ''}><label>${label}</label><input type="text" class="psr-input" value="${scores[index]}" data-index="${index}"></div>`).join(''); }); draggable.innerHTML = `<b>PSR:</b><div class="psr-grid">${gridHtml}</div><textarea class="psr-asterisk-note" placeholder="* Description...">${data.asteriskNote || ''}</textarea>`; 
 
 
 draggable.querySelectorAll('.psr-input').forEach(input => {
@@ -3493,7 +3519,22 @@ state.txSnippets = JSON.parse(element.dataset.txSnippets);
                 state.checkboxSystolic = element.dataset.checkboxSystolic;
                 state.checkboxDiastolic = element.dataset.checkboxDiastolic;
             }
-            else if (type === 'psr') { state.scores = Array(6).fill(''); state.asterisks = Array(6).fill(false); element.querySelectorAll('.psr-input').forEach(i => { state.scores[i.dataset.index] = i.value; }); element.querySelectorAll('.psr-asterisk').forEach(cb => { state.asterisks[cb.dataset.index] = cb.checked; }); state.asteriskNote = element.querySelector('.psr-asterisk-note').value; }
+            else if (type === 'psr') {
+                state.scores = Array(6).fill('');
+                state.asterisks = Array(6).fill(false);
+                element.querySelectorAll('.psr-input').forEach(i => {
+                    const idx = parseInt(i.dataset.index, 10);
+                    if (!isNaN(idx) && idx >= 0 && idx < 6) state.scores[idx] = i.value;
+                });
+                element.querySelectorAll('.psr-asterisk').forEach(cb => {
+                    const idx = parseInt(cb.dataset.index, 10);
+                    if (!isNaN(idx) && idx >= 0 && idx < 6) state.asterisks[idx] = cb.checked;
+                });
+                const noteEl = element.querySelector('.psr-asterisk-note');
+                state.asteriskNote = noteEl ? noteEl.value : '';
+                state.scores = normalizePsrScores(state.scores);
+                state.asterisks = normalizePsrAsterisks(state.asterisks);
+            }
             else if (type === 'dropdown') { const select = element.querySelector('select'); state.options = Array.from(select.options).map(o => o.value); state.selected = select.value; }
             else if (type === 'checkbox') { state.checked = element.querySelector('input').checked; state.content = element.querySelector('span').innerText; }
             else if ((type || '').startsWith('label-')) { state.content = element.querySelector('[contenteditable]').innerText; }
@@ -4978,8 +5019,8 @@ function canonicalFieldValue(item) {
         out.diastolic = item.diastolic || '';
         out.isPriorTxChecked = !!item.isPriorTxChecked;
     } else if (t === 'psr') {
-        out.scores = item.scores || [];
-        out.asterisks = item.asterisks || [];
+        out.scores = (typeof normalizePsrScores === 'function') ? normalizePsrScores(item.scores) : (item.scores || Array(6).fill(''));
+        out.asterisks = (typeof normalizePsrAsterisks === 'function') ? normalizePsrAsterisks(item.asterisks) : (item.asterisks || Array(6).fill(false));
         out.asteriskNote = item.asteriskNote || '';
     } else if (t === 'tx-plan') {
         out.txData = item.txData || {};
@@ -5617,7 +5658,33 @@ const surgicallyUpdateElement = (element, newStateItem) => {
 		}	
 
 		else if (newStateItem.type === 'psr') {
-            element.replaceWith(createElement(newStateItem.type, newStateItem));
+            // In-place update (never replaceWith). replaceWith destroyed element identity;
+            // Form View clones could then write into a detached node and wipe sextants
+            // (often the last 3 / bottom row) when a collab echo arrived mid-entry.
+            const scores = normalizePsrScores(newStateItem.scores);
+            const asterisks = normalizePsrAsterisks(newStateItem.asterisks);
+            element.querySelectorAll('.psr-input').forEach(inp => {
+                const idx = parseInt(inp.dataset.index, 10);
+                if (isNaN(idx) || idx < 0 || idx > 5) return;
+                const next = scores[idx] != null ? String(scores[idx]) : '';
+                if (inp.value !== next && document.activeElement !== inp) {
+                    inp.value = next;
+                }
+            });
+            element.querySelectorAll('.psr-asterisk').forEach(cb => {
+                const idx = parseInt(cb.dataset.index, 10);
+                if (isNaN(idx) || idx < 0 || idx > 5) return;
+                const want = !!asterisks[idx];
+                if (cb.checked !== want && document.activeElement !== cb) {
+                    cb.checked = want;
+                }
+            });
+            const note = element.querySelector('.psr-asterisk-note');
+            const nextNote = newStateItem.asteriskNote || '';
+            if (note && note.value !== nextNote && document.activeElement !== note) {
+                note.value = nextNote;
+            }
+            if (typeof updatePSRElementUI === 'function') updatePSRElementUI(element);
         } else if (newStateItem.type === 'alert') {
             if (typeof updateAlertElementUI === 'function') updateAlertElementUI(element);
         }
@@ -8353,7 +8420,7 @@ techNameInput.addEventListener('keydown', (event) => {
                       '<div class="bp-extra-vitals">' +
                         '<div class="bp-if-applicable">if applicable</div>' +
                         '<div class="bp-extra-inputs">' +
-                          '<label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="72" min="0" max="300" value="' + (pulseSrc ? pulseSrc.value : '') + '"></label>' +
+                          '<label><b>Pulse:</b> <input type="number" class="bp-pulse" placeholder="--" min="0" max="300" value="' + (pulseSrc ? pulseSrc.value : '') + '"></label>' +
                           '<label><b>Temp:</b> <input type="number" class="bp-temp" placeholder="98.6" step="0.1" min="90" max="110" value="' + (tempSrc ? tempSrc.value : '') + '"></label>' +
                         '</div>' +
                       '</div>' +
@@ -8695,12 +8762,20 @@ techNameInput.addEventListener('keydown', (event) => {
                         wrap.style.display = 'flex';
                         wrap.style.alignItems = 'center';
                         wrap.style.gap = '8px';
+                        const painVal = String(
+                            (src && src.value !== '' && src.value != null) ? src.value
+                            : (state.value != null && state.value !== '' ? state.value : '0')
+                        );
                         const range = document.createElement('input');
                         range.type = 'range';
-                        range.min = '0'; range.max = '10';
-                        range.value = src ? src.value : (state.value || '0');
+                        range.min = '0';
+                        range.max = '10';
+                        range.step = '1';
+                        // Set value attribute BEFORE insert — avoids browser painting max/default (flicker to 10/10)
+                        range.setAttribute('value', painVal);
+                        range.value = painVal;
                         const val = document.createElement('strong');
-                        val.textContent = `${range.value}/10`;
+                        val.textContent = painVal + '/10';
                         range.addEventListener('input', () => {
                             val.textContent = `${range.value}/10`;
                             if (src) {
@@ -8708,10 +8783,11 @@ techNameInput.addEventListener('keydown', (event) => {
                                 src.dispatchEvent(new Event('input', { bubbles: true }));
                             }
                             const pv = el.querySelector('.pain-value');
-                            if (pv) pv.textContent = `${range.value}/10`;
+                            if (pv) pv.textContent = range.value + '/10';
                             updateLiveOutput();
+                            // Do NOT full-refresh form on every change — remounting the range
+                            // is what caused the brief 10/10 → correct-value flicker.
                         });
-                        range.addEventListener('change', () => setTimeout(refreshCondensedForm, 30));
                         wrap.appendChild(range);
                         wrap.appendChild(val);
                         preview.className = 'cf-preview';
@@ -8753,6 +8829,167 @@ techNameInput.addEventListener('keydown', (event) => {
 
                 if (anyVisible) host.appendChild(sectionEl);
             });
+        }
+
+        /** Patch existing Form View rows in place (pain / PSR / BP / dropdowns / previews).
+         *  Avoids destroying & recreating range/inputs — main source of pain-scale flicker.
+         *  Returns false if structure is missing/stale and a full render is required. */
+        function patchCondensedFormInPlace() {
+            const host = document.getElementById('condensed-form-view');
+            if (!host || !host.querySelector('.cf-section')) return false;
+            let rowsFound = 0;
+            let expected = 0;
+
+            /** Yellow flash on Diagnosis of Chief Concern when chief is set but dx still default. */
+            function applyAssessmentFlash(row, el, state) {
+                if (!row) return;
+                const isDxRow = state.originalId === '3-1' ||
+                    (state.internalLabel || '').toLowerCase().includes('diagnosis of chief');
+                if (!isDxRow) {
+                    row.classList.remove('cf-flash-assessment');
+                    return;
+                }
+                const chiefEl = document.querySelector('[data-original-id="1-1"]');
+                let chiefNeedsDx = false;
+                if (chiefEl) {
+                    const cs = getElementState(chiefEl);
+                    const chiefText = String(cs.content || '').trim().toLowerCase();
+                    const chiefDef = String(cs.defaultText || 'None').trim().toLowerCase();
+                    chiefNeedsDx = chiefText !== '' && chiefText !== chiefDef && chiefText !== 'none' && chiefText !== 'none.';
+                }
+                const dxText = String(state.content || '').trim().toLowerCase();
+                const dxDef = String(state.defaultText || 'None.').trim().toLowerCase();
+                const dxStillDefault = !dxText || dxText === dxDef || dxText === 'none' || dxText === 'none.';
+                const shouldFlash = chiefNeedsDx && dxStillDefault;
+                row.classList.toggle('cf-flash-assessment', shouldFlash);
+                if (el) {
+                    if (shouldFlash) el.classList.add('element-highlighted2');
+                    else el.classList.remove('element-highlighted2');
+                }
+            }
+
+            try {
+                SECTIONS.forEach(sectionId => {
+                    const dropzone = document.querySelector('.dropzone[data-section-id="' + sectionId + '"]');
+                    if (!dropzone) return;
+                    dropzone.querySelectorAll('.draggable-element').forEach(el => {
+                        const state = getElementState(el);
+                        if (state.type === 'formatter') return;
+                        const isHidden = el.classList.contains('element-hidden') || state.isHidden;
+                        const showHidden = document.body.classList.contains('show-hidden-elements') ||
+                            (document.getElementById('view-hidden-toggle') && document.getElementById('view-hidden-toggle').checked);
+                        if (isHidden && !showHidden) return;
+                        expected++;
+                        const oid = state.originalId || el.dataset.originalId || '';
+                        const row = oid
+                            ? host.querySelector('.cf-row[data-original-id="' + oid + '"]')
+                            : host.querySelector('.cf-row[data-element-id="' + el.id + '"]');
+                        if (!row) return;
+                        rowsFound++;
+
+                        // --- Visual state that full renderCondensedForm used to set ---
+                        // Blue "changed" wash (skip pure alert status tiles)
+                        const contentChanged = (typeof isCfContentChanged === 'function')
+                            ? isCfContentChanged(el, state) : false;
+                        const useChanged = contentChanged && state.type !== 'alert';
+                        row.classList.toggle('cf-changed', !!useChanged);
+
+                        // Diagnosis-of-chief yellow flash
+                        applyAssessmentFlash(row, el, state);
+
+                        // Value sync by type
+                        if (state.type === 'painscale') {
+                            const src = el.querySelector('.pain-slider');
+                            const range = row.querySelector('input[type="range"]');
+                            const label = row.querySelector('strong');
+                            const v = String((src && src.value != null && src.value !== '') ? src.value : (state.value != null ? state.value : '0'));
+                            if (range && document.activeElement !== range && range.value !== v) {
+                                range.value = v;
+                                range.setAttribute('value', v);
+                            }
+                            if (label && label.textContent !== v + '/10') label.textContent = v + '/10';
+                        } else if (state.type === 'psr') {
+                            el.querySelectorAll('.psr-input').forEach(srcInp => {
+                                const idx = srcInp.dataset.index;
+                                const dst = row.querySelector('.psr-input[data-index="' + idx + '"]');
+                                if (dst && document.activeElement !== dst && dst.value !== srcInp.value) {
+                                    dst.value = srcInp.value;
+                                }
+                            });
+                            el.querySelectorAll('.psr-asterisk').forEach(srcCb => {
+                                const idx = srcCb.dataset.index;
+                                const dst = row.querySelector('.psr-asterisk[data-index="' + idx + '"]');
+                                if (dst && document.activeElement !== dst && dst.checked !== srcCb.checked) {
+                                    dst.checked = srcCb.checked;
+                                }
+                            });
+                            const srcNote = el.querySelector('.psr-asterisk-note');
+                            const dstNote = row.querySelector('.psr-asterisk-note');
+                            if (srcNote && dstNote && document.activeElement !== dstNote && dstNote.value !== srcNote.value) {
+                                dstNote.value = srcNote.value;
+                            }
+                        } else if (state.type === 'bloodpressure') {
+                            [['.bp-systolic', state.systolic], ['.bp-diastolic', state.diastolic],
+                             ['.bp-pulse', state.pulse], ['.bp-temp', state.temp]].forEach(([sel, v]) => {
+                                const dst = row.querySelector(sel);
+                                const next = v != null ? String(v) : '';
+                                if (dst && document.activeElement !== dst && dst.value !== next) dst.value = next;
+                            });
+                            // Mirror BP stage border colors onto the form surface
+                            const wrap = row.querySelector('.bp-element') || row.querySelector('.cf-surface');
+                            if (wrap) {
+                                ['bp-normal', 'bp-elevated', 'bp-stage1', 'bp-stage2', 'bp-crisis'].forEach(c => {
+                                    wrap.classList.toggle(c, el.classList.contains(c));
+                                });
+                            }
+                        } else if (state.type === 'dropdown') {
+                            const src = el.querySelector('select');
+                            const dst = row.querySelector('select');
+                            if (src && dst && document.activeElement !== dst && dst.value !== src.value) {
+                                dst.value = src.value;
+                                dst.selectedIndex = src.selectedIndex;
+                            }
+                        } else if (state.type === 'alert') {
+                            const srcDisp = el.querySelector('.alert-display');
+                            const dstDisp = row.querySelector('.alert-display');
+                            if (srcDisp && dstDisp && dstDisp.textContent !== srcDisp.textContent) {
+                                dstDisp.textContent = srcDisp.textContent;
+                            }
+                            const box = row.querySelector('.alert-element') || row.querySelector('.cf-surface');
+                            if (box) {
+                                ['alert-blank', 'alert-none', 'alert-active'].forEach(c => {
+                                    box.classList.toggle(c, el.classList.contains(c));
+                                });
+                            }
+                        } else {
+                            // Text / charting / tx-plan preview + chip / empty classes
+                            const preview = row.querySelector('.cf-preview');
+                            if (preview && !preview.querySelector('input, select, textarea')) {
+                                const text = (typeof getCondensedPreview === 'function') ? getCondensedPreview(el, state) : '';
+                                const isEmpty = !text || /^(none\.?|—|not recorded|not set|unchecked)?$/i.test(String(text).trim());
+                                const isChart = state.type === 'charting' || state.type === 'tx-plan' || state.type === 'endo-testing';
+                                if (preview.textContent !== text) preview.textContent = text;
+                                preview.classList.toggle('empty', !!isEmpty);
+                                preview.classList.toggle('chip', !isEmpty && (isChart || contentChanged));
+                            }
+                        }
+
+                        // When chief concern (1-1) changes, re-evaluate flash on diagnosis row
+                        if (oid === '1-1') {
+                            const dxRow = host.querySelector('.cf-row[data-original-id="3-1"]');
+                            const dxEl = document.querySelector('[data-original-id="3-1"]');
+                            if (dxRow && dxEl) {
+                                applyAssessmentFlash(dxRow, dxEl, getElementState(dxEl));
+                            }
+                        }
+                    });
+                });
+            } catch (err) {
+                console.warn('patchCondensedFormInPlace failed', err);
+                return false;
+            }
+            // If row count is way off, force full render next time
+            return expected > 0 && rowsFound >= Math.max(1, expected - 1);
         }
 
         let _cfRefreshTimer = null;
@@ -8798,7 +9035,11 @@ techNameInput.addEventListener('keydown', (event) => {
                 };
             }
 
-            renderCondensedForm();
+            // Prefer in-place value patch (no DOM destroy) unless forced or structure missing
+            const forceFull = opts && opts.force;
+            if (forceFull || !patchCondensedFormInPlace()) {
+                renderCondensedForm();
+            }
 
             if (!restore) return;
             try {
