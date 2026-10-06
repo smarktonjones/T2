@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 01OCT26 mgh doctor session localStorage restore -->
+<!-- version as of 06OCT26 mgh doctor session localStorage restore, glitch fix -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2109,7 +2109,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "required": false,
       "prefixTab": true,
       "prefixNewline": false,
-      "suffixNewline": true,
+      "suffixNewline": false,
       "originalId": "2-3",
       "isHidden": false,
       "doNotReset": false,
@@ -4227,6 +4227,13 @@ const runImportLogic = (noteText) => {
         
         console.log("DEBUG: The following original IDs will be highlighted:", originalIdsToHighlight);
 
+        // Protect imported fields from a concurrent cloud snapshot overwriting them
+        originalIdsToHighlight.forEach(id => {
+            if (typeof markLocalEdit === 'function') markLocalEdit(id);
+        });
+        // Drop any modal target pointing at nodes about to be destroyed
+        try { activeElementForEditor = null; } catch (e) {}
+
         // 2. Render the state first.
         renderState(liveState, false);
 
@@ -4244,9 +4251,17 @@ const runImportLogic = (noteText) => {
                 }
             });
         }
-        // Mirror yellow flash into Form View when active
-        if (typeof refreshCondensedForm === 'function') {
-            setTimeout(() => { try { refreshCondensedForm(); } catch (e) {} }, 60);
+        // Force FULL Form View rebuild (not in-place patch).
+        // Patch leaves stale data-element-id links → mixed / uneditable rows until F5.
+         if (typeof refreshCondensedForm === 'function') {
+            setTimeout(() => {
+                try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {}
+            }, 60);
+         }
+
+        // Push imported values to cloud so self/peer sync does not reintroduce old text
+        if (typeof updateLiveOutput === 'function') {
+            try { updateLiveOutput(true); } catch (e) {}
         }
 
         console.log("--- IMPORT PROCESS COMPLETE ---");
