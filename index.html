@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 01OCT26 mgh patch visual state (changed + flash) -->
+<!-- version as of 06OCT26 mgh doctor session localStorage restore, glitch fix -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1507,7 +1507,7 @@ body.session-readonly .add-element-btn {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.1.5</p>
+    <p class="landing-version">v6.1.7</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -2109,7 +2109,7 @@ Questions/Support? <a href="mailto:mark.g.horning.civ@health.mil">MG Horning</a>
       "required": false,
       "prefixTab": true,
       "prefixNewline": false,
-      "suffixNewline": true,
+      "suffixNewline": false,
       "originalId": "2-3",
       "isHidden": false,
       "doNotReset": false,
@@ -2819,6 +2819,11 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+// Prefer browser localStorage over IndexedDB — more resilient on locked
+// government machines that wipe IndexedDB/session storage on unlock/idle.
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
+    console.warn('Could not set Firebase LOCAL persistence:', err);
+});
 // =================================================================
 
 
@@ -4222,6 +4227,13 @@ const runImportLogic = (noteText) => {
         
         console.log("DEBUG: The following original IDs will be highlighted:", originalIdsToHighlight);
 
+        // Protect imported fields from a concurrent cloud snapshot overwriting them
+        originalIdsToHighlight.forEach(id => {
+            if (typeof markLocalEdit === 'function') markLocalEdit(id);
+        });
+        // Drop any modal target pointing at nodes about to be destroyed
+        try { activeElementForEditor = null; } catch (e) {}
+
         // 2. Render the state first.
         renderState(liveState, false);
 
@@ -4239,9 +4251,17 @@ const runImportLogic = (noteText) => {
                 }
             });
         }
-        // Mirror yellow flash into Form View when active
-        if (typeof refreshCondensedForm === 'function') {
-            setTimeout(() => { try { refreshCondensedForm(); } catch (e) {} }, 60);
+        // Force FULL Form View rebuild (not in-place patch).
+        // Patch leaves stale data-element-id links → mixed / uneditable rows until F5.
+         if (typeof refreshCondensedForm === 'function') {
+            setTimeout(() => {
+                try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {}
+            }, 60);
+         }
+
+        // Push imported values to cloud so self/peer sync does not reintroduce old text
+        if (typeof updateLiveOutput === 'function') {
+            try { updateLiveOutput(true); } catch (e) {}
         }
 
         console.log("--- IMPORT PROCESS COMPLETE ---");
@@ -5455,6 +5475,13 @@ const listenForHistoryNotes = () => {
 const startEditingSession = (noteId) => {
     console.log(`DEBUG: Starting editing session for note: "${noteId}"`);
 
+    // Remember last open note so a forced refresh can rejoin it (doctors only)
+    try {
+        if (auth && auth.currentUser) {
+            writeDoctorSessionMeta({ lastNoteId: noteId, lastView: 'note-editor' });
+        }
+    } catch (e) { /* ignore */ }
+
     // Live collab session — allow writes (never read-only for active notes)
     setReadOnlySession(false);
     pendingLocalEdits.clear();
@@ -6125,6 +6152,46 @@ async function loadDefaults() {
 console.log("DEBUG: Attaching main auth listener and all UI event handlers...");
 
 // The "brain" of the app. It runs on page load and controls the entire UI flow.
+// =================================================================
+// Doctor session resilience (localStorage) — survives F5 / tab discard
+// =================================================================
+const DOCTOR_EMAIL_KEY = 'dentalNoteDoctorEmail';
+const DOCTOR_META_KEY = 'dentalNoteDoctorSessionMeta';
+// Auto-rejoin the last open note only if lastActive is within this window
+const DOCTOR_NOTE_REJOIN_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+function readDoctorSessionMeta() {
+    try {
+        return JSON.parse(localStorage.getItem(DOCTOR_META_KEY) || 'null') || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeDoctorSessionMeta(patch) {
+    const prev = readDoctorSessionMeta() || {};
+    const next = Object.assign({}, prev, patch || {}, { lastActive: Date.now() });
+    try {
+        localStorage.setItem(DOCTOR_META_KEY, JSON.stringify(next));
+        if (next.email) localStorage.setItem(DOCTOR_EMAIL_KEY, next.email);
+    } catch (e) {
+        console.warn('Could not write doctor session meta', e);
+    }
+}
+
+function clearDoctorSessionMeta() {
+    try {
+        localStorage.removeItem(DOCTOR_META_KEY);
+        localStorage.removeItem(DOCTOR_EMAIL_KEY);
+    } catch (e) { /* ignore */ }
+}
+
+function touchDoctorSessionActivity(extra) {
+    const meta = readDoctorSessionMeta();
+    if (!meta || !meta.email) return;
+    writeDoctorSessionMeta(Object.assign({}, extra || {}));
+}
+
 auth.onAuthStateChanged(user => {
     if (unsubscribeFromNote) unsubscribeFromNote();
 
@@ -6140,10 +6207,30 @@ auth.onAuthStateChanged(user => {
         lockLayoutToggleLabel.classList.remove('view-hidden');
 		document.getElementById('import-btn').classList.remove('element-hidden');
         document.getElementById('export-btn').classList.remove('element-hidden');
-        showView('view-doctor-dashboard');
+
+        // Read prior meta BEFORE writing, so a mid-note refresh can rejoin
+        const prior = readDoctorSessionMeta();
+        const canRejoinNote = prior && prior.lastNoteId && prior.lastView === 'note-editor' &&
+            prior.lastActive && (Date.now() - prior.lastActive) < DOCTOR_NOTE_REJOIN_MS;
+
+        // Persist doctor identity + activity for forced-refresh recovery
+        writeDoctorSessionMeta({
+            email: user.email,
+            uid: user.uid,
+            lastView: canRejoinNote ? 'note-editor' : 'dashboard',
+            lastNoteId: canRejoinNote ? prior.lastNoteId : (prior && prior.lastNoteId) || null
+        });
+
         listenForActiveNotes();
 		listenForHistoryNotes();
-    } else { // TECHNICIAN
+
+        if (canRejoinNote) {
+            console.log('Restoring doctor into last note after refresh:', prior.lastNoteId);
+            startEditingSession(prior.lastNoteId);
+        } else {
+            showView('view-doctor-dashboard');
+        }
+    } else { // TECHNICIAN (or signed-out doctor)
         userStatusEmail.textContent = "Technician Mode";
         logoutButton.classList.add('view-hidden');
         saveCopyButton.classList.add('view-hidden');
@@ -6165,7 +6252,26 @@ auth.onAuthStateChanged(user => {
             userStatusEmail.textContent = `Tech: ${savedTechName}`;
             logoutButton.classList.remove('view-hidden');
         } else {
-            showView('view-technician-start');
+            // If a doctor was recently logged in but Firebase session was wiped
+            // (common on locked government browsers), land on doctor login with
+            // email pre-filled instead of the tech start screen.
+            const lastDoctorEmail = localStorage.getItem(DOCTOR_EMAIL_KEY) || '';
+            const meta = readDoctorSessionMeta();
+            const recentDoctor = meta && meta.lastActive &&
+                (Date.now() - meta.lastActive) < DOCTOR_NOTE_REJOIN_MS && lastDoctorEmail;
+
+            if (recentDoctor) {
+                showView('view-doctor-login');
+                const emailEl = document.getElementById('email-input');
+                if (emailEl && !emailEl.value) emailEl.value = lastDoctorEmail;
+                const errEl = document.getElementById('login-error-message');
+                if (errEl) {
+                    errEl.style.color = '#b45309';
+                    errEl.textContent = 'Session was interrupted (browser refresh / lock). Please sign in again — email is pre-filled.';
+                }
+            } else {
+                showView('view-technician-start');
+            }
         }
     }
 
@@ -6383,12 +6489,35 @@ logoutButton.addEventListener('click', () => {
     if (confirm("Are you sure you want to log out or end the session?")) {
         localStorage.removeItem('dentalNoteMakerTechName');
 		localStorage.removeItem('dentalNoteSessionID');
+        clearDoctorSessionMeta();
         auth.signOut().then(() => {
             // After successful sign out, reload the page to get a clean start.
             window.location.reload();
         });
     }
 });
+
+// Keep doctor session "lastActive" fresh so a lock-screen refresh still
+// counts as recent (rejoin / prefill). Throttled to once per minute.
+(function wireDoctorSessionHeartbeat() {
+    let lastTouch = 0;
+    const touch = () => {
+        try {
+            if (!(auth && auth.currentUser)) return;
+            const now = Date.now();
+            if (now - lastTouch < 60 * 1000) return;
+            lastTouch = now;
+            touchDoctorSessionActivity();
+        } catch (e) { /* ignore */ }
+    };
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') touch();
+    });
+    window.addEventListener('focus', touch);
+    setInterval(touch, 5 * 60 * 1000);
+})();
+
+
 
 saveCopyButton.addEventListener('click', () => {
     // Doctor leaves the note editor: stop live listener, cancel pending writes,
@@ -6401,6 +6530,7 @@ saveCopyButton.addEventListener('click', () => {
     }
     currentNoteId = null;
     setReadOnlySession(false);
+    try { writeDoctorSessionMeta({ lastView: 'dashboard' }); } catch (e) {}
     showView('view-doctor-dashboard');
 });
 
