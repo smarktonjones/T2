@@ -6,14 +6,11 @@
 <style>
     body { margin:0; overflow:hidden; background:#000; font-family:Arial, sans-serif; }
     #gui {
-        position:absolute; top:10px; left:50px; z-index:100;
+        position:fixed; top:10px; bottom:10px; left:50px; z-index:100;
+        width:min(320px, calc(100vw - 70px)); max-height:calc(100vh - 20px);
+        overflow-y:auto; overscroll-behavior:contain;
         background:rgba(0,0,0,0.7); padding:15px; border-radius:8px; color:#fff;
-        user-select:none;
-        /* --- MODIFICATIONS START --- */
-        max-height: 80vh; /* Set a max height relative to the viewport height */
-        overflow-y: auto;   /* Add a vertical scrollbar only when needed */
-        overflow-x: hidden; /* Prevent horizontal scrollbar */
-        /* --- MODIFICATIONS END --- */
+        box-sizing:border-box; user-select:none;
     }
     #gui label { display:block; margin:8px 0; }
     #gui input, #gui select, #gui button { width:100%; padding:6px; margin-top:4px; box-sizing:border-box; }
@@ -33,21 +30,24 @@
     <label>Thickness  <input type="number" id="thick" value="14" step="1"></label>
     <label>Sim Speed  <input type="number" id="speed" value="20" step="5"></label>
     <label>Reset Radius (0=off) <input type="number" id="resetR" value="400" step="50"></label>
-    <label>Num Central Attractors <input type="number" id="numAttract" value="6" min="0" step="1"></label>
-    <label>Attractor Distance <input type="number" id="attractDist" value="300" step="10"></label>
-    <label>Audio Strength <input type="number" id="audioS" value="100" step="0.1"></label>
+    <label>Num Central Attractors <input type="number" id="numAttract" value="4" min="0" max="64" step="1"></label>
+    <label>Attractor Distance <input type="number" id="attractDist" value="500" step="10"></label>
+    <label>Self-attracting particles <input type="checkbox" id="selfAttract"></label>
+    <label>Particle Gravity <input type="number" id="selfGravity" value="0.0001" min="0" step="0.0001"></label>
+    <label>Particle Attraction Cutoff <input type="number" id="selfRadius" value="120" min="0" step="10"></label>
+    <label>Audio Strength <input type="number" id="audioS" value="50" step="0.1"></label>
     <label>Sample Interval (ms) <input type="number" id="sampleInt" value="5" step="10" min="10"></label>
     <label>Audio Effect <select id="audioMode"><option value="multiply">Multiply</option><option value="add">Add</option></select></label>
     <label>Colorize <input type="checkbox" id="colorize" checked></label>
     <label>Color Radius <input type="number" id="colorRad" value="50" step="10"></label>
     <label>Acoustic Waves <input type="checkbox" id="acoustic" checked></label>
-    <label>Wave Strength <input type="number" id="waveS" value="300" step="0.01"></label>
-    <label>Wave Speed <input type="number" id="waveSpeed" value="1000000" step="10"></label>
+    <label>Wave Strength <input type="number" id="waveS" value="100" step="0.01"></label>
+    <label>Wave Speed <input type="number" id="waveSpeed" value="100000" step="10"></label>
     <label>Acoustic Visual <input type="checkbox" id="acousticVis" checked></label>
     <label>Visual Amount <input type="number" id="visAmt" value="5" step="1"></label>
     <label>Flicker Effect <input type="checkbox" id="flicker" checked></label>
     <label>Flicker Interval (s) <input type="number" id="flickFreq" value="10000" step="10" min="1"></label>
-    <label>Flicker Duration (s) <input type="number" id="flickSpeed" value="50" step="0.1"></label>
+    <label>Flicker Duration (s) <input type="number" id="flickSpeed" value="200" step="0.1"></label>
     <label>Flicker Magnitude <input type="number" id="flickMag" value="1.5" step="0.5"></label>
     <button id="startAudio">Start Audio Capture</button>
     <button id="restart">Restart Simulation</button>
@@ -57,6 +57,7 @@
 <!-- Three.js and OrbitControls -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/misc/GPUComputationRenderer.js"></script>
 
 <script>
 // Wait for the page and scripts to load
@@ -71,7 +72,7 @@ window.addEventListener('load', function() {
 
     const renderer = new THREE.WebGLRenderer({ antialias:true });
     renderer.setSize(innerWidth, innerHeight);
-    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     document.body.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -105,6 +106,17 @@ window.addEventListener('load', function() {
     let attractorColors = [];
     let uniforms;
     let sim_time = 0;
+    let gpuCompute = null;
+    let gpuPositionVariable = null;
+    let gpuVelocityVariable = null;
+    let gpuColorVariable = null;
+    let gpuFlickerVariable = null;
+    let gpuGeometry = null;
+    let gpuMaterial = null;
+    let gpuEnabled = false;
+    let gpuFrame = 0;
+    const gpuAttractorVectors = Array.from({ length: 64 }, () => new THREE.Vector3());
+    const gpuAttractorColorVectors = Array.from({ length: 64 }, () => new THREE.Vector3(1, 1, 1));
 
     let analyzer;
     let current_amplitudes = [];
@@ -155,7 +167,7 @@ window.addEventListener('load', function() {
     }
 
     function initAttractors() {
-        const numAttract = +document.getElementById('numAttract').value;
+        const numAttract = Math.min(64, Math.max(0, Math.floor(+document.getElementById('numAttract').value)));
         const attractDist = +document.getElementById('attractDist').value;
         attractorPositions = [];
         attractorColors = [];
@@ -181,11 +193,18 @@ window.addEventListener('load', function() {
     function initParticle(i) {
         const G     = +document.getElementById('grav').value;
         const velM  = +document.getElementById('vel').value;
-        const R     = +document.getElementById('radius').value;
-        const thick = +document.getElementById('thick').value;
+        const resetRadius = +document.getElementById('resetR').value;
+        const R     = resetRadius > 0
+            ? Math.min(+document.getElementById('radius').value, resetRadius * 0.9)
+            : +document.getElementById('radius').value;
+        const thick = resetRadius > 0
+            ? Math.min(+document.getElementById('thick').value, resetRadius * 0.2)
+            : +document.getElementById('thick').value;
 
-        const attractIdx = Math.floor(Math.random() * attractorPositions.length);
-        const attract = attractorPositions[attractIdx];
+        const attractIdx = attractorPositions.length
+            ? Math.floor(Math.random() * attractorPositions.length)
+            : -1;
+        const attract = attractIdx >= 0 ? attractorPositions[attractIdx] : [0, 0, 0];
 
         const phi = Math.random() * Math.PI * 2;
         const r   = Math.sqrt(Math.random()) * R;
@@ -197,14 +216,29 @@ window.addEventListener('load', function() {
         positions[i*3+1] = attract[1] + relY;
         positions[i*3+2] = attract[2] + relZ;
 
-        const dist = r;
-        const v0   = Math.sqrt(G / dist) * velM;
+        let orbitIdx = attractIdx;
+        let nearestDist2 = Infinity;
+        for (let a = 0; a < attractorPositions.length; a++) {
+            const dx = attractorPositions[a][0] - positions[i * 3];
+            const dy = attractorPositions[a][1] - positions[i * 3 + 1];
+            const dz = attractorPositions[a][2] - positions[i * 3 + 2];
+            const distance2 = dx * dx + dy * dy + dz * dz;
+            if (distance2 < nearestDist2) {
+                nearestDist2 = distance2;
+                orbitIdx = a;
+            }
+        }
+        const orbitCenter = orbitIdx >= 0 ? attractorPositions[orbitIdx] : [0, 0, 0];
+        const radialX = positions[i * 3] - orbitCenter[0];
+        const radialY = positions[i * 3 + 1] - orbitCenter[1];
+        const orbitRadius = Math.max(Math.hypot(radialX, radialY), 0.001);
+        const v0 = Math.sqrt(Math.max(G, 0) / orbitRadius) * velM;
 
-        velocities[i*3]   = -v0 * Math.sin(phi) * (0.9 + Math.random()*0.2);
-        velocities[i*3+1] =  v0 * Math.cos(phi) * (0.9 + Math.random()*0.2);
+        velocities[i*3]   = -radialY / orbitRadius * v0 * (0.9 + Math.random()*0.2);
+        velocities[i*3+1] =  radialX / orbitRadius * v0 * (0.9 + Math.random()*0.2);
         velocities[i*3+2] = (Math.random()-0.5)*0.02;
 
-        const rgb = attractorColors[attractIdx];
+        const rgb = attractIdx >= 0 ? attractorColors[attractIdx] : [1, 1, 1];
         colorArray[i*3]   = rgb[0];
         colorArray[i*3+1] = rgb[1];
         colorArray[i*3+2] = rgb[2];
@@ -215,6 +249,13 @@ window.addEventListener('load', function() {
 
         initAttractors();
 
+        disposeGpuCompute();
+        gpuEnabled = false;
+        if (gpuGeometry) gpuGeometry.dispose();
+        if (gpuMaterial) gpuMaterial.dispose();
+        gpuGeometry = null;
+        gpuMaterial = null;
+
         if (points) scene.remove(points);
         if (geometry) geometry.dispose();
         if (material) material.dispose();
@@ -222,7 +263,11 @@ window.addEventListener('load', function() {
         positions  = new Float32Array(num * 3);
         velocities = new Float32Array(num * 3);
         colorArray = new Float32Array(num * 3);
-        flickerPhases = new Float32Array(num).fill(-1);
+        flickerPhases = new Float32Array(num);
+        const meanFlickerWait = Math.max(+document.getElementById('flickFreq').value, 0.001);
+        for (let i = 0; i < num; i++) {
+            flickerPhases[i] = -Math.max(0.0001, -Math.log(Math.max(Math.random(), 1e-6)) * meanFlickerWait);
+        }
 
         for (let i = 0; i < num; i++) {
             initParticle(i);
@@ -234,9 +279,23 @@ window.addEventListener('load', function() {
         geometry.setAttribute('flickerPhase', new THREE.BufferAttribute(flickerPhases, 1));
 
         updateMaterial();
+        initGpuSimulation();
+    }
+
+    function disposeGpuCompute() {
+        if (!gpuCompute) return;
+        for (const variable of gpuCompute.variables || []) {
+            for (const target of variable.renderTargets || []) target.dispose();
+            if (variable.initialValueTexture) variable.initialValueTexture.dispose();
+        }
+        gpuCompute = null;
     }
 
     function updateMaterial() {
+        if (gpuEnabled) {
+            updateGpuMaterial();
+            return;
+        }
         if (points) scene.remove(points);
         if (material) material.dispose();
 
@@ -330,6 +389,484 @@ window.addEventListener('load', function() {
         scene.add(points);
     }
 
+    function initGpuSimulation() {
+        if (!THREE.GPUComputationRenderer || !renderer.capabilities.isWebGL2) {
+            document.title = '3D Galaxy Simulator (CPU fallback)';
+            return;
+        }
+
+        const width = Math.ceil(Math.sqrt(num));
+        const height = Math.ceil(num / width);
+        gpuCompute = new THREE.GPUComputationRenderer(width, height, renderer);
+        gpuCompute.setDataType(THREE.FloatType);
+
+        const positionTexture = gpuCompute.createTexture();
+        const velocityTexture = gpuCompute.createTexture();
+        const colorTexture = gpuCompute.createTexture();
+        const flickerTexture = gpuCompute.createTexture();
+        const positionData = positionTexture.image.data;
+        const velocityData = velocityTexture.image.data;
+        const colorData = colorTexture.image.data;
+        const flickerData = flickerTexture.image.data;
+
+        for (let i = 0; i < width * height; i++) {
+            const offset = i * 4;
+            if (i < num) {
+                positionData[offset] = positions[i * 3];
+                positionData[offset + 1] = positions[i * 3 + 1];
+                positionData[offset + 2] = positions[i * 3 + 2];
+                velocityData[offset] = velocities[i * 3];
+                velocityData[offset + 1] = velocities[i * 3 + 1];
+                velocityData[offset + 2] = velocities[i * 3 + 2];
+                colorData[offset] = colorArray[i * 3];
+                colorData[offset + 1] = colorArray[i * 3 + 1];
+                colorData[offset + 2] = colorArray[i * 3 + 2];
+                flickerData[offset] = flickerPhases[i];
+            }
+            positionData[offset + 3] = 1;
+            velocityData[offset + 3] = 1;
+            colorData[offset + 3] = 1;
+            flickerData[offset + 3] = 1;
+            flickerData[offset + 1] = Math.random();
+        }
+
+        const common = `
+            const int MAX_ATTRACTORS = 64;
+            uniform vec3 attractors[MAX_ATTRACTORS];
+            uniform vec3 attractorColors[MAX_ATTRACTORS];
+            uniform float attractorGravity[MAX_ATTRACTORS];
+            uniform int attractorCount;
+            uniform float gravity;
+            uniform float dt;
+            uniform float resetRadius;
+            uniform float spawnRadius;
+            uniform float thickness;
+            uniform float velocityScale;
+            uniform float simTime;
+            uniform float waveEnabled;
+            uniform float waveStrength;
+            uniform float waveSpeed;
+            uniform float audioFrequency;
+            uniform float audioAmplitude;
+            uniform float selfAttractionEnabled;
+            uniform float selfAttraction;
+            uniform float selfAttractionRadius;
+            uniform float particleCount;
+            uniform float frameSeed;
+
+            float rand(vec2 p, float seed) {
+                return fract(sin(dot(p + seed, vec2(127.1, 311.7))) * 43758.5453);
+            }
+
+            vec3 acceleration(vec3 p) {
+                vec3 a = vec3(0.0);
+                for (int i = 0; i < MAX_ATTRACTORS; i++) {
+                    if (i >= attractorCount) break;
+                    vec3 delta = attractors[i] - p;
+                    float r2 = dot(delta, delta);
+                    if (r2 > 0.1) a += attractorGravity[i] * delta / (r2 * sqrt(r2));
+                }
+                if (selfAttractionEnabled > 0.5 && selfAttraction > 0.0 && selfAttractionRadius > 0.0) {
+                    vec2 particleUv = gl_FragCoord.xy / resolution.xy;
+                    float radius2 = selfAttractionRadius * selfAttractionRadius;
+                    for (int sampleIndex = 0; sampleIndex < 16; sampleIndex++) {
+                        float sampleId = floor(rand(particleUv, frameSeed + float(sampleIndex) * 17.13) * particleCount);
+                        vec2 sampleUv = (vec2(mod(sampleId, resolution.x), floor(sampleId / resolution.x)) + 0.5) / resolution.xy;
+                        vec3 delta = texture2D(texturePosition, sampleUv).xyz - p;
+                        float r2 = dot(delta, delta);
+                        if (r2 > 1.0 && r2 < radius2) {
+                            a += selfAttraction * (particleCount / 16.0) * delta / (r2 * sqrt(r2));
+                        }
+                    }
+                }
+                float r2 = dot(p, p);
+                if (waveEnabled > 0.5 && r2 > 0.1) {
+                    float r = sqrt(r2);
+                    float frequency = max(audioFrequency, 1.0);
+                    float phase = 6.28318530718 * frequency * simTime
+                        - 6.28318530718 * frequency * r / max(waveSpeed, 0.001);
+                    a += normalize(p) * (waveStrength * audioAmplitude * sin(phase) / r);
+                }
+                return a;
+            }
+
+            vec3 spawnPosition(vec2 id, float seed, out int selected) {
+                selected = int(floor(rand(id, seed + 2.0) * float(max(attractorCount, 1))));
+                selected = min(selected, max(attractorCount - 1, 0));
+                float phi = rand(id, seed + 3.0) * 6.28318530718;
+                float safeRadius = resetRadius > 0.0 ? min(spawnRadius, resetRadius * 0.9) : spawnRadius;
+                float radius = sqrt(rand(id, seed + 4.0)) * safeRadius;
+                vec3 center = attractorCount > 0 ? attractors[selected] : vec3(0.0);
+                float safeThickness = resetRadius > 0.0 ? min(thickness, resetRadius * 0.2) : thickness;
+                return center + vec3(radius * cos(phi), radius * sin(phi),
+                    (rand(id, seed + 5.0) - 0.5) * safeThickness);
+            }
+
+            bool outsideResetRadius(vec3 p) {
+                if (any(notEqual(p, p)) || any(greaterThan(abs(p), vec3(1000000.0)))) return true;
+                if (resetRadius <= 0.0) return false;
+                if (attractorCount == 0) return dot(p, p) > resetRadius * resetRadius;
+                float nearest = 1.0e30;
+                for (int i = 0; i < MAX_ATTRACTORS; i++) {
+                    if (i >= attractorCount) break;
+                    vec3 delta = attractors[i] - p;
+                    nearest = min(nearest, dot(delta, delta));
+                }
+                return nearest > resetRadius * resetRadius;
+            }
+        `;
+
+        const positionShader = `${common}
+            void main() {
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
+                vec4 state = texture2D(texturePosition, uv);
+                vec3 velocity = texture2D(textureVelocity, uv).xyz;
+                vec3 nextPosition = state.xyz + (velocity + acceleration(state.xyz) * dt) * dt;
+                if (outsideResetRadius(nextPosition)) {
+                    int selected;
+                    nextPosition = spawnPosition(uv, frameSeed, selected);
+                }
+                gl_FragColor = vec4(nextPosition, 1.0);
+            }
+        `;
+
+        const velocityShader = `${common}
+            uniform float velocityEnabled;
+            void main() {
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
+                vec3 p = texture2D(texturePosition, uv).xyz;
+                vec3 velocity = texture2D(textureVelocity, uv).xyz;
+                vec3 nextPosition = p + (velocity + acceleration(p) * dt) * dt;
+                if (outsideResetRadius(nextPosition)) {
+                    int selected;
+                    vec3 spawn = spawnPosition(uv, frameSeed, selected);
+                    vec3 center = attractorCount > 0 ? attractors[selected] : vec3(0.0);
+                    vec3 radial = spawn - center;
+                    float orbitRadius = max(length(radial.xy), 0.001);
+                    int nearestIndex = selected;
+                    float nearestDistance2 = 1.0e30;
+                    for (int i = 0; i < MAX_ATTRACTORS; i++) {
+                        if (i >= attractorCount) break;
+                        vec3 offset = spawn - attractors[i];
+                        float distance2 = dot(offset, offset);
+                        if (distance2 < nearestDistance2) {
+                            nearestDistance2 = distance2;
+                            nearestIndex = i;
+                        }
+                    }
+                    if (attractorCount > 0) {
+                        center = attractors[nearestIndex];
+                        radial = spawn - center;
+                        orbitRadius = max(length(radial.xy), 0.001);
+                    }
+                    float orbitGravity = attractorCount > 0 ? attractorGravity[nearestIndex] : gravity;
+                    float speed = sqrt(max(orbitGravity, 0.0) / orbitRadius) * velocityScale;
+                    float speedJitter = 0.9 + rand(uv, frameSeed + 6.0) * 0.2;
+                    velocity = vec3(-radial.y, radial.x, 0.0) / orbitRadius * speed * speedJitter;
+                    velocity.z = (rand(uv, frameSeed + 7.0) - 0.5) * 0.02;
+                } else if (velocityEnabled > 0.5) {
+                    velocity += acceleration(p) * dt;
+                }
+                gl_FragColor = vec4(velocity, 1.0);
+            }
+        `;
+
+        const colorShader = `${common}
+            uniform float colorizeEnabled;
+            uniform float colorRadius;
+            void main() {
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
+                vec3 color = texture2D(textureColor, uv).rgb;
+                vec3 p = texture2D(texturePosition, uv).xyz;
+                vec3 velocity = texture2D(textureVelocity, uv).xyz;
+                vec3 nextPosition = p + (velocity + acceleration(p) * dt) * dt;
+                if (outsideResetRadius(nextPosition)) {
+                    int selected;
+                    spawnPosition(uv, frameSeed, selected);
+                    if (attractorCount > 0) color = attractorColors[selected];
+                } else if (colorizeEnabled > 0.5) {
+                    float nearest = 1.0e30;
+                    int nearestIndex = 0;
+                    for (int i = 0; i < MAX_ATTRACTORS; i++) {
+                        if (i >= attractorCount) break;
+                        float d2 = dot(attractors[i] - p, attractors[i] - p);
+                        if (d2 < nearest) { nearest = d2; nearestIndex = i; }
+                    }
+                    if (nearest < colorRadius * colorRadius && attractorCount > 0)
+                        color = attractorColors[nearestIndex];
+                }
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        const flickerShader = `
+            uniform float dt;
+            uniform float meanStable;
+            uniform float flickerDuration;
+            uniform float flickerEnabled;
+            uniform float frameSeed;
+            float rand(float seed) {
+                return fract(sin(seed * 127.1 + 311.7) * 43758.5453);
+            }
+            void main() {
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
+                vec4 state = texture2D(textureFlicker, uv);
+                float phase = state.r;
+                float randomState = state.g;
+                if (flickerEnabled > 0.5) {
+                    randomState = fract(sin(randomState * 91.17 + frameSeed * 17.71) * 43758.5453);
+                    if (phase < 0.0) {
+                        phase += dt;
+                        if (phase >= 0.0) phase = 0.0;
+                    } else {
+                        phase += dt / max(flickerDuration, 0.001);
+                        if (phase > 1.0) {
+                            float wait = -log(max(rand(randomState), 0.000001)) * max(meanStable, 0.001);
+                            phase = -max(wait, 0.0001);
+                        }
+                    }
+                }
+                gl_FragColor = vec4(phase, randomState, 0.0, 1.0);
+            }
+        `;
+
+        gpuPositionVariable = gpuCompute.addVariable('texturePosition', positionShader, positionTexture);
+        gpuVelocityVariable = gpuCompute.addVariable('textureVelocity', velocityShader, velocityTexture);
+        gpuColorVariable = gpuCompute.addVariable('textureColor', colorShader, colorTexture);
+        gpuFlickerVariable = gpuCompute.addVariable('textureFlicker', flickerShader, flickerTexture);
+        const variables = [gpuPositionVariable, gpuVelocityVariable, gpuColorVariable, gpuFlickerVariable];
+        for (const variable of variables) gpuCompute.setVariableDependencies(variable, variables);
+
+        const error = gpuCompute.init();
+        if (error) {
+            console.warn('GPU simulation unavailable; using CPU simulation:', error);
+            disposeGpuCompute();
+            document.title = '3D Galaxy Simulator (CPU fallback)';
+            return;
+        }
+
+        const sharedUniforms = {
+            attractors: { value: gpuAttractorVectors },
+            attractorColors: { value: gpuAttractorColorVectors },
+            attractorGravity: { value: new Float32Array(64).fill(1) },
+            attractorCount: { value: 0 },
+            gravity: { value: 1 },
+            dt: { value: base_dt },
+            resetRadius: { value: 0 },
+            spawnRadius: { value: 1 },
+            thickness: { value: 1 },
+            velocityScale: { value: 1 },
+            simTime: { value: 0 },
+            waveEnabled: { value: 0 },
+            waveStrength: { value: 0 },
+            waveSpeed: { value: 1 },
+            audioFrequency: { value: 440 },
+            audioAmplitude: { value: 0 },
+            selfAttractionEnabled: { value: 0 },
+            selfAttraction: { value: 0 },
+            selfAttractionRadius: { value: 0 },
+            particleCount: { value: num },
+            frameSeed: { value: 0 }
+        };
+        for (const variable of [gpuPositionVariable, gpuVelocityVariable, gpuColorVariable]) {
+            Object.assign(variable.material.uniforms, sharedUniforms);
+        }
+        Object.assign(gpuVelocityVariable.material.uniforms, {
+            velocityEnabled: { value: 1 }
+        });
+        Object.assign(gpuColorVariable.material.uniforms, {
+            colorizeEnabled: { value: 1 },
+            colorRadius: { value: 50 }
+        });
+        Object.assign(gpuFlickerVariable.material.uniforms, {
+            dt: { value: base_dt },
+            meanStable: { value: 1 },
+            flickerDuration: { value: 1 },
+            flickerEnabled: { value: 1 },
+            frameSeed: { value: 0 }
+        });
+
+        gpuEnabled = true;
+        document.title = '3D GPU Galaxy Simulator';
+        updateGpuUniforms();
+        updateGpuMaterial();
+    }
+
+    function updateGpuUniforms() {
+        if (!gpuEnabled) return;
+        const count = Math.min(attractorPositions.length, 64);
+        for (let i = 0; i < 64; i++) {
+            const p = attractorPositions[Math.min(i, Math.max(count - 1, 0))] || [0, 0, 0];
+            const c = attractorColors[Math.min(i, Math.max(count - 1, 0))] || [1, 1, 1];
+            gpuAttractorVectors[i].set(p[0], p[1], p[2]);
+            gpuAttractorColorVectors[i].set(c[0], c[1], c[2]);
+        }
+        const audioS = +document.getElementById('audioS').value;
+        const audioMode = document.getElementById('audioMode').value;
+        const gravity = +document.getElementById('grav').value;
+        const gravityByAttractor = gpuPositionVariable.material.uniforms.attractorGravity.value;
+        for (let i = 0; i < 64; i++) {
+            const amplitude = analyzer && i < current_amplitudes.length ? current_amplitudes[i] : 0;
+            gravityByAttractor[i] = analyzer
+                ? (audioMode === 'multiply'
+                    ? gravity * (1 + amplitude * audioS)
+                    : gravity + amplitude * audioS)
+                : gravity;
+        }
+        const dt = base_dt * +document.getElementById('speed').value;
+        const resetRadius = +document.getElementById('resetR').value;
+        const waveOn = document.getElementById('acoustic').checked && !!analyzer;
+        const commonValues = {
+            attractors: gpuAttractorVectors, attractorColors: gpuAttractorColorVectors,
+            attractorGravity: gravityByAttractor, attractorCount: count,
+            gravity, dt, resetRadius,
+            spawnRadius: +document.getElementById('radius').value,
+            thickness: +document.getElementById('thick').value,
+            velocityScale: +document.getElementById('vel').value,
+            simTime: sim_time, waveEnabled: waveOn ? 1 : 0,
+            waveStrength: +document.getElementById('waveS').value,
+            waveSpeed: +document.getElementById('waveSpeed').value,
+            audioFrequency: current_freq, audioAmplitude: current_amp,
+            selfAttractionEnabled: document.getElementById('selfAttract').checked ? 1 : 0,
+            selfAttraction: +document.getElementById('selfGravity').value,
+            selfAttractionRadius: +document.getElementById('selfRadius').value,
+            particleCount: num
+        };
+        for (const variable of [gpuPositionVariable, gpuVelocityVariable, gpuColorVariable]) {
+            const u = variable.material.uniforms;
+            for (const [key, value] of Object.entries(commonValues)) {
+                if (u[key]) u[key].value = value;
+            }
+            if (u.frameSeed) u.frameSeed.value = gpuFrame;
+        }
+
+        const velocityUniforms = gpuVelocityVariable.material.uniforms;
+        velocityUniforms.velocityEnabled.value = 1;
+        const colorUniforms = gpuColorVariable.material.uniforms;
+        colorUniforms.colorizeEnabled.value = document.getElementById('colorize').checked ? 1 : 0;
+        colorUniforms.colorRadius.value = +document.getElementById('colorRad').value;
+
+        const flickerUniforms = gpuFlickerVariable.material.uniforms;
+        flickerUniforms.dt.value = dt;
+        flickerUniforms.meanStable.value = +document.getElementById('flickFreq').value;
+        flickerUniforms.flickerDuration.value = +document.getElementById('flickSpeed').value;
+        flickerUniforms.flickerEnabled.value = document.getElementById('flicker').checked ? 1 : 0;
+        flickerUniforms.frameSeed.value = gpuFrame;
+    }
+
+    function updateGpuMaterial() {
+        if (!gpuEnabled) return;
+        if (points) scene.remove(points);
+        if (gpuMaterial) gpuMaterial.dispose();
+        if (!gpuGeometry) {
+            const width = Math.ceil(Math.sqrt(num));
+            const height = Math.ceil(num / width);
+            const refs = new Float32Array(num * 2);
+            const placeholderPositions = new Float32Array(num * 3);
+            for (let i = 0; i < num; i++) {
+                refs[i * 2] = ((i % width) + 0.5) / width;
+                refs[i * 2 + 1] = (Math.floor(i / width) + 0.5) / height;
+            }
+            gpuGeometry = new THREE.BufferGeometry();
+            gpuGeometry.setAttribute('position', new THREE.BufferAttribute(placeholderPositions, 3));
+            gpuGeometry.setAttribute('particleUv', new THREE.BufferAttribute(refs, 2));
+        }
+
+        const acousticVis = document.getElementById('acousticVis').checked;
+        const flickerOn = document.getElementById('flicker').checked;
+        uniforms = {
+            positionMap: { value: null },
+            colorMap: { value: null },
+            flickerMap: { value: null },
+            pointTexture: { value: tex },
+            pointSize: { value: +document.getElementById('size').value },
+            time: { value: sim_time },
+            waveSpeed: { value: +document.getElementById('waveSpeed').value },
+            freq: { value: current_freq },
+            amp: { value: current_amp },
+            visAmt: { value: acousticVis ? +document.getElementById('visAmt').value : 0 },
+            flickMag: { value: flickerOn ? +document.getElementById('flickMag').value : 0 },
+            acousticEnabled: { value: acousticVis ? 1 : 0 },
+            flickerEnabled: { value: flickerOn ? 1 : 0 }
+        };
+        gpuMaterial = new THREE.ShaderMaterial({
+            uniforms,
+            vertexShader: `
+                attribute vec2 particleUv;
+                uniform sampler2D positionMap;
+                uniform sampler2D colorMap;
+                uniform sampler2D flickerMap;
+                uniform float pointSize;
+                uniform float time;
+                uniform float waveSpeed;
+                uniform float freq;
+                uniform float amp;
+                uniform float visAmt;
+                uniform float flickMag;
+                uniform float acousticEnabled;
+                uniform float flickerEnabled;
+                varying vec3 vColor;
+                varying float vAlpha;
+                void main() {
+                    vec3 p = texture2D(positionMap, particleUv).xyz;
+                    vColor = texture2D(colorMap, particleUv).rgb;
+                    float phaseState = texture2D(flickerMap, particleUv).r;
+                    float r = length(p);
+                    float alpha = 1.0;
+                    if (acousticEnabled > 0.5 && r > 0.1) {
+                        float phase = 6.28318530718 * freq * time
+                            - 6.28318530718 * freq * r / max(waveSpeed, 0.001);
+                        float displacement = amp * sin(phase) * visAmt;
+                        p += normalize(p) * displacement;
+                        alpha = 1.0 - abs(sin(phase)) * 0.3;
+                    }
+                    float sizeMod = 1.0;
+                    if (flickerEnabled > 0.5 && phaseState >= 0.0) {
+                        float flicker = sin(phaseState * 3.14159265359);
+                        vColor = mix(vColor, vec3(1.0), flicker * flickMag);
+                        sizeMod += flicker * flickMag * 0.5;
+                    }
+                    vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                    gl_PointSize = pointSize * sizeMod;
+                    #ifdef USE_SIZEATTENUATION
+                        gl_PointSize *= ( 300.0 / -mvPosition.z );
+                    #endif
+                    vAlpha = alpha;
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D pointTexture;
+                varying vec3 vColor;
+                varying float vAlpha;
+                void main() {
+                    gl_FragColor = texture2D(pointTexture, gl_PointCoord) * vec4(vColor, vAlpha);
+                }
+            `,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true
+        });
+        gpuMaterial.extensions = { derivatives: false };
+        gpuMaterial.defines = { USE_SIZEATTENUATION: '' };
+        points = new THREE.Points(gpuGeometry, gpuMaterial);
+        scene.add(points);
+    }
+
+    function simulateGpu() {
+        sim_time += base_dt * +document.getElementById('speed').value;
+        gpuFrame++;
+        updateGpuUniforms();
+        gpuCompute.compute();
+        uniforms.positionMap.value = gpuCompute.getCurrentRenderTarget(gpuPositionVariable).texture;
+        uniforms.colorMap.value = gpuCompute.getCurrentRenderTarget(gpuColorVariable).texture;
+        uniforms.flickerMap.value = gpuCompute.getCurrentRenderTarget(gpuFlickerVariable).texture;
+        uniforms.time.value = sim_time;
+        uniforms.freq.value = current_freq;
+        uniforms.amp.value = current_amp;
+        uniforms.waveSpeed.value = +document.getElementById('waveSpeed').value;
+    }
+
     // ------------------------------------------------------------------
     // Audio setup
     // ------------------------------------------------------------------
@@ -400,6 +937,11 @@ window.addEventListener('load', function() {
     const base_dt = 0.06;
 
     function simulate() {
+        if (gpuEnabled) {
+            simulateGpu();
+            return;
+        }
+        gpuFrame++;
         let G = +document.getElementById('grav').value;
         const timeScale = +document.getElementById('speed').value;
         const resetR = +document.getElementById('resetR').value;
@@ -477,6 +1019,33 @@ window.addEventListener('load', function() {
             }
         }
 
+        if (document.getElementById('selfAttract').checked) {
+            const selfGravity = +document.getElementById('selfGravity').value;
+            const selfRadius = +document.getElementById('selfRadius').value;
+            const selfRadius2 = selfRadius * selfRadius;
+            if (selfGravity > 0 && selfRadius > 0) {
+                for (let i = 0; i < num; i++) {
+                    const offset = i * 3;
+                    const px = pos[offset], py = pos[offset + 1], pz = pos[offset + 2];
+                    for (let sample = 0; sample < 16; sample++) {
+                        const other = Math.floor(Math.random() * num);
+                        if (other === i) continue;
+                        const otherOffset = other * 3;
+                        const dx = pos[otherOffset] - px;
+                        const dy = pos[otherOffset + 1] - py;
+                        const dz = pos[otherOffset + 2] - pz;
+                        const distance2 = dx * dx + dy * dy + dz * dz;
+                        if (distance2 > 1 && distance2 < selfRadius2) {
+                            const scale = selfGravity * num / 16 / (distance2 * Math.sqrt(distance2));
+                            accels[offset] += scale * dx;
+                            accels[offset + 1] += scale * dy;
+                            accels[offset + 2] += scale * dz;
+                        }
+                    }
+                }
+            }
+        }
+
         // Apply accelerations
         for (let i = 0; i < num; i++) {
             vel[i*3] += accels[i*3] * eff_dt;
@@ -497,16 +1066,21 @@ window.addEventListener('load', function() {
             const resetR2 = resetR * resetR;
             for (let i = 0; i < num; i++) {
                 const x = pos[i*3], y = pos[i*3+1], z = pos[i*3+2];
-                let minR2 = Infinity;
-                for (let attract of attractorPositions) {
-                    const dx = attract[0] - x;
-                    const dy = attract[1] - y;
-                    const dz = attract[2] - z;
-                    const r2 = dx*dx + dy*dy + dz*dz;
-                    if (r2 < minR2) minR2 = r2;
+                let minR2 = x * x + y * y + z * z;
+                if (attractorPositions.length > 0) {
+                    minR2 = Infinity;
+                    for (let a = 0; a < attractorPositions.length; a++) {
+                        const attract = attractorPositions[a];
+                        const dx = attract[0] - x;
+                        const dy = attract[1] - y;
+                        const dz = attract[2] - z;
+                        const r2 = dx*dx + dy*dy + dz*dz;
+                        if (r2 < minR2) minR2 = r2;
+                    }
                 }
-                if (minR2 > resetR2) {
+                if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z) || minR2 > resetR2) {
                     initParticle(i);
+                    flickerPhases[i] = -Math.max(0.0001, -Math.log(Math.max(Math.random(), 1e-6)) * Math.max(+document.getElementById('flickFreq').value, 0.001));
                     resetColorNeedsUpdate = true;
                 }
             }
@@ -544,20 +1118,18 @@ window.addEventListener('load', function() {
         // Flicker phase update (CPU side)
         if (flicker_on) {
             const meanStable = +document.getElementById('flickFreq').value;
-            const prob = eff_dt / meanStable;
             const duration = +document.getElementById('flickSpeed').value;
             const phaseInc = eff_dt / duration;
 
             for (let i = 0; i < num; i++) {
                 let phase = flickerPhases[i];
                 if (phase < 0) {
-                    if (Math.random() < prob) {
-                        phase = 0;
-                    }
+                    phase += eff_dt;
+                    if (phase >= 0) phase = 0;
                 } else {
                     phase += phaseInc;
                     if (phase > 1) {
-                        phase = -1;
+                        phase = -Math.max(0.0001, -Math.log(Math.max(Math.random(), 1e-6)) * meanStable);
                     }
                 }
                 flickerPhases[i] = phase;
