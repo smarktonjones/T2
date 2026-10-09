@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WebGPU Galaxy Simulator – GPU Compute Physics</title>
+<style>
+    body { margin:0; overflow:hidden; background:#000; font-family:Arial, sans-serif; }
+    #gui {
+        position:absolute; top:10px; left:50px; z-index:100;
+        background:rgba(0,0,0,0.75); padding:15px; border-radius:8px; color:#fff;
+        user-select:none; max-height:80vh; overflow-y:auto; overflow-x:hidden;
+        font-size:13px; min-width:220px;
+    }
+    #gui label { display:block; margin:7px 0; }
+    #gui input, #gui select, #gui button { width:100%; padding:5px; margin-top:3px; box-sizing:border-box; }
+    #gui button { background:#0088ff; color:white; border:none; padding:9px; cursor:pointer; font-weight:bold; margin-top:8px; }
+    #status { position:absolute; bottom:10px; left:10px; color:#0f0; font-family:monospace; font-size:12px; z-index:100; }
+    canvas { display:block; }
+</style>
+</head>
+<body>
+
+<button id="toggleGui" style="position:absolute; top:10px; left:10px; z-index:101; background:rgba(0,0,0,0.7); color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Hide</button>
+
+<div id="gui">
+    <label>Particles <input type="number" id="num" value="150000" min="1000" max="1000000" step="10000"></label>
+    <label>Base Gravity <input type="number" id="grav" value="1.2" step="0.01"></label>
+    <label>Velocity   <input type="number" id="vel" value="0.85" step="0.05"></label>
+    <label>Size       <input type="number" id="size" value="2.2" step="0.1"></label>
+    <label>Disk Radius<input type="number" id="radius" value="320" step="20"></label>
+    <label>Thickness  <input type="number" id="thick" value="14" step="1"></label>
+    <label>Sim Speed  <input type="number" id="speed" value="18" step="1"></label>
+    <label>Reset Radius (0=off) <input type="number" id="resetR" value="480" step="20"></label>
+    <label>Num Central Attractors <input type="number" id="numAttract" value="6" min="1" max="12" step="1"></label>
+    <label>Attractor Distance <input type="number" id="attractDist" value="280" step="10"></label>
+    <label>Audio Strength <input type="number" id="audioS" value="80" step="1"></label>
+    <label>Sample Interval (ms) <input type="number" id="sampleInt" value="16" step="1" min="8"></label>
+    <label>Audio Effect <select id="audioMode"><option value="multiply">Multiply</option><option value="add">Add</option></select></label>
+    <label>Colorize <input type="checkbox" id="colorize" checked></label>
+    <label>Color Radius <input type="number" id="colorRad" value="60" step="5"></label>
+    <label>Acoustic Waves <input type="checkbox" id="acoustic" checked></label>
+    <label>Wave Strength <input type="number" id="waveS" value="220" step="5"></label>
+    <label>Wave Speed <input type="number" id="waveSpeed" value="900000" step="10000"></label>
+    <label>Acoustic Visual <input type="checkbox" id="acousticVis" checked></label>
+    <label>Visual Amount <input type="number" id="visAmt" value="4" step="0.5"></label>
+    <label>Flicker Effect <input type="checkbox" id="flicker" checked></label>
+    <label>Flicker Interval (s) <input type="number" id="flickFreq" value="8" step="0.5" min="0.5"></label>
+    <label>Flicker Duration (s) <input type="number" id="flickSpeed" value="0.35" step="0.05"></label>
+    <label>Flicker Magnitude <input type="number" id="flickMag" value="1.4" step="0.1"></label>
+    <button id="startAudio">Start Audio Capture</button>
+    <button id="restart">Restart Simulation</button>
+    <button id="fullScreen">Full Screen</button>
+</div>
+
+<div id="status">Initializing WebGPU...</div>
+<canvas id="c"></canvas>
+
+<script type="module">
+// ============================================================
+// WebGPU Galaxy – Full GPU Physics (Compute + Render)
+// ============================================================
+
+const canvas = document.getElementById('c');
+const statusEl = document.getElementById('status');
+
+if (!navigator.gpu) {
+    statusEl.textContent = 'WebGPU not supported in this browser';
+    throw new Error('WebGPU not supported');
+}
+
+const adapter = await navigator.gpu.requestAdapter();
+const device = await adapter.requestDevice();
+const context = canvas.getContext('webgpu');
+const format = navigator.gpu.getPreferredCanvasFormat();
+
+function resize() {
+    canvas.width = innerWidth * devicePixelRatio;
+    canvas.height = innerHeight * devicePixelRatio;
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+    context.configure({ device, format, alphaMode: 'opaque' });
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ---------- Camera (simple orbit) ----------
+let camDist = 780, camTheta = 0.0, camPhi = 0.35;
+let isDragging = false, lastX = 0, lastY = 0;
+
+canvas.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    camTheta += (e.clientX - lastX) * 0.005;
+    camPhi   += (e.clientY - lastY) * 0.005;
+    camPhi = Math.max(-1.4, Math.min(1.4, camPhi));
+    lastX = e.clientX; lastY = e.clientY;
+});
+canvas.addEventListener('wheel', e => {
+    camDist *= (e.deltaY > 0 ? 1.08 : 0.92);
+    camDist = Math.max(120, Math.min(2500, camDist));
+});
+
+function getViewProj() {
+    const eye = [
+        camDist * Math.cos(camPhi) * Math.sin(camTheta),
+        camDist * Math.sin(camPhi),
+        camDist * Math.cos(camPhi) * Math.cos(camTheta)
+    ];
+    const target = [0, 0, 0];
+    const up = [0, 1, 0];
+
+    // LookAt
+    const z = normalize(sub(eye, target));
+    const x = normalize(cross(up, z));
+    const y = cross(z, x);
+
+    const view = new Float32Array([
+        x[0], y[0], z[0], 0,
+        x[1], y[1], z[1], 0,
+        x[2], y[2], z[2], 0,
+        -dot(x, eye), -dot(y, eye), -dot(z, eye), 1
+    ]);
+
+    const aspect = canvas.width / canvas.height;
+    const fov = 55 * Math.PI / 180;
+    const f = 1 / Math.tan(fov / 2);
+    const near = 1, far = 4000;
+    const nf = 1 / (near - far);
+
+    const proj = new Float32Array([
+        f / aspect, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, (far + near) * nf, -1,
+        0, 0, 2 * far * near * nf, 0
+    ]);
+
+    return mul4(proj, view);
+}
+
+function sub(a, b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+function cross(a, b) { return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+function dot(a, b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
+function normalize(v) {
+    const l = Math.hypot(v[0], v[1], v[2]) || 1;
+    return [v[0]/l, v[1]/l, v[2]/l];
+}
+function mul4(a, b) {
+    const r = new Float32Array(16);
+    for (let i = 0; i < 4; i++)
+        for (let j = 0; j < 4; j++)
+            r[i*4+j] = a[i*4+0]*b[0*4+j] + a[i*4+1]*b[1*4+j] + a[i*4+2]*b[2*4+j] + a[i*4+3]*b[3*4+j];
+    return r;
+}
+
+// ---------- Helpers ----------
+function wavelengthToRGB(wl) {
+    let r=0,g=0,b=0;
+    if (wl>=380 && wl<440){ r=(440-wl)/(440-380); b=1; }
+    else if (wl>=440 && wl<490){ g=(wl-440)/(490-440); b=1; }
+    else if (wl>=490 && wl<510){ g=1; b=(510-wl)/(510-490); }
+    else if (wl>=510 && wl<580){ r=(wl-510)/(580-510); g=1; }
+    else if (wl>=580 && wl<645){ r=1; g=(645-wl)/(645-580); }
+    else if (wl>=645 && wl<=780){ r=1; }
+    let factor = 1;
+    if (wl>700) factor = (780-wl)/(780-700)*0.3+0.7;
+    else if (wl<420) factor = (wl-380)/(420-380)*0.3+0.7;
+    return [Math.pow(r*factor,0.8), Math.pow(g*factor,0.8), Math.pow(b*factor,0.8)];
+}
+
+// ---------- Global state ----------
+let numParticles = 150000;
+let particleBuffer, attractorBuffer, uniformBuffer;
+let computePipeline, renderPipeline, computeBindGroup, renderBindGroup;
+let simTime = 0;
+let attractorPositions = [];
+let attractorColors = [];
+
+// Audio
+let analyzer = null, audioContext = null, intervalId = null;
+let current_amplitudes = [];
+let current_amp = 0, current_freq = 440;
+
+// ---------- Uniform layout (must match WGSL) ----------
+// 256-byte aligned for simplicity
+const UNIFORM_SIZE = 256;
+const uniformData = new ArrayBuffer(UNIFORM_SIZE);
+const uView = {
+    viewProj:   new Float32Array(uniformData, 0, 16),
+    params:     new Float32Array(uniformData, 64, 16), // dt, G, waveS, waveSpeed, amp, freq, visAmt, flickMag, resetR, colorRad, time, flags...
+    attractors: new Float32Array(uniformData, 128, 32) // up to 8 attractors * 4
+};
+
+// ---------- WGSL Shaders ----------
+const computeWGSL = `
+struct Particle {
+    pos : vec4f,   // xyz + flickerPhase
+    vel : vec4f,   // xyz + pad
+    color : vec4f, // rgb + pad
+};
+
+struct Uniforms {
+    viewProj : mat4x4f,
+    // params[0]=dt, [1]=G, [2]=waveS, [3]=waveSpeed,
+    // [4]=amp, [5]=freq, [6]=visAmt, [7]=flickMag,
+    // [8]=resetR, [9]=colorRad, [10]=time, [11]=flags
+    // flags: bit0=acoustic, bit1=colorize, bit2=flicker, bit3=audioMode(1=mult)
+    params : array<f32, 16>,
+    // attractors packed as vec4 (xyz + effectiveG)
+    attractors : array<vec4f, 8>,
+};
+
+@group(0) @binding(0) var<storage, read_write> particles : array<Particle>;
+@group(0) @binding(1) var<uniform> uni : Uniforms;
+
+fn hash(p : u32) -> f32 {
+    var x = p;
+    x = (x ^ 61u) ^ (x >> 16u);
+    x = x + (x << 3u);
+    x = x ^ (x >> 4u);
+    x = x * 0x27d4eb2du;
+    x = x ^ (x >> 15u);
+    return f32(x) / 4294967295.0;
+}
+
+@compute @workgroup_size(64)
+fn main(@builtin(global_invocation_id) id : vec3u) {
+    let i = id.x;
+    if (i >= arrayLength(&particles)) { return; }
+
+    var p = particles[i];
+    let dt = uni.params[0];
+    let baseG = uni.params[1];
+    let waveS = uni.params[2];
+    let waveSpeed = uni.params[3];
+    let amp = uni.params[4];
+    let freq = uni.params[5];
+    let visAmt = uni.params[6];
+    let flickMag = uni.params[7];
+    let resetR = uni.params[8];
+    let colorRad = uni.params[9];
+    let time = uni.params[10];
+    let flags = u32(uni.params[11]);
+
+    let acoustic_on = (flags & 1u) != 0u;
+    let colorize_on = (flags & 2u) != 0u;
+    let flicker_on  = (flags & 4u) != 0u;
+    let audioMult   = (flags & 8u) != 0u;
+
+    var pos = p.pos.xyz;
+    var vel = p.vel.xyz;
+    var col = p.color.xyz;
+    var phase = p.pos.w;
+
+    // ----- Gravity from attractors -----
+    var accel = vec3f(0.0);
+    var nearestDist = 1e10;
+    var nearestIdx = 0u;
+    let numAttr = 8u; // max, unused ones have G=0
+
+    for (var a = 0u; a < numAttr; a++) {
+        let attr = uni.attractors[a];
+        let G = attr.w;
+        if (G <= 0.0) { continue; }
+        let d = attr.xyz - pos;
+        let r2 = dot(d, d);
+        if (r2 > 0.25) {
+            let r = sqrt(r2);
+            let force = G / (r2 * r);
+            accel += d * force;
+            if (r < nearestDist) {
+                nearestDist = r;
+                nearestIdx = a;
+            }
+        }
+    }
+
+    // ----- Acoustic wave force -----
+    if (acoustic_on && amp > 0.001) {
+        let r2 = dot(pos, pos);
+        if (r2 > 0.25) {
+            let r = sqrt(r2);
+            let lambda = waveSpeed / max(freq, 1.0);
+            let k = 6.283185307 / lambda;
+            let omega = 6.283185307 * freq;
+            let phaseA = omega * time - k * r;
+            let forceMag = waveS * amp * sin(phaseA) / r;
+            accel += normalize(pos) * forceMag;
+        }
+    }
+
+    // Integrate
+    vel += accel * dt;
+    pos += vel * dt;
+
+    // ----- Reset if too far -----
+    if (resetR > 0.0) {
+        var minR2 = 1e20;
+        for (var a = 0u; a < numAttr; a++) {
+            let attr = uni.attractors[a];
+            if (attr.w <= 0.0) { continue; }
+            let d = attr.xyz - pos;
+            minR2 = min(minR2, dot(d, d));
+        }
+        if (minR2 > resetR * resetR) {
+            // re-init around a random attractor
+            let aidx = u32(hash(i + u32(time * 1000.0)) * 5.9) % 6u;
+            let attr = uni.attractors[aidx];
+            let phi = hash(i * 3u + 7u) * 6.283185307;
+            let rr = sqrt(hash(i * 5u + 11u)) * 300.0;
+            pos = attr.xyz + vec3f(rr * cos(phi), rr * sin(phi), (hash(i + 13u) - 0.5) * 14.0);
+            let v0 = sqrt(max(baseG, 0.1) / max(rr, 1.0)) * 0.85;
+            vel = vec3f(-v0 * sin(phi), v0 * cos(phi), (hash(i + 17u) - 0.5) * 0.02);
+            col = attr.xyz * 0.0 + vec3f( // will be overwritten by color below
+                hash(i + 21u), hash(i + 23u), hash(i + 27u));
+            phase = -1.0;
+        }
+    }
+
+    // ----- Colorize -----
+    if (colorize_on && nearestDist < colorRad) {
+        let attr = uni.attractors[nearestIdx];
+        // simple color from attractor index (precomputed on CPU side would be better, but this works)
+        let t = f32(nearestIdx) / 5.0;
+        col = vec3f(
+            0.5 + 0.5 * sin(t * 6.28),
+            0.5 + 0.5 * sin(t * 6.28 + 2.1),
+            0.5 + 0.5 * sin(t * 6.28 + 4.2)
+        );
+    }
+
+    // ----- Flicker -----
+    if (flicker_on) {
+        if (phase < 0.0) {
+            if (hash(i + u32(time * 60.0)) < dt / 8.0) {
+                phase = 0.0;
+            }
+        } else {
+            phase += dt / 0.35;
+            if (phase > 1.0) { phase = -1.0; }
+        }
+    }
+
+    p.pos = vec4f(pos, phase);
+    p.vel = vec4f(vel, 0.0);
+    p.color = vec4f(col, 1.0);
+    particles[i] = p;
+}
+`;
+
+const renderWGSL = `
+struct Particle {
+    pos : vec4f,
+    vel : vec4f,
+    color : vec4f,
+};
+
+struct Uniforms {
+    viewProj : mat4x4f,
+    params : array<f32, 16>,
+    attractors : array<vec4f, 8>,
+};
+
+@group(0) @binding(0) var<storage, read> particles : array<Particle>;
+@group(0) @binding(1) var<uniform> uni : Uniforms;
+
+struct VSOut {
+    @builtin(position) pos : vec4f,
+    @location(0) color : vec4f,
+    @location(1) pointSize : f32,
+};
+
+@vertex
+fn vs_main(@builtin(vertex_index) vid : u32, @builtin(instance_index) iid : u32) -> VSOut {
+    let p = particles[iid];
+    var world = p.pos.xyz;
+
+    // Acoustic visual displacement (purely visual)
+    let visAmt = uni.params[6];
+    let amp = uni.params[4];
+    let freq = uni.params[5];
+    let waveSpeed = uni.params[3];
+    let time = uni.params[10];
+    if (visAmt > 0.0 && amp > 0.001) {
+        let r = length(world);
+        if (r > 0.5) {
+            let lambda = waveSpeed / max(freq, 1.0);
+            let k = 6.283185307 / lambda;
+            let omega = 6.283185307 * freq;
+            let phase = omega * time - k * r;
+            world += normalize(world) * (amp * sin(phase) * visAmt);
+        }
+    }
+
+    var out : VSOut;
+    out.pos = uni.viewProj * vec4f(world, 1.0);
+
+    var col = p.color.xyz;
+    var size = uni.params[12]; // point size
+    let phase = p.pos.w;
+    let flickMag = uni.params[7];
+
+    if (phase >= 0.0) {
+        let f = sin(phase * 3.14159265);
+        col = mix(col, vec3f(1.0), f * flickMag);
+        size += f * flickMag * 0.6;
+    }
+
+    out.color = vec4f(col, 1.0);
+    out.pointSize = size * (300.0 / out.pos.w); // rough attenuation
+    return out;
+}
+
+@fragment
+fn fs_main(in : VSOut) -> @location(0) vec4f {
+    // soft circular point
+    let d = length(gl_PointCoord - vec2f(0.5));
+    if (d > 0.5) { discard; }
+    let alpha = 1.0 - smoothstep(0.2, 0.5, d);
+    return vec4f(in.color.rgb, alpha * 0.85);
+}
+`;
+
+// ---------- Init GPU resources ----------
+async function initGPU(n) {
+    numParticles = n;
+
+    // Particle buffer: pos(vec4) + vel(vec4) + color(vec4) = 48 bytes each
+    const particleByteSize = 48;
+    particleBuffer = device.createBuffer({
+        size: numParticles * particleByteSize,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+    });
+
+    // Initialize particles on CPU once
+    const initData = new Float32Array(particleBuffer.getMappedRange());
+    initAttractors();
+    const G = +document.getElementById('grav').value;
+    const velM = +document.getElementById('vel').value;
+    const R = +document.getElementById('radius').value;
+    const thick = +document.getElementById('thick').value;
+
+    for (let i = 0; i < numParticles; i++) {
+        const base = i * 12; // 12 floats per particle
+        const attractIdx = Math.floor(Math.random() * attractorPositions.length);
+        const attract = attractorPositions[attractIdx];
+        const phi = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * R;
+        const relX = r * Math.cos(phi);
+        const relY = r * Math.sin(phi);
+        const relZ = (Math.random() - 0.5) * thick;
+
+        // pos
+        initData[base + 0] = attract[0] + relX;
+        initData[base + 1] = attract[1] + relY;
+        initData[base + 2] = attract[2] + relZ;
+        initData[base + 3] = -1; // flicker phase
+
+        // vel
+        const dist = Math.max(r, 1);
+        const v0 = Math.sqrt(G / dist) * velM;
+        initData[base + 4] = -v0 * Math.sin(phi) * (0.9 + Math.random() * 0.2);
+        initData[base + 5] =  v0 * Math.cos(phi) * (0.9 + Math.random() * 0.2);
+        initData[base + 6] = (Math.random() - 0.5) * 0.02;
+        initData[base + 7] = 0;
+
+        // color
+        const rgb = attractorColors[attractIdx];
+        initData[base + 8] = rgb[0];
+        initData[base + 9] = rgb[1];
+        initData[base + 10] = rgb[2];
+        initData[base + 11] = 1;
+    }
+    particleBuffer.unmap();
+
+    // Uniform buffer
+    uniformBuffer = device.createBuffer({
+        size: UNIFORM_SIZE,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+
+    // Pipelines
+    const computeModule = device.createShaderModule({ code: computeWGSL });
+    const renderModule = device.createShaderModule({ code: renderWGSL });
+
+    computePipeline = device.createComputePipeline({
+        layout: 'auto',
+        compute: { module: computeModule, entryPoint: 'main' }
+    });
+
+    renderPipeline = device.createRenderPipeline({
+        layout: 'auto',
+        vertex: { module: renderModule, entryPoint: 'vs_main' },
+        fragment: {
+            module: renderModule,
+            entryPoint: 'fs_main',
+            targets: [{
+                format,
+                blend: {
+                    color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
+                    alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+                }
+            }]
+        },
+        primitive: { topology: 'point-list' }
+    });
+
+    computeBindGroup = device.createBindGroup({
+        layout: computePipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: particleBuffer } },
+            { binding: 1, resource: { buffer: uniformBuffer } }
+        ]
+    });
+
+    renderBindGroup = device.createBindGroup({
+        layout: renderPipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: particleBuffer } },
+            { binding: 1, resource: { buffer: uniformBuffer } }
+        ]
+    });
+}
+
+function initAttractors() {
+    const numAttract = +document.getElementById('numAttract').value;
+    const attractDist = +document.getElementById('attractDist').value;
+    attractorPositions = [];
+    attractorColors = [];
+
+    if (numAttract === 1) {
+        attractorPositions.push([0, 0, 0]);
+    } else {
+        const offset = (numAttract - 1) * attractDist / 2;
+        for (let i = 0; i < numAttract; i++) {
+            attractorPositions.push([i * attractDist - offset, 0, 0]);
+        }
+    }
+    const minWL = 400, maxWL = 700;
+    for (let i = 0; i < numAttract; i++) {
+        const wl = minWL + (i + 0.5) / numAttract * (maxWL - minWL);
+        attractorColors.push(wavelengthToRGB(wl));
+    }
+}
+
+// ---------- Audio ----------
+async function startAudioCapture() {
+    try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        stream.getVideoTracks().forEach(t => t.stop());
+        audioContext = new AudioContext();
+        const source = audioContext.createMediaStreamSource(stream);
+        analyzer = audioContext.createAnalyser();
+        analyzer.fftSize = 2048;
+        source.connect(analyzer);
+        updateInterval();
+        statusEl.textContent = 'Audio capture started';
+    } catch (e) {
+        console.error(e);
+        statusEl.textContent = 'Audio capture failed';
+    }
+}
+
+function updateFrequencies() {
+    if (!analyzer) return;
+    const data = new Uint8Array(analyzer.frequencyBinCount);
+    analyzer.getByteFrequencyData(data);
+
+    const n = Math.max(1, attractorPositions.length);
+    const bins = Math.floor(data.length / n);
+    current_amplitudes = [];
+    for (let b = 0; b < n; b++) {
+        let sum = 0, cnt = 0;
+        const start = b * bins;
+        const end = (b === n - 1) ? data.length : (b + 1) * bins;
+        for (let k = start; k < end; k++) {
+            const v = data[k] / 255;
+            sum += v * v;
+            cnt++;
+        }
+        current_amplitudes.push(Math.sqrt(sum / Math.max(cnt, 1)));
+    }
+
+    let sumMag = 0, weighted = 0;
+    const nyquist = audioContext.sampleRate / 2;
+    for (let k = 0; k < data.length; k++) {
+        const mag = data[k] / 255;
+        sumMag += mag;
+        weighted += mag * (k / data.length) * nyquist;
+    }
+    current_amp = sumMag / data.length;
+    current_freq = sumMag > 0 ? weighted / sumMag : 440;
+}
+
+function updateInterval() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(updateFrequencies, +document.getElementById('sampleInt').value);
+}
+
+// ---------- Frame ----------
+function frame() {
+    requestAnimationFrame(frame);
+
+    const dt = 0.016 * (+document.getElementById('speed').value / 20);
+    simTime += dt;
+
+    // Update uniforms
+    uView.viewProj.set(getViewProj());
+
+    const G = +document.getElementById('grav').value;
+    const audioS = +document.getElementById('audioS').value;
+    const audioMode = document.getElementById('audioMode').value;
+    const acoustic_on = document.getElementById('acoustic').checked;
+    const colorize_on = document.getElementById('colorize').checked;
+    const flicker_on = document.getElementById('flicker').checked;
+
+    uView.params[0] = dt;
+    uView.params[1] = G;
+    uView.params[2] = +document.getElementById('waveS').value;
+    uView.params[3] = +document.getElementById('waveSpeed').value;
+    uView.params[4] = current_amp;
+    uView.params[5] = current_freq;
+    uView.params[6] = document.getElementById('acousticVis').checked ? +document.getElementById('visAmt').value : 0;
+    uView.params[7] = flicker_on ? +document.getElementById('flickMag').value : 0;
+    uView.params[8] = +document.getElementById('resetR').value;
+    uView.params[9] = +document.getElementById('colorRad').value;
+    uView.params[10] = simTime;
+    uView.params[12] = +document.getElementById('size').value;
+
+    let flags = 0;
+    if (acoustic_on) flags |= 1;
+    if (colorize_on) flags |= 2;
+    if (flicker_on)  flags |= 4;
+    if (audioMode === 'multiply') flags |= 8;
+    uView.params[11] = flags;
+
+    // Attractors + effective G
+    for (let i = 0; i < 8; i++) {
+        const base = i * 4;
+        if (i < attractorPositions.length) {
+            const amp = current_amplitudes[i] || 0;
+            let effG = G;
+            if (analyzer) {
+                effG = (audioMode === 'multiply') ? G * (1 + amp * audioS) : G + amp * audioS;
+            }
+            uView.attractors[base + 0] = attractorPositions[i][0];
+            uView.attractors[base + 1] = attractorPositions[i][1];
+            uView.attractors[base + 2] = attractorPositions[i][2];
+            uView.attractors[base + 3] = effG;
+        } else {
+            uView.attractors[base + 3] = 0;
+        }
+    }
+
+    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+    // Compute
+    const encoder = device.createCommandEncoder();
+    const computePass = encoder.beginComputePass();
+    computePass.setPipeline(computePipeline);
+    computePass.setBindGroup(0, computeBindGroup);
+    computePass.dispatchWorkgroups(Math.ceil(numParticles / 64));
+    computePass.end();
+
+    // Render
+    const renderPass = encoder.beginRenderPass({
+        colorAttachments: [{
+            view: context.getCurrentTexture().createView(),
+            clearValue: { r: 0, g: 0, b: 0, a: 1 },
+            loadOp: 'clear',
+            storeOp: 'store'
+        }]
+    });
+    renderPass.setPipeline(renderPipeline);
+    renderPass.setBindGroup(0, renderBindGroup);
+    renderPass.draw(1, numParticles); // 1 vertex per instance (point)
+    renderPass.end();
+
+    device.queue.submit([encoder.finish()]);
+
+    statusEl.textContent = `Particles: ${numParticles.toLocaleString()} | FPS ~60 | WebGPU Compute`;
+}
+
+// ---------- UI ----------
+document.getElementById('restart').addEventListener('click', async () => {
+    const n = +document.getElementById('num').value;
+    await initGPU(n);
+});
+document.getElementById('startAudio').addEventListener('click', startAudioCapture);
+document.getElementById('sampleInt').addEventListener('change', updateInterval);
+document.getElementById('fullScreen').addEventListener('click', () => canvas.requestFullscreen());
+
+const gui = document.getElementById('gui');
+const toggleGui = document.getElementById('toggleGui');
+toggleGui.addEventListener('click', () => {
+    if (gui.style.display === 'none') {
+        gui.style.display = 'block';
+        toggleGui.textContent = 'Hide';
+    } else {
+        gui.style.display = 'none';
+        toggleGui.textContent = 'Show';
+    }
+});
+
+// Start
+await initGPU(+document.getElementById('num').value);
+frame();
+</script>
+</body>
+</html>
