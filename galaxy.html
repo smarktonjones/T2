@@ -32,6 +32,10 @@
     <label>Thickness  <input type="number" id="thick" value="14" step="1"></label>
     <label>Sim Speed  <input type="number" id="speed" value="20" step="5"></label>
     <label>Reset Radius (0=off) <input type="number" id="resetR" value="400" step="50"></label>
+    <label>Maintain Particle Population <input type="checkbox" id="populationAudit" checked></label>
+    <label>Population Audit Interval (s) <input type="number" id="auditInterval" value="3" min="0.25" step="0.25"></label>
+    <label>Collapse Detection Diameter <input type="number" id="collapseDiameter" value="8" min="0.1" step="1"></label>
+    <output id="populationStatus" style="display:block; margin:8px 0; font-size:12px;">Population audit pending</output>
     <label>Num Central Attractors <input type="number" id="numAttract" value="4" min="0" max="64" step="1"></label>
     <label>Attractor Distance <input type="number" id="attractDist" value="500" step="10"></label>
     <label>Self-attracting particles <input type="checkbox" id="selfAttract"></label>
@@ -120,6 +124,21 @@ window.addEventListener('load', function() {
     let gpuMaterial = null;
     let gpuEnabled = false;
     let gpuFrame = 0;
+    let gpuWidth = 0;
+    let gpuHeight = 0;
+    let gpuAuditTargets = [];
+    let gpuAuditMaterial = null;
+    let gpuAuditStatsMaterial = null;
+    let gpuAuditClusterMaterial = null;
+    let gpuAuditReduceMaterial = null;
+    let gpuAuditStatsSource = null;
+    let gpuAuditClusterSource = null;
+    let gpuAuditReductionLevels = [];
+    let gpuAuditScene = null;
+    let gpuAuditCamera = null;
+    let auditRespawnCount = 0;
+    let auditCollapseDetected = false;
+    let lastPopulationAudit = 0;
     const gpuAttractorVectors = Array.from({ length: 64 }, () => new THREE.Vector3());
     const gpuAttractorColorVectors = Array.from({ length: 64 }, () => new THREE.Vector3(1, 1, 1));
 
@@ -251,6 +270,10 @@ window.addEventListener('load', function() {
 
     function init() {
         num   = +document.getElementById('num').value;
+        auditRespawnCount = 0;
+        auditCollapseDetected = false;
+        lastPopulationAudit = 0;
+        document.getElementById('populationStatus').textContent = 'Population audit pending';
 
         initAttractors();
 
@@ -295,6 +318,283 @@ window.addEventListener('load', function() {
             if (variable.initialValueTexture) variable.initialValueTexture.dispose();
         }
         gpuCompute = null;
+    }
+
+    function createAuditTarget(width, height) {
+        return new THREE.WebGLRenderTarget(width, height, {
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+            depthBuffer: false,
+            stencilBuffer: false
+        });
+    }
+
+    function createGpuAuditResources(width, height) {
+        if (gpuAuditMaterial) gpuAuditMaterial.geometry.dispose();
+        if (gpuAuditStatsMaterial) gpuAuditStatsMaterial.dispose();
+        if (gpuAuditClusterMaterial) gpuAuditClusterMaterial.dispose();
+        if (gpuAuditReduceMaterial) gpuAuditReduceMaterial.dispose();
+        for (const target of [gpuAuditStatsSource, gpuAuditClusterSource, ...gpuAuditTargets]) {
+            if (target) target.dispose();
+        }
+        gpuAuditTargets = [];
+        gpuAuditReductionLevels = [];
+        gpuAuditStatsSource = createAuditTarget(width, height);
+        gpuAuditClusterSource = createAuditTarget(width, height);
+
+        let sourceWidth = width;
+        let sourceHeight = height;
+        while (sourceWidth > 1 || sourceHeight > 1) {
+            const targetWidth = Math.max(1, Math.ceil(sourceWidth / 2));
+            const targetHeight = Math.max(1, Math.ceil(sourceHeight / 2));
+            const statsTarget = createAuditTarget(targetWidth, targetHeight);
+            const clusterTarget = createAuditTarget(targetWidth, targetHeight);
+            gpuAuditReductionLevels.push({
+                sourceWidth, sourceHeight, targetWidth, targetHeight,
+                statsTarget, clusterTarget
+            });
+            gpuAuditTargets.push(statsTarget, clusterTarget);
+            sourceWidth = targetWidth;
+            sourceHeight = targetHeight;
+        }
+
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 1.0);
+            }
+        `;
+        const statsShader = `
+            uniform sampler2D positionMap;
+            uniform vec2 textureSize;
+            uniform float particleCount;
+            uniform float resetRadius;
+            uniform vec3 attractors[64];
+            uniform int attractorCount;
+            varying vec2 vUv;
+            void main() {
+                vec2 cell = floor(vUv * textureSize);
+                float index = cell.y * textureSize.x + cell.x;
+                if (index >= particleCount) { gl_FragColor = vec4(0.0); return; }
+                vec3 p = texture2D(positionMap, (cell + 0.5) / textureSize).xyz;
+                if (any(notEqual(p, p)) || any(greaterThan(abs(p), vec3(1000000.0)))) {
+                    gl_FragColor = vec4(0.0); return;
+                }
+                bool inside = resetRadius <= 0.0;
+                if (resetRadius > 0.0 && attractorCount == 0) inside = dot(p, p) <= resetRadius * resetRadius;
+                float nearest = 1.0e30;
+                for (int i = 0; i < 64; i++) {
+                    if (i >= attractorCount) break;
+                    vec3 delta = p - attractors[i];
+                    nearest = min(nearest, dot(delta, delta));
+                }
+                if (resetRadius > 0.0 && attractorCount > 0) inside = nearest <= resetRadius * resetRadius;
+                gl_FragColor = inside ? vec4(1.0, p) : vec4(0.0);
+            }
+        `;
+        const clusterShader = `
+            uniform sampler2D positionMap;
+            uniform vec2 textureSize;
+            uniform float particleCount;
+            uniform float resetRadius;
+            uniform float clusterRadius;
+            uniform vec3 clusterCenter;
+            uniform vec3 attractors[64];
+            uniform int attractorCount;
+            varying vec2 vUv;
+            void main() {
+                vec2 cell = floor(vUv * textureSize);
+                float index = cell.y * textureSize.x + cell.x;
+                if (index >= particleCount) { gl_FragColor = vec4(0.0); return; }
+                vec3 p = texture2D(positionMap, (cell + 0.5) / textureSize).xyz;
+                if (any(notEqual(p, p)) || any(greaterThan(abs(p), vec3(1000000.0)))) {
+                    gl_FragColor = vec4(0.0); return;
+                }
+                bool inside = resetRadius <= 0.0;
+                if (resetRadius > 0.0 && attractorCount == 0) inside = dot(p, p) <= resetRadius * resetRadius;
+                float nearest = 1.0e30;
+                for (int i = 0; i < 64; i++) {
+                    if (i >= attractorCount) break;
+                    vec3 delta = p - attractors[i];
+                    nearest = min(nearest, dot(delta, delta));
+                }
+                if (resetRadius > 0.0 && attractorCount > 0) inside = nearest <= resetRadius * resetRadius;
+                float clusterDistance2 = clusterRadius * clusterRadius;
+                gl_FragColor = inside && dot(p - clusterCenter, p - clusterCenter) <= clusterDistance2
+                    ? vec4(1.0, 0.0, 0.0, 0.0) : vec4(0.0);
+            }
+        `;
+        const reduceShader = `
+            uniform sampler2D sourceMap;
+            uniform vec2 sourceSize;
+            uniform vec2 targetSize;
+            varying vec2 vUv;
+            void main() {
+                vec2 base = floor(vUv * targetSize) * 2.0;
+                vec4 sum = vec4(0.0);
+                for (int y = 0; y < 2; y++) {
+                    for (int x = 0; x < 2; x++) {
+                        vec2 cell = base + vec2(float(x), float(y));
+                        if (cell.x < sourceSize.x && cell.y < sourceSize.y)
+                            sum += texture2D(sourceMap, (cell + 0.5) / sourceSize);
+                    }
+                }
+                gl_FragColor = sum;
+            }
+        `;
+        const materialOptions = { vertexShader, depthTest: false, depthWrite: false, toneMapped: false };
+        gpuAuditStatsMaterial = new THREE.ShaderMaterial({
+            ...materialOptions,
+            fragmentShader: statsShader,
+            uniforms: {
+                positionMap: { value: null }, textureSize: { value: new THREE.Vector2(width, height) },
+                particleCount: { value: num }, resetRadius: { value: 0 },
+                attractors: { value: gpuAttractorVectors }, attractorCount: { value: 0 }
+            }
+        });
+        gpuAuditClusterMaterial = new THREE.ShaderMaterial({
+            ...materialOptions,
+            fragmentShader: clusterShader,
+            uniforms: {
+                positionMap: { value: null }, textureSize: { value: new THREE.Vector2(width, height) },
+                particleCount: { value: num }, resetRadius: { value: 0 }, clusterRadius: { value: 4 },
+                clusterCenter: { value: new THREE.Vector3() },
+                attractors: { value: gpuAttractorVectors }, attractorCount: { value: 0 }
+            }
+        });
+        gpuAuditReduceMaterial = new THREE.ShaderMaterial({
+            ...materialOptions,
+            fragmentShader: reduceShader,
+            uniforms: {
+                sourceMap: { value: null }, sourceSize: { value: new THREE.Vector2(1, 1) },
+                targetSize: { value: new THREE.Vector2(1, 1) }
+            }
+        });
+        gpuAuditScene = new THREE.Scene();
+        gpuAuditCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), gpuAuditStatsMaterial);
+        gpuAuditScene.add(quad);
+        gpuAuditMaterial = quad;
+    }
+
+    function drawAuditMaterial(material, target) {
+        gpuAuditMaterial.material = material;
+        renderer.setRenderTarget(target);
+        renderer.render(gpuAuditScene, gpuAuditCamera);
+    }
+
+    function reduceAuditTarget(source, sourceWidth, sourceHeight, valueKey) {
+        let currentTarget = source;
+        let width = sourceWidth;
+        let height = sourceHeight;
+        for (const level of gpuAuditReductionLevels) {
+            gpuAuditReduceMaterial.uniforms.sourceMap.value = currentTarget.texture;
+            gpuAuditReduceMaterial.uniforms.sourceSize.value.set(width, height);
+            gpuAuditReduceMaterial.uniforms.targetSize.value.set(level.targetWidth, level.targetHeight);
+            const target = valueKey === 'stats' ? level.statsTarget : level.clusterTarget;
+            drawAuditMaterial(gpuAuditReduceMaterial, target);
+            currentTarget = target;
+            width = level.targetWidth;
+            height = level.targetHeight;
+        }
+        return currentTarget;
+    }
+
+    function auditGpuPopulation() {
+        const previousTarget = renderer.getRenderTarget();
+        const count = Math.min(attractorPositions.length, 64);
+        gpuAuditStatsMaterial.uniforms.positionMap.value = gpuCompute.getCurrentRenderTarget(gpuPositionVariable).texture;
+        gpuAuditStatsMaterial.uniforms.resetRadius.value = +document.getElementById('resetR').value;
+        gpuAuditStatsMaterial.uniforms.attractorCount.value = count;
+        drawAuditMaterial(gpuAuditStatsMaterial, gpuAuditStatsSource);
+        const statsTarget = reduceAuditTarget(gpuAuditStatsSource, gpuWidth, gpuHeight, 'stats');
+        const stats = new Float32Array(4);
+        renderer.readRenderTargetPixels(statsTarget, 0, 0, 1, 1, stats);
+        const insideCount = Math.max(0, Math.min(num, Math.round(stats[0])));
+        auditRespawnCount = Math.max(0, num - insideCount);
+        auditCollapseDetected = false;
+
+        if (insideCount >= Math.max(2, Math.ceil(num * 0.9))) {
+            const centroid = new THREE.Vector3(stats[1], stats[2], stats[3]).multiplyScalar(1 / insideCount);
+            gpuAuditClusterMaterial.uniforms.positionMap.value = gpuCompute.getCurrentRenderTarget(gpuPositionVariable).texture;
+            gpuAuditClusterMaterial.uniforms.resetRadius.value = +document.getElementById('resetR').value;
+            gpuAuditClusterMaterial.uniforms.clusterRadius.value = Math.max(+document.getElementById('collapseDiameter').value, 0.1) * 0.5;
+            gpuAuditClusterMaterial.uniforms.clusterCenter.value.copy(centroid);
+            gpuAuditClusterMaterial.uniforms.attractorCount.value = count;
+            drawAuditMaterial(gpuAuditClusterMaterial, gpuAuditClusterSource);
+            const clusterTarget = reduceAuditTarget(gpuAuditClusterSource, gpuWidth, gpuHeight, 'cluster');
+            const cluster = new Float32Array(4);
+            renderer.readRenderTargetPixels(clusterTarget, 0, 0, 1, 1, cluster);
+            auditCollapseDetected = cluster[0] >= Math.ceil(num * 0.9);
+            if (auditCollapseDetected) auditRespawnCount = 0;
+        }
+
+        document.getElementById('populationStatus').textContent = auditCollapseDetected
+            ? `Population: ${insideCount.toLocaleString()} / ${num.toLocaleString()} in range; clump recovery triggered`
+            : `Population: ${insideCount.toLocaleString()} / ${num.toLocaleString()} in range`;
+
+        renderer.setRenderTarget(previousTarget);
+        lastPopulationAudit = performance.now();
+    }
+
+    function auditCpuPopulation() {
+        const resetRadius = +document.getElementById('resetR').value;
+        const resetRadius2 = resetRadius * resetRadius;
+        let insideCount = 0;
+        let sumX = 0, sumY = 0, sumZ = 0;
+        const inside = new Uint8Array(num);
+        for (let i = 0; i < num; i++) {
+            const offset = i * 3;
+            const x = positions[offset], y = positions[offset + 1], z = positions[offset + 2];
+            let nearest2 = x * x + y * y + z * z;
+            if (attractorPositions.length) {
+                nearest2 = Infinity;
+                for (const attractor of attractorPositions) {
+                    const dx = x - attractor[0], dy = y - attractor[1], dz = z - attractor[2];
+                    nearest2 = Math.min(nearest2, dx * dx + dy * dy + dz * dz);
+                }
+            }
+            if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)
+                && (resetRadius <= 0 || nearest2 <= resetRadius2)) {
+                inside[i] = 1;
+                insideCount++;
+                sumX += x; sumY += y; sumZ += z;
+            }
+        }
+
+        auditCollapseDetected = false;
+        auditRespawnCount = Math.max(0, num - insideCount);
+        if (insideCount >= Math.max(2, Math.ceil(num * 0.9))) {
+            const centerX = sumX / insideCount, centerY = sumY / insideCount, centerZ = sumZ / insideCount;
+            const clusterRadius = Math.max(+document.getElementById('collapseDiameter').value, 0.1) * 0.5;
+            const clusterRadius2 = clusterRadius * clusterRadius;
+            let clusterCount = 0;
+            for (let i = 0; i < num; i++) {
+                if (!inside[i]) continue;
+                const offset = i * 3;
+                const dx = positions[offset] - centerX, dy = positions[offset + 1] - centerY, dz = positions[offset + 2] - centerZ;
+                if (dx * dx + dy * dy + dz * dz <= clusterRadius2) clusterCount++;
+            }
+            auditCollapseDetected = clusterCount >= Math.ceil(num * 0.9);
+        }
+
+        if (auditCollapseDetected) {
+            for (let i = 0; i < num; i++) initParticle(i);
+            auditRespawnCount = 0;
+        } else if (auditRespawnCount > 0) {
+            let deficit = auditRespawnCount;
+            for (let i = 0; i < num && deficit > 0; i++) {
+                if (!inside[i]) { initParticle(i); deficit--; }
+            }
+            for (let i = num - 1; i >= 0 && deficit > 0; i--, deficit--) initParticle(i);
+        }
+        document.getElementById('populationStatus').textContent = auditCollapseDetected
+            ? `Population: ${insideCount.toLocaleString()} / ${num.toLocaleString()} in range; clump recovery triggered`
+            : `Population: ${insideCount.toLocaleString()} / ${num.toLocaleString()} in range`;
+        lastPopulationAudit = performance.now();
     }
 
     function updateMaterial() {
@@ -403,6 +703,8 @@ window.addEventListener('load', function() {
 
         const width = Math.ceil(Math.sqrt(num));
         const height = Math.ceil(num / width);
+        gpuWidth = width;
+        gpuHeight = height;
         gpuCompute = new THREE.GPUComputationRenderer(width, height, renderer);
         gpuCompute.setDataType(THREE.FloatType);
 
@@ -465,6 +767,8 @@ window.addEventListener('load', function() {
             uniform float chargeDiameter;
             uniform float particleCount;
             uniform float frameSeed;
+            uniform float auditRespawnCount;
+            uniform float auditCollapse;
 
             float rand(vec2 p, float seed) {
                 return fract(sin(dot(p + seed, vec2(127.1, 311.7))) * 43758.5453);
@@ -556,6 +860,11 @@ window.addEventListener('load', function() {
                 }
                 return nearest > resetRadius * resetRadius;
             }
+
+            bool populationRepair(vec2 uv) {
+                float particleIndex = floor(gl_FragCoord.y - 0.5) * resolution.x + floor(gl_FragCoord.x - 0.5);
+                return auditCollapse > 0.5 || particleIndex >= particleCount - auditRespawnCount;
+            }
         `;
 
         const positionShader = `${common}
@@ -565,7 +874,7 @@ window.addEventListener('load', function() {
                 vec3 velocity = texture2D(textureVelocity, uv).xyz;
                 velocity = limitVector(velocity + acceleration(state.xyz) * dt, maxVelocity);
                 vec3 nextPosition = state.xyz + velocity * dt;
-                if (outsideResetRadius(nextPosition)) {
+                if (populationRepair(uv) || outsideResetRadius(nextPosition)) {
                     int selected;
                     nextPosition = spawnPosition(uv, frameSeed, selected);
                 }
@@ -580,7 +889,7 @@ window.addEventListener('load', function() {
                 vec3 p = texture2D(texturePosition, uv).xyz;
                 vec3 velocity = texture2D(textureVelocity, uv).xyz;
                 vec3 nextPosition = p + limitVector(velocity + acceleration(p) * dt, maxVelocity) * dt;
-                if (outsideResetRadius(nextPosition)) {
+                if (populationRepair(uv) || outsideResetRadius(nextPosition)) {
                     int selected;
                     vec3 spawn = spawnPosition(uv, frameSeed, selected);
                     vec3 center = attractorCount > 0 ? attractors[selected] : vec3(0.0);
@@ -623,7 +932,7 @@ window.addEventListener('load', function() {
                 vec3 p = texture2D(texturePosition, uv).xyz;
                 vec3 velocity = texture2D(textureVelocity, uv).xyz;
                 vec3 nextPosition = p + limitVector(velocity + acceleration(p) * dt, maxVelocity) * dt;
-                if (outsideResetRadius(nextPosition)) {
+                if (populationRepair(uv) || outsideResetRadius(nextPosition)) {
                     int selected;
                     spawnPosition(uv, frameSeed, selected);
                     if (attractorCount > 0) color = attractorColors[selected];
@@ -688,6 +997,8 @@ window.addEventListener('load', function() {
             return;
         }
 
+        createGpuAuditResources(width, height);
+
         const sharedUniforms = {
             attractors: { value: gpuAttractorVectors },
             attractorColors: { value: gpuAttractorColorVectors },
@@ -715,7 +1026,9 @@ window.addEventListener('load', function() {
             particleCharge: { value: 0 },
             chargeDiameter: { value: 0 },
             particleCount: { value: num },
-            frameSeed: { value: 0 }
+            frameSeed: { value: 0 },
+            auditRespawnCount: { value: 0 },
+            auditCollapse: { value: 0 }
         };
         for (const variable of [gpuPositionVariable, gpuVelocityVariable, gpuColorVariable]) {
             Object.assign(variable.material.uniforms, sharedUniforms);
@@ -795,7 +1108,9 @@ window.addEventListener('load', function() {
             selfAttractionRadius: +document.getElementById('selfRadius').value,
             particleCharge: Math.max(+document.getElementById('chargeStrength').value, 0),
             chargeDiameter: Math.max(+document.getElementById('chargeDiameter').value, 0),
-            particleCount: num
+            particleCount: num,
+            auditRespawnCount,
+            auditCollapse: auditCollapseDetected ? 1 : 0
         };
         for (const variable of [gpuPositionVariable, gpuVelocityVariable, gpuColorVariable]) {
             const u = variable.material.uniforms;
@@ -922,6 +1237,11 @@ window.addEventListener('load', function() {
     function simulateGpu() {
         sim_time += base_dt * +document.getElementById('speed').value;
         gpuFrame++;
+        const now = performance.now();
+        if (document.getElementById('populationAudit').checked
+            && now - lastPopulationAudit >= Math.max(+document.getElementById('auditInterval').value, 0.25) * 1000) {
+            auditGpuPopulation();
+        }
         updateGpuUniforms();
         gpuCompute.compute();
         uniforms.positionMap.value = gpuCompute.getCurrentRenderTarget(gpuPositionVariable).texture;
@@ -931,6 +1251,8 @@ window.addEventListener('load', function() {
         uniforms.freq.value = current_freq;
         uniforms.amp.value = current_amp;
         uniforms.waveSpeed.value = +document.getElementById('waveSpeed').value;
+        auditRespawnCount = 0;
+        auditCollapseDetected = false;
     }
 
     // ------------------------------------------------------------------
@@ -1008,6 +1330,11 @@ window.addEventListener('load', function() {
             return;
         }
         gpuFrame++;
+        const auditNow = performance.now();
+        if (document.getElementById('populationAudit').checked
+            && auditNow - lastPopulationAudit >= Math.max(+document.getElementById('auditInterval').value, 0.25) * 1000) {
+            auditCpuPopulation();
+        }
         let G = +document.getElementById('grav').value;
         const timeScale = +document.getElementById('speed').value;
         const resetR = +document.getElementById('resetR').value;
