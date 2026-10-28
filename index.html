@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<!-- version as of 06OCT26 mgh doctor session localStorage restore, glitch fix -->
+<!-- version as of 28OCT26 mgh + patient-switch full reload -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Send origin on cross-origin requests (helps Firebase Auth when API key has HTTP-referrer restrictions) -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Dental Note - MAKER</title>
     <style>
         :root {
@@ -1507,7 +1509,7 @@ body.session-readonly .add-element-btn {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.1.7</p>
+    <p class="landing-version">v6.2.1</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -1560,7 +1562,7 @@ body.session-readonly .add-element-btn {
         <input type="password" id="password-input" autocomplete="current-password" placeholder="Password">
         <button type="submit" id="login-button">Login</button>
         <button type="button" id="signup-button">Sign Up</button>
-        <p id="login-error-message" style="color: red;"></p>
+        <p id="login-error-message" style="color: red; white-space: pre-wrap; text-align: left; font-size: 0.9em; max-width: 520px; margin: 12px auto 0;"></p>
     </form>
 </div>
 
@@ -3184,7 +3186,7 @@ const handlePSRTabbing = (event) => {
                 display.textContent = "ALERT (Click to set)";
                 element.classList.add('alert-blank');
             } else if (state.alerts.length === 1 && state.alerts[0] === 'None') {
-                display.textContent = "No Known Allergies";
+                display.textContent = "No Known Drug Allergies";
                 element.classList.add('alert-none');
             } else {
                 display.textContent = `ALERT: ${state.alerts.length} active`;
@@ -3279,7 +3281,7 @@ const updateLiveOutput = (forceImmediate = false) => {
                 }
             }
         }
-        else if (state.type === 'alert') { if (state.alerts && state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => { if (!a) return ''; if (a === 'PREGNANCY') return 'PREGNANCY'; if (String(a).startsWith('Custom: ')) return String(a).substring(8); return `${a} ALLERGY`; }).filter(Boolean).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
+        else if (state.type === 'alert') { if (state.alerts && state.alerts.length > 0) { if (state.alerts[0] === 'None') { content = 'ALERT: No Known Drug Allergies'; } else { content = 'ALERT: ' + state.alerts.map(a => { if (!a) return ''; if (a === 'PREGNANCY') return 'PREGNANCY'; if (String(a).startsWith('Custom: ')) return String(a).substring(8); return `${a} ALLERGY`; }).filter(Boolean).join(', '); } } else if (state.required) { content = 'ALERT: [BLANK]'; } }
         else if (state.type === 'painscale') { if (!state.required || state.value > 0) content = `PAIN: ${state.value}/10`; }
         else if (state.type === 'bloodpressure') {
             const bpParts = [];
@@ -4512,10 +4514,11 @@ const openTextboxEditor = (element) => {
     // B. Do the initial paint of the backdrop mirror
     updateBackdropMirror();
 
-    // C. Update mirror on input
+    // C + staging: single oninput so autocomplete-dispatched input events update BOTH
+    // stagedContentChange (what Save uses) and the highlight mirror.
     textarea.oninput = () => {
         stagedContentChange = textarea.value;
-        updateBackdropMirror(); // <-- ADD THIS
+        try { updateBackdropMirror(); } catch (e) {}
     };
 
     // D. Sync scrolling perfectly
@@ -4523,12 +4526,6 @@ const openTextboxEditor = (element) => {
         if (mirror) mirror.scrollTop = textarea.scrollTop;
     };
     // ============================================
-
-
-    // 2. As the user types, ONLY update the staging variable. This is safe from background syncs.
-    textarea.oninput = () => {
-        stagedContentChange = textarea.value;
-    };
     
     // 3. Populate the dropdown as before.
     select.innerHTML = '';
@@ -4678,7 +4675,6 @@ document.getElementById('textbox-editor-replace-btn').click(); });
         // **** END OF REPLACEMENT CODE ****
 
         document.getElementById('tx-plan-save-btn').onclick = () => {
-            if (!activeElementForEditor) return;
             const newData = {};
             txPlanModal.querySelectorAll('tbody .cell-content').forEach(cellContent => {
                 const textarea = cellContent.querySelector('textarea');
@@ -4691,11 +4687,23 @@ document.getElementById('textbox-editor-replace-btn').click(); });
                     newData[key] = { text, priority };
                 }
             });
-            activeElementForEditor.dataset.txData = JSON.stringify(newData);
-            updateTxPlanSummary(activeElementForEditor);
+            let target = activeElementForEditor;
+            const oid = (target && target.dataset) ? target.dataset.originalId : null;
+            if (oid) {
+                const live = document.querySelector(`.draggable-element[data-original-id="${oid}"]`);
+                if (live) target = live;
+            }
+            if (!target || !target.dataset) return;
+            if (typeof markLocalEdit === 'function' && oid) markLocalEdit(oid);
+            target.dataset.txData = JSON.stringify(newData);
+            updateTxPlanSummary(target);
+            activeElementForEditor = target;
+            try { pendingCloudState = null; } catch (e) {}
             updateLiveOutput(true);
             txPlanModal.style.display = 'none';
-            if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
+            if (typeof refreshCondensedForm === 'function') {
+                setTimeout(() => { try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {} }, 50);
+            }
         };
 
         // --- Treatment Plan Properties ---
@@ -4728,17 +4736,41 @@ document.getElementById('textbox-editor-replace-btn').click(); });
 // Textbox Save Button (No Transaction Needed)
 // =================================================================
 document.getElementById('textbox-editor-save-btn').onclick = () => {
-    if (!activeElementForEditor) return;
+    const textarea = document.getElementById('textbox-editor-textarea');
+    // Prefer live textarea value (covers autocomplete / paste that never fired a tracked keystroke).
+    // Fall back to stagedContentChange only if textarea is missing.
+    const newContent = (textarea && typeof textarea.value === 'string')
+        ? textarea.value
+        : (stagedContentChange !== null ? stagedContentChange : '');
 
-    const editedElementId = activeElementForEditor.dataset.originalId;
+    // Resolve the LIVE dropzone node by originalId — activeElementForEditor can be
+    // detached if a cloud rebuild raced while the modal was open.
+    let target = activeElementForEditor;
+    const editedElementId = (target && target.dataset) ? target.dataset.originalId : null;
+    if (editedElementId) {
+        const live = document.querySelector(`.draggable-element[data-original-id="${editedElementId}"]`);
+        if (live) target = live;
+    }
+    if (!target || !target.dataset) return;
 
-    const newContent = stagedContentChange !== null ? stagedContentChange : document.getElementById('textbox-editor-textarea').value;
-    activeElementForEditor.dataset.content = newContent;
-    const preview = activeElementForEditor.querySelector('.enhanced-textbox-preview');
+    if (typeof markLocalEdit === 'function' && editedElementId) markLocalEdit(editedElementId);
+
+    target.dataset.content = newContent;
+    const preview = target.querySelector('.enhanced-textbox-preview');
     if (preview) preview.textContent = newContent;
+    // Keep charting-style class if this element uses updateEnhancedTextboxUI
+    if (typeof updateEnhancedTextboxUI === 'function') {
+        try { updateEnhancedTextboxUI(target); } catch (e) {}
+    }
+
     stagedContentChange = null;
-    document.getElementById('textbox-editor-textarea').oninput = null;
+    if (textarea) textarea.oninput = null;
     document.getElementById('textbox-editor-modal').style.display = 'none';
+    activeElementForEditor = target; // keep a live reference
+
+    // Drop any cloud snapshot queued while the modal was open — it is older than
+    // this save and would clobber the just-written value if flushed.
+    try { pendingCloudState = null; } catch (e) {}
 
     // 1. If caries fields were updated, re-evaluate Caries Risk
     if (editedElementId === "2-5" || editedElementId === "2-6") {
@@ -4755,6 +4787,10 @@ document.getElementById('textbox-editor-save-btn').onclick = () => {
     // 2. Pass 'true' to trigger an INSTANT save to Firestore!
     console.log("DEBUG: Modal saved. Triggering IMMEDIATE cloud sync.");
     updateLiveOutput(true); 
+
+    if (typeof refreshCondensedForm === 'function') {
+        setTimeout(() => { try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {} }, 50);
+    }
 
     const noteText = document.getElementById('live-output').value;
     evaluateNote(noteText);
@@ -4789,8 +4825,8 @@ function updateChiefConcernDiagnosisHighlight() {
 
 
 
-        const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { if (!activeElementForEditor) return; const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); activeElementForEditor.dataset.anestheticValues = JSON.stringify(newValues); activeElementForEditor.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(activeElementForEditor); updateLiveOutput(true); anestheticEditorModal.style.display = 'none'; if (typeof flushPendingCloudState === 'function') flushPendingCloudState(); }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
-        const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { if (!activeElementForEditor) return; const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); activeElementForEditor.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(activeElementForEditor); updateLiveOutput(true); endoModal.style.display = 'none'; if (typeof flushPendingCloudState === 'function') flushPendingCloudState(); };
+        const anestheticEditorModal = document.getElementById('anesthetic-editor-modal'); const openAnestheticEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const listDiv = document.getElementById('anesthetic-editor-list'); listDiv.innerHTML = ''; document.getElementById('anesthetic-topical-check').checked = state.includeTopical; state.anestheticTypes.forEach(type => { const currentValue = state.anestheticValues[type.name] || 0; const row = document.createElement('div'); row.className = 'anesthetic-row'; row.innerHTML = `<label>${type.name}</label><input type="number" value="${currentValue}" min="0" step="0.25" data-name="${type.name}">`; listDiv.appendChild(row); }); anestheticEditorModal.style.display = 'block'; }; document.getElementById('anesthetic-editor-save-btn').onclick = () => { const newValues = {}; document.querySelectorAll('#anesthetic-editor-list input').forEach(input => { newValues[input.dataset.name] = parseFloat(input.value) || 0; }); let target = activeElementForEditor; const oid = (target && target.dataset) ? target.dataset.originalId : null; if (oid) { const live = document.querySelector(`.draggable-element[data-original-id="${oid}"]`); if (live) target = live; } if (!target || !target.dataset) return; if (typeof markLocalEdit === 'function' && oid) markLocalEdit(oid); target.dataset.anestheticValues = JSON.stringify(newValues); target.dataset.includeTopical = document.getElementById('anesthetic-topical-check').checked; updateAnestheticSummary(target); activeElementForEditor = target; try { pendingCloudState = null; } catch (e) {} updateLiveOutput(true); anestheticEditorModal.style.display = 'none'; if (typeof refreshCondensedForm === 'function') { setTimeout(() => { try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {} }, 50); } }; const createAnestheticTypeRow = (type = {name: '', mg: '', epi: ''}) => { const row = document.createElement('div'); row.className = 'prop-anesthetic-row'; row.innerHTML = `<input type="text" class="prop-anesthetic-name" value="${type.name}" placeholder="Name"> <input type="number" class="prop-anesthetic-mg" value="${type.mg}" placeholder="mg/carp"> <input type="number" class="prop-anesthetic-epi" value="${type.epi}" placeholder="epi/carp"> <span class="remove-btn">✖</span>`; row.querySelector('.remove-btn').onclick = () => row.remove(); return row; };
+        const endoModal = document.getElementById('endo-testing-modal'); const openEndoTestingEditor = (element) => { activeElementForEditor = element; const state = getElementState(element); const tableHead = endoModal.querySelector('thead'); const tableBody = endoModal.querySelector('tbody'); tableHead.innerHTML = ''; tableBody.innerHTML = ''; const headerRow = document.createElement('tr'); headerRow.innerHTML = '<th>Test</th>'; const teethToDisplay = [...state.endoData.teeth]; if (teethToDisplay.length === 0 || teethToDisplay[teethToDisplay.length - 1] !== '') { teethToDisplay.push(''); } teethToDisplay.forEach((tooth, index) => { headerRow.innerHTML += `<th><input type="text" value="${tooth}" class="endo-tooth-input" data-index="${index}" placeholder="#"></th>`; }); tableHead.appendChild(headerRow); state.endoTests.forEach(testName => { const testRow = document.createElement('tr'); testRow.innerHTML = `<td>${testName}</td>`; teethToDisplay.forEach((_, index) => { const result = state.endoData.results[testName]?.[index] || ''; testRow.innerHTML += `<td><input type="text" value="${result}" data-test="${testName}" data-index="${index}"></td>`; }); tableBody.appendChild(testRow); }); endoModal.style.display = 'block'; }; document.getElementById('endo-range-add-btn').onclick = () => { if (!activeElementForEditor) return; const rangeInput = document.getElementById('endo-range-input'); const newTeeth = parseToothRange(rangeInput.value); const state = getElementState(activeElementForEditor); const existingTeeth = new Set(state.endoData.teeth.filter(t => t && t.trim() !== '')); newTeeth.forEach(t => existingTeeth.add(t)); const sortedTeeth = Array.from(existingTeeth).sort((a,b)=>a-b); state.endoData.teeth = sortedTeeth; activeElementForEditor.dataset.endoData = JSON.stringify(state.endoData); openEndoTestingEditor(activeElementForEditor); rangeInput.value = ''; }; document.getElementById('endo-testing-save-btn').onclick = () => { const teeth = Array.from(endoModal.querySelectorAll('.endo-tooth-input')).map(input => input.value.trim()); const results = {}; endoModal.querySelectorAll('tbody input').forEach(input => { const test = input.dataset.test; const index = parseInt(input.dataset.index, 10); if (!results[test]) { results[test] = []; } results[test][index] = input.value; }); let target = activeElementForEditor; const oid = (target && target.dataset) ? target.dataset.originalId : null; if (oid) { const live = document.querySelector(`.draggable-element[data-original-id="${oid}"]`); if (live) target = live; } if (!target || !target.dataset) return; if (typeof markLocalEdit === 'function' && oid) markLocalEdit(oid); target.dataset.endoData = JSON.stringify({ teeth, results }); updateEndoTestingSummary(target); activeElementForEditor = target; try { pendingCloudState = null; } catch (e) {} updateLiveOutput(true); endoModal.style.display = 'none'; if (typeof refreshCondensedForm === 'function') { setTimeout(() => { try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {} }, 50); } };
         const openPropertiesModal = (element) => {
             const state = getElementState(element); const body = document.getElementById('properties-body'); let mainPropsHtml = '', formattingHtml = '', generalPropsHtml = '';
             if (state.type === 'enhanced-textbox' || state.type === 'charting') { mainPropsHtml = `<fieldset><legend>Labels & Text</legend><label for="prop-internal-label">Internal Label (for maker only)</label><input type="text" id="prop-internal-label" value="${state.internalLabel}"><label for="prop-prefix-label">Prefix Label (for note output)</label><input type="text" id="prop-prefix-label" value="${state.prefixLabel}"><label for="prop-default-text">Default Text</label><input type="text" id="prop-default-text" value="${state.defaultText}"></fieldset><fieldset><legend>Dropdown Phrases / Snippets</legend><label for="prop-dropdown-options">(one per line)</label><textarea id="prop-dropdown-options" rows="6">${(state.dropdownOptions || []).join('\n')}</textarea></fieldset>`; }
@@ -4892,12 +4928,22 @@ function updateChiefConcernDiagnosisHighlight() {
             if (newState.type !== 'formatter' && !(newState.type || '').startsWith('label-')) { const pnl = document.getElementById('prop-prefix-newline'); if (pnl) {newState.prefixNewline = pnl.checked; newState.prefixTab = document.getElementById('prop-prefix-tab').checked; newState.suffixNewline = document.getElementById('prop-suffix-newline').checked;} }
             const newElement = createElement(newState.type, newState); element.replaceWith(newElement); updateLiveOutput(); document.getElementById('properties-modal').style.display = 'none';
         };
-        const allergyModal = document.getElementById('allergy-modal'); const allergyListDiv = document.getElementById('allergy-list'); ALLERGY_LIST.forEach(allergy => { allergyListDiv.innerHTML += `<label><input type="checkbox" class="allergy-checkbox" value="${allergy}"> ${allergy}</label>`; }); allergyListDiv.addEventListener('change', e => { if (!e.target.classList.contains('allergy-checkbox')) return; const checkboxes = Array.from(allergyListDiv.querySelectorAll('.allergy-checkbox')); const noneCheckbox = checkboxes.find(cb => cb.value === "None"); if (e.target.value === "None" && e.target.checked) { checkboxes.forEach(cb => { if (cb.value !== "None") cb.checked = false; }); } else if (e.target.value !== "None" && e.target.checked) { if (noneCheckbox.checked) noneCheckbox.checked = false; } }); const openAllergyModal = (element) => { activeElementForEditor = element; const state = getElementState(element); const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox'); checkboxes.forEach(cb => cb.checked = false); const customInput = document.getElementById('custom-allergy-input'); customInput.value = ''; state.alerts.forEach(alert => { const cb = Array.from(checkboxes).find(c => c.value === alert); if (cb) { cb.checked = true; } else if (alert.startsWith('Custom: ')) { customInput.value = alert.substring(8); } }); allergyModal.style.display = 'block'; }; 
+        const allergyModal = document.getElementById('allergy-modal'); const allergyListDiv = document.getElementById('allergy-list'); ALLERGY_LIST.forEach(allergy => { allergyListDiv.innerHTML += `<label><input type="checkbox" class="allergy-checkbox" value="${allergy}"> ${allergy}</label>`; }); allergyListDiv.addEventListener('change', e => { if (!e.target.classList.contains('allergy-checkbox')) return; const checkboxes = Array.from(allergyListDiv.querySelectorAll('.allergy-checkbox')); const noneCheckbox = checkboxes.find(cb => cb.value === "None"); if (e.target.value === "None" && e.target.checked) { checkboxes.forEach(cb => { if (cb.value !== "None") cb.checked = false; }); const customInputClr = document.getElementById('custom-allergy-input'); if (customInputClr) customInputClr.value = ''; } else if (e.target.value !== "None" && e.target.checked) { if (noneCheckbox && noneCheckbox.checked) noneCheckbox.checked = false; } });
+// Free-text custom allergy unchecks the "None" default
+(function wireCustomAllergyInput() {
+    const customInput = document.getElementById('custom-allergy-input');
+    if (!customInput || customInput.dataset.nkdaWired === '1') return;
+    customInput.dataset.nkdaWired = '1';
+    customInput.addEventListener('input', () => {
+        if (!customInput.value.trim()) return;
+        const noneCb = document.querySelector('#allergy-list .allergy-checkbox[value="None"]');
+        if (noneCb && noneCb.checked) noneCb.checked = false;
+    });
+})();
+const openAllergyModal = (element) => { activeElementForEditor = element; const state = getElementState(element); const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox'); checkboxes.forEach(cb => cb.checked = false); const customInput = document.getElementById('custom-allergy-input'); customInput.value = ''; state.alerts.forEach(alert => { const cb = Array.from(checkboxes).find(c => c.value === alert); if (cb) { cb.checked = true; } else if (alert.startsWith('Custom: ')) { customInput.value = alert.substring(8); } }); allergyModal.style.display = 'block'; }; 
 
 document.getElementById('allergy-save-btn').onclick = () => {
-    if (!activeElementForEditor) return;
-
-    // Gather modal data and write to the element (do NOT hold isRenderingFromCloud
+    // Gather modal data and write to the LIVE element (do NOT hold isRenderingFromCloud
     // across updateLiveOutput — that would suppress the collab write).
     const selected = [];
     const checkboxes = allergyModal.querySelectorAll('.allergy-checkbox:checked');
@@ -4906,19 +4952,39 @@ document.getElementById('allergy-save-btn').onclick = () => {
     if (customValue) {
         selected.push(`Custom: ${customValue}`);
     }
-
-    if (selected.includes("None")) {
-        activeElementForEditor.dataset.alerts = JSON.stringify(["None"]);
-    } else {
-        activeElementForEditor.dataset.alerts = JSON.stringify(selected.filter(a => a !== "None"));
+    // Free-text allergy means not "None"
+    if (customValue) {
+        const idx = selected.indexOf('None');
+        if (idx >= 0) selected.splice(idx, 1);
     }
 
-    updateAlertElementUI(activeElementForEditor);
+    let target = activeElementForEditor;
+    const oid = (target && target.dataset) ? target.dataset.originalId : null;
+    if (oid) {
+        const live = document.querySelector(`.draggable-element[data-original-id="${oid}"]`);
+        if (live) target = live;
+    }
+    if (!target || !target.dataset) return;
+    if (typeof markLocalEdit === 'function' && oid) markLocalEdit(oid);
+
+    if (selected.includes("None") && selected.length === 1) {
+        target.dataset.alerts = JSON.stringify(["None"]);
+    } else {
+        target.dataset.alerts = JSON.stringify(selected.filter(a => a !== "None"));
+    }
+
+    updateAlertElementUI(target);
     allergyModal.style.display = 'none';
+    activeElementForEditor = target;
+
+    // Drop stale queued cloud snapshot (older than this save)
+    try { pendingCloudState = null; } catch (e) {}
 
     // Immediate field-level collab write
     updateLiveOutput(true);
-    if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
+    if (typeof refreshCondensedForm === 'function') {
+        setTimeout(() => { try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {} }, 50);
+    }
 
     showFeedback("Alerts saved.", true);
 };
@@ -4989,6 +5055,9 @@ function isAnyEditorModalOpen() {
     // Prefer explicit display:block (this app toggles style.display)
     const open = document.querySelector('.modal[style*="display: block"], .modal[style*="display:block"]');
     if (open) return true;
+    // Import-note modal uses #modal-backdrop.modal-visible (not .modal display:block)
+    const importBackdrop = document.getElementById('modal-backdrop');
+    if (importBackdrop && importBackdrop.classList.contains('modal-visible')) return true;
     // Fallback: computed style for any .modal
     return Array.from(document.querySelectorAll('.modal')).some(m => {
         try { return getComputedStyle(m).display === 'block'; } catch (e) { return false; }
@@ -5257,6 +5326,19 @@ function applyIncomingCloudState(docData, opts) {
     const options = opts || {};
     const docTemplateId = docData.templateId || 'BUILT_IN';
     const cloudMeta = docData.fieldMeta || {};
+    const expectedNoteId = options.expectedNoteId;
+    const applyGen = options.applyGen;
+
+    // Abort if this apply belongs to a note we already left (race after patient switch)
+    const stillCurrent = () => {
+        if (expectedNoteId && currentNoteId !== expectedNoteId) return false;
+        if (applyGen != null && applyGen !== window.__noteApplyGen) return false;
+        return true;
+    };
+    if (!stillCurrent()) {
+        console.log('DEBUG: Skipping stale cloud apply for prior note');
+        return Promise.resolve();
+    }
 
     // Pure dirty check — do NOT stamp localFieldMeta (that is only for user saves)
     const localSections = gatherLocalSections();
@@ -5272,22 +5354,29 @@ function applyIncomingCloudState(docData, opts) {
     const needsFullRebuild = options.forceFull || !lastLoadedState || activeTemplateId !== docTemplateId;
 
     const run = async () => {
+        if (!stillCurrent()) return;
+
         if (needsFullRebuild) {
             activeTemplateId = docTemplateId;
             if (typeof fetchAndSetTemplateState === 'function') {
                 await fetchAndSetTemplateState(docTemplateId);
             }
+            if (!stillCurrent()) return; // patient switched while template fetch was in flight
             isRenderingFromCloud = true;
-            renderState(docData, false);
+            // isNewTemplate=true rebuilds lastLoadedState baselines (same as F5-quality load)
+            renderState(docData, true);
             isRenderingFromCloud = false;
             // Fresh load: trust cloud, clear pending local edits for this session snapshot
             pendingLocalEdits.clear();
+            pendingFocusApplies.clear();
             rememberSyncedFromSections(
                 Object.fromEntries(SECTIONS.map(s => [s, docData[s] || []])),
                 cloudMeta
             );
             seedSyncedFromDom();
-            if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+            if (typeof window.refreshCondensedForm === 'function') {
+                window.refreshCondensedForm({ immediate: true, force: true });
+            }
             return;
         }
 
@@ -5362,6 +5451,7 @@ const emailInput = document.getElementById('email-input');
 const passwordInput = document.getElementById('password-input');
 const loginButton = document.getElementById('login-button');
 const signupButton = document.getElementById('signup-button');
+const loginErrorMessage = document.getElementById('login-error-message');
 const noteList = document.getElementById('note-list');
 const saveCopyButton = document.getElementById('save-copy-button');
 const showDoctorLoginBtn = document.getElementById('show-doctor-login-btn');
@@ -5492,25 +5582,40 @@ const startEditingSession = (noteId) => {
     pendingFocusApplies.clear();
 
     const isSwitchingNote = currentNoteId && currentNoteId !== noteId;
+    // Bump generation so in-flight applies from a previous note are discarded
+    window.__noteApplyGen = (window.__noteApplyGen || 0) + 1;
+    const applyGen = window.__noteApplyGen;
     currentNoteId = noteId;
     if (unsubscribeFromNote) unsubscribeFromNote();
 
     if (isSwitchingNote) {
+        // Full wipe of prior patient UI/state so fields cannot bleed across notes
         lastLoadedState = null;
         activeTemplateId = null;
         localFieldMeta = {};
         lastSyncedById = {};
         knownDocRev = 0;
+        pendingLocalEdits.clear();
         document.querySelectorAll('.dropzone').forEach(zone => { zone.innerHTML = ''; });
+        try {
+            const cf = document.getElementById('condensed-form-view');
+            if (cf) cf.innerHTML = '';
+        } catch (e) { /* ignore */ }
+        if (typeof updateLiveOutput === 'function') {
+            try { updateLiveOutput(false); } catch (e) { /* ignore */ }
+        }
     }
 
     showView('view-note-editor');
 
     const noteDocRef = db.collection('live_notes').doc(noteId);
+    // First snapshot after a patient switch must fully rebuild (like F5), not surgically merge
+    let forceFullOnce = !!isSwitchingNote || !lastLoadedState;
     
     unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
         // Guard: only process events for the note we are currently editing
         if (currentNoteId !== noteId) return;
+        if (applyGen !== window.__noteApplyGen) return;
 
         if (isAnyEditorModalOpen()) {
             console.log("DEBUG: A modal is open. Queueing cloud update (will apply on close).");
@@ -5520,7 +5625,14 @@ const startEditingSession = (noteId) => {
 	
         console.log(`DEBUG: Real-time update received for note "${noteId}".`);
         if (doc.exists) {
-            await applyIncomingCloudState(doc.data(), { forceFull: false });
+            const useForce = forceFullOnce;
+            forceFullOnce = false;
+            await applyIncomingCloudState(doc.data(), { forceFull: useForce, expectedNoteId: noteId, applyGen });
+            // Stale async completion from a prior note — ignore
+            if (currentNoteId !== noteId || applyGen !== window.__noteApplyGen) return;
+            if (useForce && typeof window.refreshCondensedForm === 'function') {
+                try { window.refreshCondensedForm({ immediate: true, force: true }); } catch (e) { /* ignore */ }
+            }
         } else {
             console.log(`DEBUG: Note "${noteId}" does not exist. Creating it.`);
             loadDefaults(noteId);
@@ -6461,28 +6573,133 @@ startDayButton.addEventListener('click', async () => {
 
 
 
-showDoctorLoginBtn.addEventListener('click', () => {
-    showView('view-doctor-login');
-});
+if (showDoctorLoginBtn) {
+    showDoctorLoginBtn.addEventListener('click', () => {
+        showView('view-doctor-login');
+        try {
+            const remembered = localStorage.getItem(DOCTOR_EMAIL_KEY) || '';
+            if (remembered && emailInput && !emailInput.value) emailInput.value = remembered;
+            if (passwordInput) passwordInput.focus();
+        } catch (e) { /* ignore */ }
+    });
+}
 
-loginButton.addEventListener('click', () => auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value).catch(err => loginErrorMessage.textContent = err.message));
-signupButton.addEventListener('click', () => auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value).catch(err => loginErrorMessage.textContent = err.message));
+/** Doctor email/password login — shared by button click and form submit. */
+/** Map Firebase auth errors to actionable UI text (esp. referer-null / API key restrictions). */
+function formatAuthError(err) {
+    const code = (err && err.code) || '';
+    const msg = (err && err.message) || String(err || 'Unknown error');
+    const isFile = (typeof location !== 'undefined' && location.protocol === 'file:');
+    const origin = (typeof location !== 'undefined') ? (location.origin || location.href) : '';
 
-// --- NEW: Prevent the form from reloading the page on submit ---
-document.getElementById('doctor-login-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-});
-
-// --- Allow Enter key to trigger login ---
-passwordInput.addEventListener('keydown', (event) => {
-    // Check if the key pressed was "Enter"
-    if (event.key === 'Enter') {
-        // Prevent the default Enter key action (like adding a newline)
-        event.preventDefault();
-        // Programmatically click the login button
-        loginButton.click();
+    if (code === 'auth/requests-from-referer-null-are-blocked' ||
+        /referer-null|referrer.*blocked|requests from referer/i.test(msg)) {
+        let help = 'Firebase blocked this login (API key HTTP-referrer restriction).\n\n';
+        if (isFile) {
+            help += 'You opened this page as a local file (file://). Doctor Login requires HTTPS hosting.\n';
+            help += 'Open the deployed site URL instead of a downloaded HTML file.\n\n';
+        } else {
+            help += 'Current origin: ' + origin + '\n\n';
+        }
+        help += 'Admin fix (one-time):\n';
+        help += '1) Google Cloud Console → APIs & Services → Credentials → your Browser API key\n';
+        help += '2) Application restrictions → HTTP referrers → add:\n';
+        help += '   • your site: https://YOUR-DOMAIN/*\n';
+        help += '   • Firebase: https://dentalnotemaker.firebaseapp.com/*\n';
+        help += '   • (optional dev) http://localhost/* and http://127.0.0.1/*\n';
+        help += '3) Firebase Console → Authentication → Settings → Authorized domains → add your domain\n';
+        help += 'Wait 1–5 minutes after saving, then retry.';
+        return help;
     }
-});
+    if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        return 'Incorrect email or password.';
+    }
+    if (code === 'auth/invalid-email') return 'Invalid email format.';
+    if (code === 'auth/email-already-in-use') return 'An account with this email already exists. Use Login instead.';
+    if (code === 'auth/weak-password') return 'Password must be at least 6 characters.';
+    if (code === 'auth/too-many-requests') return 'Too many attempts. Wait a moment and try again.';
+    if (code === 'auth/network-request-failed') {
+        return 'Network error reaching Firebase. Check connection / proxy, then retry.';
+    }
+    return msg;
+}
+
+async function performDoctorLogin() {
+    if (loginErrorMessage) loginErrorMessage.textContent = '';
+    const email = (emailInput && emailInput.value || '').trim();
+    const password = (passwordInput && passwordInput.value) || '';
+    if (!email || !password) {
+        if (loginErrorMessage) loginErrorMessage.textContent = 'Enter email and password.';
+        return;
+    }
+    if (typeof location !== 'undefined' && location.protocol === 'file:') {
+        if (loginErrorMessage) {
+            loginErrorMessage.textContent = formatAuthError({
+                code: 'auth/requests-from-referer-null-are-blocked',
+                message: 'referer-null'
+            });
+        }
+        console.warn('Doctor login blocked: page opened via file://');
+        return;
+    }
+    try {
+        console.log('DEBUG: Doctor login attempt for', email, 'origin=', location && location.origin);
+        await auth.signInWithEmailAndPassword(email, password);
+        // onAuthStateChanged will switch to dashboard
+    } catch (err) {
+        console.error('Doctor login failed:', err);
+        if (loginErrorMessage) loginErrorMessage.textContent = formatAuthError(err);
+    }
+}
+
+async function performDoctorSignup() {
+    if (loginErrorMessage) loginErrorMessage.textContent = '';
+    const email = (emailInput && emailInput.value || '').trim();
+    const password = (passwordInput && passwordInput.value) || '';
+    if (!email || !password) {
+        if (loginErrorMessage) loginErrorMessage.textContent = 'Enter email and password to sign up.';
+        return;
+    }
+    if (typeof location !== 'undefined' && location.protocol === 'file:') {
+        if (loginErrorMessage) {
+            loginErrorMessage.textContent = formatAuthError({
+                code: 'auth/requests-from-referer-null-are-blocked',
+                message: 'referer-null'
+            });
+        }
+        return;
+    }
+    try {
+        console.log('DEBUG: Doctor signup attempt for', email, 'origin=', location && location.origin);
+        await auth.createUserWithEmailAndPassword(email, password);
+    } catch (err) {
+        console.error('Doctor signup failed:', err);
+        if (loginErrorMessage) loginErrorMessage.textContent = formatAuthError(err);
+    }
+}
+
+if (loginButton) {
+    loginButton.addEventListener('click', (event) => {
+        // Button is type=submit — stop double-handling; form submit also calls login
+        event.preventDefault();
+        performDoctorLogin();
+    });
+}
+if (signupButton) {
+    signupButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        performDoctorSignup();
+    });
+}
+
+// Form submit (Enter in password field, or Login button) — never reload the page
+const doctorLoginForm = document.getElementById('doctor-login-form');
+if (doctorLoginForm) {
+    doctorLoginForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        performDoctorLogin();
+    });
+}
 
 
 logoutButton.addEventListener('click', () => {
@@ -8194,27 +8411,38 @@ techNameInput.addEventListener('keydown', (event) => {
         });
 
         document.getElementById('charting-editor-save-btn').onclick = () => {
-            if (!activeElementForEditor) return;
             const ta = document.getElementById('charting-editor-textarea');
             // Normalize tokens in place (replaces raw "6 postfix" with "#6 postfix", no duplicates)
             chartingSelections = parseChartingTextToSelections(ta.value);
             updateTextareaTokensPreservingNotes();
             const finalText = ta.value.trim();
-            activeElementForEditor.dataset.content = finalText;
+
+            // Resolve LIVE element by originalId (cloud rebuild may have replaced the node)
+            let target = activeElementForEditor;
+            const editedElementId = (target && target.dataset) ? target.dataset.originalId : null;
+            if (editedElementId) {
+                const live = document.querySelector(`.draggable-element[data-original-id="${editedElementId}"]`);
+                if (live) target = live;
+            }
+            if (!target || !target.dataset) return;
+
+            target.dataset.content = finalText;
             // Persist classifications
-            activeElementForEditor.dataset.chartingMeta = JSON.stringify({
+            target.dataset.chartingMeta = JSON.stringify({
                 classifications: Object.fromEntries(chartingClassifications)
             });
-            if (typeof updateEnhancedTextboxUI === 'function') updateEnhancedTextboxUI(activeElementForEditor);
+            if (typeof updateEnhancedTextboxUI === 'function') updateEnhancedTextboxUI(target);
             else {
-                const preview = activeElementForEditor.querySelector('.enhanced-textbox-preview');
+                const preview = target.querySelector('.enhanced-textbox-preview');
                 if (preview) preview.textContent = finalText;
             }
 
-            const editedElementId = activeElementForEditor.dataset.originalId;
             chartingOpenSnapshot = null; // commit — do not restore on close
+            activeElementForEditor = target;
 
             if (typeof markLocalEdit === 'function') markLocalEdit(editedElementId);
+            // Drop stale cloud snapshot queued while modal was open
+            try { pendingCloudState = null; } catch (e) {}
             // Immediate collab write (do NOT set isRenderingFromCloud — that would suppress sync)
             updateLiveOutput(true);
 
@@ -8226,9 +8454,10 @@ techNameInput.addEventListener('keydown', (event) => {
             }
 
             document.getElementById('charting-editor-modal').style.display = 'none';
-            if (typeof flushPendingCloudState === 'function') flushPendingCloudState();
             showFeedback("Charting saved.", true);
-            if (typeof refreshCondensedForm === 'function') refreshCondensedForm();
+            if (typeof refreshCondensedForm === 'function') {
+                setTimeout(() => { try { refreshCondensedForm({ immediate: true, force: true }); } catch (e) {} }, 50);
+            }
         };
 
         // Close charting modal on Escape (discard)
@@ -8342,7 +8571,7 @@ techNameInput.addEventListener('keydown', (event) => {
                 }
                 if (state.type === 'alert') {
                     if (!state.alerts || state.alerts.length === 0) return 'ALERT (not set)';
-                    if (state.alerts.length === 1 && state.alerts[0] === 'None') return 'No Known Allergies';
+                    if (state.alerts.length === 1 && state.alerts[0] === 'None') return 'No Known Drug Allergies';
                     return state.alerts.join(', ');
                 }
                 if (state.type === 'painscale') return `${state.value || 0}/10`;
@@ -9595,7 +9824,7 @@ function attachEventListeners() {
 
     const handleKeyDown = (e) => { /* ... same as before ... */ if (suggestionsContainer.style.display === 'none') return; const suggestions = suggestionsContainer.querySelectorAll('li'); if (suggestions.length === 0) return; let activeIndex = -1; suggestions.forEach((s, index) => { if (s.classList.contains('active')) activeIndex = index; }); if (e.key === 'ArrowDown') { e.preventDefault(); if (activeIndex < suggestions.length - 1) { if (activeIndex > -1) suggestions[activeIndex].classList.remove('active'); suggestions[activeIndex + 1].classList.add('active'); } } else if (e.key === 'ArrowUp') { e.preventDefault(); if (activeIndex > 0) { suggestions[activeIndex].classList.remove('active'); suggestions[activeIndex - 1].classList.add('active'); } } else if (e.key === 'Enter' && activeIndex > -1) { e.preventDefault(); selectTerm(suggestions[activeIndex].getAttribute('data-term')); } else if (e.key === 'Escape' || e.key === 'Tab') { hideSuggestions(); } };
     const handleGlobalClick = (event) => { /* ... same as before ... */ if (!textInput.contains(event.target) && !suggestionsContainer.contains(event.target)) { hideSuggestions(); } };
-    function selectTerm(term) { /* ... same as before ... */ const fullText = textInput.value; const cursorPos = textInput.selectionStart; const textBeforeCursor = fullText.substring(0, cursorPos); const textAfterCursor = fullText.substring(cursorPos); const lastSpaceIndex = textBeforeCursor.lastIndexOf(' '); const baseText = textBeforeCursor.substring(0, lastSpaceIndex + 1); textInput.value = baseText + term + ' ' + textAfterCursor; hideSuggestions(); textInput.focus(); const newCursorPos = (baseText + term + ' ').length; textInput.setSelectionRange(newCursorPos, newCursorPos); }
+    function selectTerm(term) { /* autocomplete insert — must fire input so modal stagedContentChange tracks */ const fullText = textInput.value; const cursorPos = textInput.selectionStart; const textBeforeCursor = fullText.substring(0, cursorPos); const textAfterCursor = fullText.substring(cursorPos); const lastSpaceIndex = textBeforeCursor.lastIndexOf(' '); const baseText = textBeforeCursor.substring(0, lastSpaceIndex + 1); textInput.value = baseText + term + ' ' + textAfterCursor; hideSuggestions(); textInput.focus(); const newCursorPos = (baseText + term + ' ').length; textInput.setSelectionRange(newCursorPos, newCursorPos); try { textInput.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} }
     function hideSuggestions() { if (suggestionsContainer) { suggestionsContainer.style.display = 'none'; } }
     
     document.addEventListener('DOMContentLoaded', init);
