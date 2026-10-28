@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 28OCT26 mgh + doctor-login referer/API-key guidance -->
+<!-- version as of 28OCT26 mgh + patient-switch full reload -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1509,7 +1509,7 @@ body.session-readonly .add-element-btn {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.2.0</p>
+    <p class="landing-version">v6.2.1</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -5326,6 +5326,19 @@ function applyIncomingCloudState(docData, opts) {
     const options = opts || {};
     const docTemplateId = docData.templateId || 'BUILT_IN';
     const cloudMeta = docData.fieldMeta || {};
+    const expectedNoteId = options.expectedNoteId;
+    const applyGen = options.applyGen;
+
+    // Abort if this apply belongs to a note we already left (race after patient switch)
+    const stillCurrent = () => {
+        if (expectedNoteId && currentNoteId !== expectedNoteId) return false;
+        if (applyGen != null && applyGen !== window.__noteApplyGen) return false;
+        return true;
+    };
+    if (!stillCurrent()) {
+        console.log('DEBUG: Skipping stale cloud apply for prior note');
+        return Promise.resolve();
+    }
 
     // Pure dirty check — do NOT stamp localFieldMeta (that is only for user saves)
     const localSections = gatherLocalSections();
@@ -5341,22 +5354,29 @@ function applyIncomingCloudState(docData, opts) {
     const needsFullRebuild = options.forceFull || !lastLoadedState || activeTemplateId !== docTemplateId;
 
     const run = async () => {
+        if (!stillCurrent()) return;
+
         if (needsFullRebuild) {
             activeTemplateId = docTemplateId;
             if (typeof fetchAndSetTemplateState === 'function') {
                 await fetchAndSetTemplateState(docTemplateId);
             }
+            if (!stillCurrent()) return; // patient switched while template fetch was in flight
             isRenderingFromCloud = true;
-            renderState(docData, false);
+            // isNewTemplate=true rebuilds lastLoadedState baselines (same as F5-quality load)
+            renderState(docData, true);
             isRenderingFromCloud = false;
             // Fresh load: trust cloud, clear pending local edits for this session snapshot
             pendingLocalEdits.clear();
+            pendingFocusApplies.clear();
             rememberSyncedFromSections(
                 Object.fromEntries(SECTIONS.map(s => [s, docData[s] || []])),
                 cloudMeta
             );
             seedSyncedFromDom();
-            if (typeof window.refreshCondensedForm === 'function') window.refreshCondensedForm();
+            if (typeof window.refreshCondensedForm === 'function') {
+                window.refreshCondensedForm({ immediate: true, force: true });
+            }
             return;
         }
 
@@ -5562,25 +5582,40 @@ const startEditingSession = (noteId) => {
     pendingFocusApplies.clear();
 
     const isSwitchingNote = currentNoteId && currentNoteId !== noteId;
+    // Bump generation so in-flight applies from a previous note are discarded
+    window.__noteApplyGen = (window.__noteApplyGen || 0) + 1;
+    const applyGen = window.__noteApplyGen;
     currentNoteId = noteId;
     if (unsubscribeFromNote) unsubscribeFromNote();
 
     if (isSwitchingNote) {
+        // Full wipe of prior patient UI/state so fields cannot bleed across notes
         lastLoadedState = null;
         activeTemplateId = null;
         localFieldMeta = {};
         lastSyncedById = {};
         knownDocRev = 0;
+        pendingLocalEdits.clear();
         document.querySelectorAll('.dropzone').forEach(zone => { zone.innerHTML = ''; });
+        try {
+            const cf = document.getElementById('condensed-form-view');
+            if (cf) cf.innerHTML = '';
+        } catch (e) { /* ignore */ }
+        if (typeof updateLiveOutput === 'function') {
+            try { updateLiveOutput(false); } catch (e) { /* ignore */ }
+        }
     }
 
     showView('view-note-editor');
 
     const noteDocRef = db.collection('live_notes').doc(noteId);
+    // First snapshot after a patient switch must fully rebuild (like F5), not surgically merge
+    let forceFullOnce = !!isSwitchingNote || !lastLoadedState;
     
     unsubscribeFromNote = noteDocRef.onSnapshot(async doc => {
         // Guard: only process events for the note we are currently editing
         if (currentNoteId !== noteId) return;
+        if (applyGen !== window.__noteApplyGen) return;
 
         if (isAnyEditorModalOpen()) {
             console.log("DEBUG: A modal is open. Queueing cloud update (will apply on close).");
@@ -5590,7 +5625,14 @@ const startEditingSession = (noteId) => {
 	
         console.log(`DEBUG: Real-time update received for note "${noteId}".`);
         if (doc.exists) {
-            await applyIncomingCloudState(doc.data(), { forceFull: false });
+            const useForce = forceFullOnce;
+            forceFullOnce = false;
+            await applyIncomingCloudState(doc.data(), { forceFull: useForce, expectedNoteId: noteId, applyGen });
+            // Stale async completion from a prior note — ignore
+            if (currentNoteId !== noteId || applyGen !== window.__noteApplyGen) return;
+            if (useForce && typeof window.refreshCondensedForm === 'function') {
+                try { window.refreshCondensedForm({ immediate: true, force: true }); } catch (e) { /* ignore */ }
+            }
         } else {
             console.log(`DEBUG: Note "${noteId}" does not exist. Creating it.`);
             loadDefaults(noteId);
