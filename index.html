@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- version as of 28OCT26 mgh + patient-switch full reload -->
+<!-- version as of 29OCT26 mgh + reset after refresh fix -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1509,7 +1509,7 @@ body.session-readonly .add-element-btn {
 
     <!-- 1. Title and Version Number -->
     <h1 class="landing-title">Dental Note Maker</h1>
-    <p class="landing-version">v6.2.1</p>
+    <p class="landing-version">v6.2.2</p>
 	
 
     <!-- 2. The Login Box (contains the original functionality) -->
@@ -5358,13 +5358,15 @@ function applyIncomingCloudState(docData, opts) {
 
         if (needsFullRebuild) {
             activeTemplateId = docTemplateId;
+            // Load CLEAN clinic template into lastLoadedState (used by Reset).
+            // Do NOT pass isNewTemplate=true to renderState — that would overwrite
+            // lastLoadedState with the live patient note and break Reset after refresh.
             if (typeof fetchAndSetTemplateState === 'function') {
                 await fetchAndSetTemplateState(docTemplateId);
             }
             if (!stillCurrent()) return; // patient switched while template fetch was in flight
             isRenderingFromCloud = true;
-            // isNewTemplate=true rebuilds lastLoadedState baselines (same as F5-quality load)
-            renderState(docData, true);
+            renderState(docData, false);
             isRenderingFromCloud = false;
             // Fresh load: trust cloud, clear pending local edits for this session snapshot
             pendingLocalEdits.clear();
@@ -5374,6 +5376,10 @@ function applyIncomingCloudState(docData, opts) {
                 cloudMeta
             );
             seedSyncedFromDom();
+            // Re-affirm clean template baseline (in case anything else touched lastLoadedState)
+            if (typeof fetchAndSetTemplateState === 'function') {
+                try { await fetchAndSetTemplateState(docTemplateId); } catch (e) { /* ignore */ }
+            }
             if (typeof window.refreshCondensedForm === 'function') {
                 window.refreshCondensedForm({ immediate: true, force: true });
             }
@@ -5975,7 +5981,7 @@ const reconcileState = (newState) => {
 // UPDATED `resetValues` Function
 // This version correctly handles 'doNotReset' properties.
 // =================================================================
-const resetValues = () => {
+const resetValues = async () => {
     // 1. Keep the history saving feature, it's good practice.
     saveNoteToHistory();
 	saveHistoryToFirestore();
@@ -5983,16 +5989,11 @@ const resetValues = () => {
     // 2. The single confirmation dialog.
     if (currentNoteId && confirm("Are you sure you want to reset this note for the next patient? This will not affect fields marked 'Do Not Reset'.")) {
         console.log(`DEBUG: Smart Reset initiated for note "${currentNoteId}"...`);
-        
-        if (!lastLoadedState) {
-            alert("Error: Default template (lastLoadedState) is not available. Cannot perform reset.");
-            return;
-        }
 
         const noteDocRef = db.collection('live_notes').doc(currentNoteId);
 
         // 3. GET the most recent version of the document from the server first.
-        noteDocRef.get().then(doc => {
+        noteDocRef.get().then(async doc => {
             if (!doc.exists) {
                 console.error("Cannot reset a document that doesn't exist.");
                 alert("Error: The note could not be found in the cloud to reset.");
@@ -6000,6 +6001,21 @@ const resetValues = () => {
             }
 
             const currentState = doc.data();
+
+            // Ensure lastLoadedState is the CLEAN clinic template (not the live note).
+            // After a security refresh / rejoin, it can be missing; recover from templateId.
+            const templateIdForReset = currentState.templateId || activeTemplateId || 'BUILT_IN';
+            if (!lastLoadedState || !Object.keys(lastLoadedState).length) {
+                console.log('DEBUG: lastLoadedState missing — re-fetching template for reset:', templateIdForReset);
+                if (typeof fetchAndSetTemplateState === 'function') {
+                    await fetchAndSetTemplateState(templateIdForReset);
+                }
+            }
+            if (!lastLoadedState || !Object.keys(lastLoadedState).length) {
+                alert("Error: Default template is not available. Cannot perform reset. Try Full Reset or re-open the note.");
+                return;
+            }
+
             // 4. Create a fresh, clean copy of the original template.
             const newResetState = JSON.parse(JSON.stringify(lastLoadedState));
 
